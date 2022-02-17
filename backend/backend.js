@@ -1,6 +1,7 @@
 const http = require('http')
+const socket = require('socket.io')
 const fs = require('fs')
-var path = require('path');
+const path = require('path')
 
 const port = 3000
 
@@ -32,7 +33,7 @@ const server = http.createServer(function (request, response) {
 
     const dirpath = '../frontend';
     if(request.url === '/') {
-        var filePath = dirpath + '/index.html'
+        var filePath = dirpath + '/login.html'
     } else {
         var filePath = dirpath + request.url;
     }
@@ -65,6 +66,20 @@ const server = http.createServer(function (request, response) {
     });
 
 })
+
+let io = socket(server);
+
+io.on('connection', (socket) => {
+    console.log('A user just connected.');
+
+    socket.on('disconnect', () => {
+        console.log('A user has disconnected.');
+    })
+
+    socket.on('buttonClicked', () => {
+        console.log('Button clicked arrived to server')
+    });
+});
 
 server.listen(port, function(error) {
     if(error) {
