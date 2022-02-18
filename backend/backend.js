@@ -33,7 +33,7 @@ const server = http.createServer(function (request, response) {
 
     const dirpath = '../frontend';
     if(request.url === '/') {
-        var filePath = dirpath + '/login.html'
+        var filePath = dirpath + '/login/login.html'
     } else {
         var filePath = dirpath + request.url;
     }

@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./style.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <title>Login</title>
 </head>
@@ -14,7 +15,7 @@
             <h1 class="form__title">Login</h1>
             <div class="form__message form__message--error"></div>
             <div class="form__input-group">
-                <input type="text" class="form__input" autofocus placeholder="Guest1234">
+                <input type="text" class="form__input" id="username_input">
                 <div class="form__input-error-message"></div>
             </div>
             <button class="form__button" id="start_button">Start</button>
@@ -22,5 +23,6 @@
             <button class="form__button" id="join_button">Join</button>
         </form>
     </div>
+    <!-- <script src="login.js"></script> -->
 </body>
 </html>

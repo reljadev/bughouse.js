@@ -1,5 +1,7 @@
 html {background-color: #252526}
 
+/* TODO: you don't need all of this */
+
 body {
     --color-primary: #009579;
     --color-primary-dark: #007f67;
