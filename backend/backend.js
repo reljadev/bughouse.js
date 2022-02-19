@@ -35,7 +35,8 @@ const server = http.createServer(function (request, response) {
     //TOOD: this is an ugly hack
     let file_name = request.url.substring(0, request.url.indexOf('.'))
     if(request.url === '/') {
-        var filePath = dirpath + '/game/game.html'
+        // var filePath = dirpath + '/game/game.html'
+        var filePath = dirpath + '/landing_page/landing_page.html'
     } else if(file_name === '/game' || file_name === '/landing_page'){
         var filePath = dirpath + file_name + request.url
     } else {
@@ -73,10 +74,10 @@ const server = http.createServer(function (request, response) {
 
 let io = socket(server);
 
-io.on('connection', (socket) => {
+io.on('connection', (client) => {
     console.log('A user just connected.');
 
-    socket.on('disconnect', () => {
+    client.on('disconnect', () => {
         console.log('A user has disconnected.');
     })
     
