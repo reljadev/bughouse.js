@@ -9,13 +9,16 @@
         <!-- Define host path -->
         <script> let HOST_PATH = window.location.protocol + '//' + window.location.host + '/'; </script> <!-- Do i need this? -->
 
+        <!-- Import style -->
+        <link rel="stylesheet" href="./game.css">
+
         <!-- Import chess.js library -->
-        <script src="./modules/chess.js/chess.js"></script> <!-- TODO: Change this to min later -->
+        <script src="../modules/chess.js/chess.js"></script> <!-- TODO: Change this to min later -->
 
         <!-- Import chessboard.js library & jquery -->
-        <link rel="stylesheet" href="./modules/chessboardjs-1.0.0/css/chessboard-1.0.0.css"> <!-- TODO: Change this to min later -->
+        <link rel="stylesheet" href="../modules/chessboardjs-1.0.0/css/chessboard-1.0.0.css"> <!-- TODO: Change this to min later -->
         <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-        <script src="./modules/chessboardjs-1.0.0/js/chessboard-1.0.0.js"></script> <!-- TODO: Change this to min later -->
+        <script src="../modules/chessboardjs-1.0.0/js/chessboard-1.0.0.js"></script> <!-- TODO: Change this to min later -->
 
     </head>
 
@@ -27,7 +30,7 @@
         <div id="fen"></div>
         <label>PGN:</label>
         <div id="pgn"></div>
-        <script src="app.js"></script>
+        <script src="game.js"></script>
     </body>
 
 </html>
