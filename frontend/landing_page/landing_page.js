@@ -1,46 +1,29 @@
-const http = require('http')
-
 var $ = window['jQuery']
 
 // set default username
 var $username = $('#username_input')
 var min = 1000
-var max = 9999
+var max = 10000
 var username = 'Guest' + getRandomInt(min, max) // TODO: should be randomly generated
-$username.attr("placeholder", username)
-
-// TODO: remove
-console.log(window.location)
+$username.attr("placeholder", username) 
 
 // start new game
-$('#start_button').click(startGame())
+$('#start_button').click(() => {startGame()})
 
 function startGame() {
     var game_id = uuid()
-    username = $username.val()
-    var hostname = window.location.hostname //TODO: add params to GET request
-
-    let requestUrl = url.parse(url.format({
-        protocol: 'http',
-        hostname: hostname,
-        pathname: '/game.html',
-        query: {
-            gameId: game_id,
-            username: username,
-        }
-    }))
-
-    http.get({
-        hostname: requestUrl.hostname,
-        path: requestUrl.path,
-    }, (res) => {}
-    )
+    username = $username.val() === '' ? username : $username.val()
+    var url = window.location.href + 'game.html?'
+    url += 'gameId=' + game_id + '&'
+    url += 'username=' + username
+    window.location.replace(url)
 }
 
 function getRandomInt(min, max) {
+    //The maximum is exclusive and the minimum is inclusive
     min = Math.ceil(min);
     max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+    return Math.floor(Math.random() * (max - min) + min);
 }
 
 function uuid () {

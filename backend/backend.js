@@ -4,6 +4,7 @@ const fs = require('fs')
 const path = require('path')
 
 const port = 3000
+const dirpath = '../frontend'
 
 // serve static files
 // TODO: if you don't use, remove module
@@ -27,27 +28,33 @@ const port = 3000
 //     })
 // })
 
+function parse_url(url) {
+    let file_name = url.substring(0, url.indexOf('?'))
+    file_name = file_name === '' ? url : file_name
+    let folder_name = file_name.substring(0, file_name.indexOf('.'))
+    if(file_name === '/') {
+        // var filePath = dirpath + '/game/game.html'
+        var filePath = dirpath + '/landing_page/landing_page.html'
+    } else if(folder_name === '/game' || folder_name === '/landing_page'){
+        var filePath = dirpath + folder_name + file_name
+    } else {
+        var filePath = dirpath + file_name
+    }
+    return filePath
+}
+
 // without express library
 const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
 
-    const dirpath = '../frontend';
     //TOOD: this is an ugly hack
-    let file_name = request.url.substring(0, request.url.indexOf('.'))
-    if(request.url === '/') {
-        // var filePath = dirpath + '/game/game.html'
-        var filePath = dirpath + '/landing_page/landing_page.html'
-    } else if(file_name === '/game' || file_name === '/landing_page'){
-        var filePath = dirpath + file_name + request.url
-    } else {
-        var filePath = dirpath + request.url
-    }
+    var filePath = parse_url(request.url)
 
     var extname = path.extname(filePath);
     const ext_to_type = {'.html': 'text/html', '.js': 'text/javascript',
                          '.css': 'text/css', '.json': 'application/json',
                          '.png': 'image/png', '.jpg': 'image/jpg',
-                         '.wav': 'audio/wav'}
+                         '.ico': 'image/x-icon'}
     var contentType = ext_to_type[extname]
 
     fs.readFile(filePath, function(error, content) {
@@ -80,7 +87,6 @@ io.on('connection', (client) => {
     client.on('disconnect', () => {
         console.log('A user has disconnected.');
     })
-    
 });
 
 server.listen(port, function(error) {
