@@ -7,28 +7,6 @@ const path = require('path')
 const port = 3000
 const dirpath = '../frontend'
 
-// serve static files
-// TODO: if you don't use, remove module
-// with express library 
-//const express = require('express')
-//const app = express()
-//const server = http.createServer(app)
-//app.use(express.static('../frontend'))
-
-// const server = http.createServer(function(request, response) {
-    
-//     fs.readFile('../frontend/index.html', function(error, data) {
-//         if(error) {
-//             response.writeHead(404)
-//             response.write('Error: File Not Found')
-//         } else {
-//             response.writeHead(200, {'Content-Type': 'text/html'})
-//             response.write(data)
-//         }
-//         response.end()
-//     })
-// })
-
 //TODO: this is an ugly hack
 function parse_url(request) {
     // form URL
