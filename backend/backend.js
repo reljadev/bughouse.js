@@ -3,6 +3,7 @@ const socket = require('socket.io')
 const fs = require('fs')
 const path = require('path')
 
+// CONSTANTS
 const port = 3000
 const dirpath = '../frontend'
 
@@ -28,28 +29,39 @@ const dirpath = '../frontend'
 //     })
 // })
 
-function parse_url(url) {
-    let file_name = url.substring(0, url.indexOf('?'))
-    file_name = file_name === '' ? url : file_name
-    let folder_name = file_name.substring(0, file_name.indexOf('.'))
-    if(file_name === '/') {
+//TODO: this is an ugly hack
+function parse_url(request) {
+    // form URL
+    var baseURL = 'http://' + request.headers.host + '/';
+    var parser = new URL(request.url, baseURL);
+
+    // convert request url to file path
+    var folder_name = parser.pathname.substring(0, parser.pathname.indexOf('.'))
+    if(folder_name === '') {
         // var filePath = dirpath + '/game/game.html'
         var filePath = dirpath + '/landing_page/landing_page.html'
     } else if(folder_name === '/game' || folder_name === '/landing_page'){
-        var filePath = dirpath + folder_name + file_name
+        var filePath = dirpath + folder_name + parser.pathname
     } else {
-        var filePath = dirpath + file_name
+        var filePath = dirpath + parser.pathname
     }
-    return filePath
+    
+    // get request parameters
+    var params = parser.searchParams
+
+    return {filePath: filePath, params: params}
 }
 
 // without express library
 const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
 
-    //TOOD: this is an ugly hack
-    var filePath = parse_url(request.url)
+    // parse url
+    var parsed_url = parse_url(request)
+    var filePath = parsed_url.filePath
+    var params = parsed_url.params
 
+    // infer correct content type
     var extname = path.extname(filePath);
     const ext_to_type = {'.html': 'text/html', '.js': 'text/javascript',
                          '.css': 'text/css', '.json': 'application/json',
@@ -57,6 +69,7 @@ const server = http.createServer(function (request, response) {
                          '.ico': 'image/x-icon'}
     var contentType = ext_to_type[extname]
 
+    // read file & send it to client
     fs.readFile(filePath, function(error, content) {
         if (error) {
             if(error.code == 'ENOENT') {
@@ -79,6 +92,7 @@ const server = http.createServer(function (request, response) {
 
 })
 
+// set up websocket
 let io = socket(server);
 
 io.on('connection', (client) => {
@@ -89,6 +103,7 @@ io.on('connection', (client) => {
     })
 });
 
+// listen for upcomming connection
 server.listen(port, function(error) {
     if(error) {
         console.log('Error occured while trying to set up a server ' + error)
