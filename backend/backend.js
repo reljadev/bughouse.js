@@ -2,51 +2,17 @@ const ejs = require('ejs')
 const http = require('http')
 const socket = require('socket.io')
 const fs = require('fs')
-const path = require('path')
+const utils = require('./utils')
 
 // CONSTANTS
 const PORT = 3000
-const DIRPATH = '../frontend'
-const DEFAULT_PAGE = '/landing_page/landing_page.html'
-
-//TODO: this is an ugly hack
-function parse_url(request) {
-    // form URL
-    var baseURL = 'http://' + request.headers.host + '/';
-    var parser = new URL(request.url, baseURL);
-
-    // convert request url to file path
-    var folder_name = parser.pathname.substring(0, parser.pathname.indexOf('.'))
-    if(folder_name === '') {
-        // var filePath = DIRPATH + '/game/game.html'
-        var filePath = DIRPATH + DEFAULT_PAGE
-    } else if(folder_name === '/game' || folder_name === '/landing_page') {
-        var filePath = DIRPATH + folder_name + parser.pathname
-    } else {
-        var filePath = DIRPATH + parser.pathname
-    }
-    
-    // get request parameters
-    var params = parser.searchParams
-
-    return {fileName: parser.pathname.substring(1), filePath: filePath, params: params}
-}
-
-function ext_to_type(filePath) {
-    var extname = path.extname(filePath);
-    const ext_to_type = {'.html': 'text/html', '.js': 'text/javascript',
-                         '.css': 'text/css', '.json': 'application/json',
-                         '.png': 'image/png', '.jpg': 'image/jpg',
-                         '.ico': 'image/x-icon', '.ejs': 'text/html'}
-    return ext_to_type[extname]
-}
 
 // create server
 const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
 
     // parse url
-    var parsed_url = parse_url(request)
+    var parsed_url = utils.parse_url(request)
     var fileName = parsed_url.fileName
     var filePath = parsed_url.filePath
     var params = parsed_url.params
@@ -63,24 +29,13 @@ const server = http.createServer(function (request, response) {
             
         // start new game
         } else {
-            var game_id = uuid()
-            //TODO: this should really be a prototype
-            var new_game = {playing: false,
-                            state: {fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-                                    sparePieces: {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
-                                                'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}}},
-                            players: []}
-            games[game_id] = new_game
-
             // set current game
-            currentGame = new_game
-
-            //TODO: send this game id to client with the generated files
+            currentGame = start_new_game()
         }
     }
 
     // infer correct content type 
-    var contentType = ext_to_type(filePath)
+    var contentType = utils.ext_to_type(filePath)
     var encoding = contentType === 'image/png' ? undefined : 'utf-8'
 
     // read file & send it to client
@@ -121,6 +76,19 @@ function uuid () {
       var r = (Math.random() * 16) | 0
       return r.toString(16)
     })
+}
+
+function start_new_game() {
+    var game_id = uuid()
+    //TODO: this should really be a prototype
+    var new_game = {playing: false,
+                    state: {fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                            sparePieces: {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
+                                          'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}}},
+                    players: []}
+    games[game_id] = new_game
+
+    return new_game
 }
 
 ////////////////////////////////////////////////////
