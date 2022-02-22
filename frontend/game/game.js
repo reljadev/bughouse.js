@@ -92,7 +92,7 @@ function updateStatus () {
 
 var config = {
   draggable: true,
-  position: 'start',
+  position: 'start', //TODO: should start chess and chessboard with same fen
   onDragStart: onDragStart,
   onDrop: onDrop,
   onSnapEnd: onSnapEnd,

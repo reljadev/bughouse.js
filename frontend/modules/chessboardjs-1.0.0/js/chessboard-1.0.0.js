@@ -543,7 +543,7 @@
   // Config
   // ---------------------------------------------------------------------------
 
-  function expandConfigArgumentShorthand (config) {
+  function expandConfigArgumentShorthand (config) { //TODO: shouldn't this be config.position instead of config?
     if (config === 'start') {
       config = {position: deepCopy(START_POSITION)}
     } else if (validFen(config)) {

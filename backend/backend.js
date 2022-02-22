@@ -1,3 +1,4 @@
+const ejs = require('ejs')
 const http = require('http')
 const socket = require('socket.io')
 const fs = require('fs')
@@ -44,12 +45,23 @@ const server = http.createServer(function (request, response) {
     // join existing game
     if(params.hasOwnProperty('gameId') && 
        games.hasOwnProperty(params['gameId'])) {
+        // TODO: retrieve game information
         
     // start new game
     } else {
         var game_id = uuid()
-        // games[game_id] = ...
+        //TODO: this should really be a prototype
+        var new_game = {playing: false,
+                        state: {fen: 'rnbqkbnr/pppppppp/8/8/6N1/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1',
+                                spares: {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
+                                         'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}}},
+                        players: []}
+        games[game_id] = new_game
+
+        //TODO: send this game id to client with the generated files
     }
+
+    //TODO: generate file dynamically using EJS
 
     // infer correct content type
     var extname = path.extname(filePath);
