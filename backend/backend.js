@@ -4,8 +4,9 @@ const fs = require('fs')
 const path = require('path')
 
 // CONSTANTS
-const port = 3000
-const dirpath = '../frontend'
+const PORT = 3000
+const DIRPATH = '../frontend'
+const DEFAULT_PAGE = '/landing_page/landing_page.html'
 
 //TODO: this is an ugly hack
 function parse_url(request) {
@@ -16,12 +17,12 @@ function parse_url(request) {
     // convert request url to file path
     var folder_name = parser.pathname.substring(0, parser.pathname.indexOf('.'))
     if(folder_name === '') {
-        // var filePath = dirpath + '/game/game.html'
-        var filePath = dirpath + '/landing_page/landing_page.html'
-    } else if(folder_name === '/game' || folder_name === '/landing_page'){
-        var filePath = dirpath + folder_name + parser.pathname
+        // var filePath = DIRPATH + '/game/game.html'
+        var filePath = DIRPATH + DEFAULT_PAGE
+    } else if(folder_name === '/game' || folder_name === '/landing_page') {
+        var filePath = DIRPATH + folder_name + parser.pathname
     } else {
-        var filePath = dirpath + parser.pathname
+        var filePath = DIRPATH + parser.pathname
     }
     
     // get request parameters
@@ -30,7 +31,7 @@ function parse_url(request) {
     return {filePath: filePath, params: params}
 }
 
-// without express library
+// create server
 const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
 
@@ -38,6 +39,17 @@ const server = http.createServer(function (request, response) {
     var parsed_url = parse_url(request)
     var filePath = parsed_url.filePath
     var params = parsed_url.params
+
+    //TODO: first session id should be checked
+    // join existing game
+    if(params.hasOwnProperty('gameId') && 
+       games.hasOwnProperty(params['gameId'])) {
+        
+    // start new game
+    } else {
+        var game_id = uuid()
+        // games[game_id] = ...
+    }
 
     // infer correct content type
     var extname = path.extname(filePath);
@@ -58,7 +70,7 @@ const server = http.createServer(function (request, response) {
             }
             else {
                 response.writeHead(500);
-                response.end('Sorry, check with the site admin for error: '+error.code+' ..\n');
+                response.end('Sorry, check with the site admin for error: ' + error.code + ' ..\n');
                 response.end(); 
             }
         }
@@ -69,6 +81,20 @@ const server = http.createServer(function (request, response) {
     });
 
 })
+
+///////////////// GAME LOGIC ///////////////////////
+var games = {}
+
+function uuid () {
+    return 'xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx'.replace(/x/g, function (c) {
+      var r = (Math.random() * 16) | 0
+      return r.toString(16)
+    })
+}
+
+
+
+////////////////////////////////////////////////////
 
 // set up websocket
 let io = socket(server);
@@ -82,10 +108,10 @@ io.on('connection', (client) => {
 });
 
 // listen for upcomming connection
-server.listen(port, function(error) {
+server.listen(PORT, function(error) {
     if(error) {
         console.log('Error occured while trying to set up a server ' + error)
     } else {
-        console.log('Server is listening on port ' + port)
+        console.log('Server is listening on port ' + PORT)
     }
 })

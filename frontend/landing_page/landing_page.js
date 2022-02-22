@@ -11,10 +11,10 @@ $username.attr("placeholder", username)
 $('#start_button').click(() => {startGame()})
 
 function startGame() {
-    var game_id = uuid()
+    // var game_id = uuid()
     username = $username.val() === '' ? username : $username.val()
     var url = window.location.href + 'game.html?'
-    url += 'gameId=' + game_id + '&'
+    // url += 'gameId=' + game_id + '&'
     url += 'username=' + username
     window.location.replace(url)
 }
@@ -24,11 +24,4 @@ function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min) + min);
-}
-
-function uuid () {
-    return 'xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx'.replace(/x/g, function (c) {
-      var r = (Math.random() * 16) | 0
-      return r.toString(16)
-    })
 }
