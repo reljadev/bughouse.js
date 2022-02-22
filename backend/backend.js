@@ -52,7 +52,7 @@ const server = http.createServer(function (request, response) {
         var game_id = uuid()
         //TODO: this should really be a prototype
         var new_game = {playing: false,
-                        state: {fen: 'rnbqkbnr/pppppppp/8/8/6N1/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1',
+                        state: {fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
                                 spares: {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
                                          'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}}},
                         players: []}
