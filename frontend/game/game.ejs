@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <!--- <meta charset="UTF-8" />
-        <meta name="viewport" content="device-width, initial-scale=1.0"> --->
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="device-width, initial-scale=1.0">
 
         <title>Bughouse</title>
 
@@ -23,6 +23,7 @@
     </head>
 
     <body>
+        <!-- define chessboard element -->
         <div id="myBoard" style="width: 400px"></div>
         <label>Status:</label>
         <div id="status"></div>
@@ -30,6 +31,14 @@
         <div id="fen"></div>
         <label>PGN:</label>
         <div id="pgn"></div>
+
+        <!-- get data from server -->
+        <script type="text/javascript">
+            let fen = '<%-fen%>'
+            let sparePieces = '<%-JSON.stringify(sparePieces)%>'
+            sparePieces = JSON.parse(sparePieces) // TODO: Why do I need to stringify sparePieces?
+        </script>
+        <!-- import game logic -->
         <script src="game.js"></script>
     </body>
 

@@ -29,7 +29,16 @@ function parse_url(request) {
     // get request parameters
     var params = parser.searchParams
 
-    return {filePath: filePath, params: params}
+    return {fileName: parser.pathname.substring(1), filePath: filePath, params: params}
+}
+
+function ext_to_type(filePath) {
+    var extname = path.extname(filePath);
+    const ext_to_type = {'.html': 'text/html', '.js': 'text/javascript',
+                         '.css': 'text/css', '.json': 'application/json',
+                         '.png': 'image/png', '.jpg': 'image/jpg',
+                         '.ico': 'image/x-icon', '.ejs': 'text/html'}
+    return ext_to_type[extname]
 }
 
 // create server
@@ -38,43 +47,46 @@ const server = http.createServer(function (request, response) {
 
     // parse url
     var parsed_url = parse_url(request)
+    var fileName = parsed_url.fileName
     var filePath = parsed_url.filePath
     var params = parsed_url.params
+    var currentGame = {}
 
     //TODO: first session id should be checked
     // join existing game
-    if(params.hasOwnProperty('gameId') && 
-       games.hasOwnProperty(params['gameId'])) {
-        // TODO: retrieve game information
-        
-    // start new game
-    } else {
-        var game_id = uuid()
-        //TODO: this should really be a prototype
-        var new_game = {playing: false,
-                        state: {fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-                                spares: {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
-                                         'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}}},
-                        players: []}
-        games[game_id] = new_game
+    if(fileName === 'game.ejs') {
+        if(params.hasOwnProperty('gameId') && 
+           games.hasOwnProperty(params['gameId'])) {
+            // TODO: retrieve game information
+            // this info should be vetted because it's coming form client side (fen & sparePieces)
+            // and user can temper with it, i.e. insert executable code
+            
+        // start new game
+        } else {
+            var game_id = uuid()
+            //TODO: this should really be a prototype
+            var new_game = {playing: false,
+                            state: {fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                                    sparePieces: {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
+                                                'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}}},
+                            players: []}
+            games[game_id] = new_game
 
-        //TODO: send this game id to client with the generated files
+            // set current game
+            currentGame = new_game
+
+            //TODO: send this game id to client with the generated files
+        }
     }
 
-    //TODO: generate file dynamically using EJS
-
-    // infer correct content type
-    var extname = path.extname(filePath);
-    const ext_to_type = {'.html': 'text/html', '.js': 'text/javascript',
-                         '.css': 'text/css', '.json': 'application/json',
-                         '.png': 'image/png', '.jpg': 'image/jpg',
-                         '.ico': 'image/x-icon'}
-    var contentType = ext_to_type[extname]
+    // infer correct content type 
+    var contentType = ext_to_type(filePath)
+    var encoding = contentType === 'image/png' ? undefined : 'utf-8'
 
     // read file & send it to client
-    fs.readFile(filePath, function(error, content) {
+    fs.readFile(filePath, encoding, function(error, content) { // TODO: you can use ejs.renderFile
         if (error) {
-            if(error.code == 'ENOENT') {
+            if(error.code == 'ENOENT') { //why didn't this throw error, no such file?
                 fs.readFile('./404.html', function(error, content) {
                     response.writeHead(200, { 'Content-Type': contentType });
                     response.end(content, 'utf-8');
@@ -88,7 +100,14 @@ const server = http.createServer(function (request, response) {
         }
         else {
             response.writeHead(200, { 'Content-Type': contentType });
-            response.end(content, 'utf-8');
+            // renderize page
+            if(fileName === 'game.ejs') {
+                var renderizedPage = ejs.render(content, {fen: currentGame.state.fen, sparePieces: currentGame.state.sparePieces});
+                response.end(renderizedPage, 'utf-8'); // nor here
+            // plain html, js or css
+            } else {
+                response.end(content, 'utf-8'); //TODO: probably encoding not needed here
+            }
         }
     });
 
@@ -103,8 +122,6 @@ function uuid () {
       return r.toString(16)
     })
 }
-
-
 
 ////////////////////////////////////////////////////
 

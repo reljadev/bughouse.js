@@ -11,10 +11,8 @@ $username.attr("placeholder", username)
 $('#start_button').click(() => {startGame()})
 
 function startGame() {
-    // var game_id = uuid()
     username = $username.val() === '' ? username : $username.val()
-    var url = window.location.href + 'game.html?'
-    // url += 'gameId=' + game_id + '&'
+    var url = window.location.href + 'game.ejs?'
     url += 'username=' + username
     window.location.replace(url)
 }
