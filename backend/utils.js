@@ -21,7 +21,7 @@ function parse_url(request) {
     }
     
     // get request parameters
-    var params = parser.searchParams
+    var params = Object.fromEntries(parser.searchParams)
 
     return {fileName: parser.pathname.substring(1), filePath: filePath, params: params}
 }

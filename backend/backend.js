@@ -26,7 +26,7 @@ const server = http.createServer(function (request, response) {
             // TODO: retrieve game information
             // this info should be vetted because it's coming form client side (fen & sparePieces)
             // and user can temper with it, i.e. insert executable code
-            currentGame = games[gameId]
+            currentGame = games[params['gameId']]
             
         // start new game
         } else {
@@ -34,8 +34,6 @@ const server = http.createServer(function (request, response) {
             currentGame = start_new_game()
         }
     }
-
-    //TODO: gameId should be sent to client ! ! !
 
     // infer correct content type 
     var contentType = utils.ext_to_type(filePath)
@@ -60,7 +58,7 @@ const server = http.createServer(function (request, response) {
             response.writeHead(200, { 'Content-Type': contentType });
             // renderize page
             if(fileName === 'game.ejs') {
-                var renderizedPage = ejs.render(content, {fen: currentGame.state.fen, sparePieces: currentGame.state.sparePieces});
+                var renderizedPage = ejs.render(content, {data: currentGame});
                 response.end(renderizedPage, 'utf-8'); // nor here
             // plain html, js or css
             } else {
@@ -84,7 +82,8 @@ function uuid () {
 function start_new_game() {
     var game_id = uuid()
     //TODO: this should really be a prototype
-    var new_game = {playing: false,
+    var new_game = {id: game_id,
+                    playing: false,
                     state: {fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
                             sparePieces: {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
                                           'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}}},
@@ -102,10 +101,18 @@ let io = socket(server);
 io.on('connection', (client) => {
     console.log('A user just connected.');
 
+    // join game
+    var game_id = client.request._query['gameId'] //TODO: check if valid id
+    client.join(game_id)
+    client.data.game_id = game_id
+    //games[game_id]['players'].unshift(client)
+
+    // on player move
     client.on('move', (move) => {
-        client.broadcast.emit('move', move)
+        client.broadcast.to(client.data.game_id).emit('move', move)
     })
 
+    // on player disconnect
     client.on('disconnect', () => {
         console.log('A user has disconnected.');
     })

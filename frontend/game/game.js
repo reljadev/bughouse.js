@@ -1,12 +1,30 @@
-var board = null
-// NOTE: fen and sparePieces variables are included at renderization time (runtime)
+// retrieve data
+// NOTE: data variable is included at renderization time (runtime)
+let game_id = data.id
+console.log(game_id) //TODO: this should be displayed on page
+let fen = data.state.fen
+let sparePieces = data.state.sparePieces
+
+// initialize chess
 var game = new Chess(fen, deepCopy(sparePieces)) //TODO: won't this cause name conflict with chess and app?
 var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
 
-// io is imported in game.ejs
-const socket = io();
+// initialize chessboard
+var config = {
+  draggable: true,
+  position: 'start', //TODO: should start chess and chessboard with same fen
+  onDragStart: onDragStart,
+  onDrop: onDrop,
+  onSnapEnd: onSnapEnd,
+  sparePieces: deepCopy(sparePieces)
+}
+var board = Chessboard('myBoard', config)
+
+// connect to server
+// NOTE: io is imported in game.ejs
+const socket = io('localhost:3000', { query: "gameId=" + game_id })
 socket.on('move', (move) => { //TODO: this function shares code with onDrop
   game.move(move)
   if(move.from === 'offboard') {
@@ -16,6 +34,7 @@ socket.on('move', (move) => { //TODO: this function shares code with onDrop
   }
   board.move(moveStr) //TODO: why can it work without this as well, but with delay??
   updateStatus()
+  // sanity check
   setTimeout(() => {console.log(game.ascii() + '\n')}, 200)
   setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
 })
@@ -107,16 +126,5 @@ function updateStatus () {
   $fen.html(game.fen())
   $pgn.html(game.pgn())
 }
-
-var config = {
-  draggable: true,
-  position: 'start', //TODO: should start chess and chessboard with same fen
-  onDragStart: onDragStart,
-  onDrop: onDrop,
-  onSnapEnd: onSnapEnd,
-  sparePieces: deepCopy(sparePieces)
-}
-
-board = Chessboard('myBoard', config)
 
 updateStatus()

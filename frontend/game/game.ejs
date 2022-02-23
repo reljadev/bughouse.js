@@ -34,9 +34,8 @@
 
         <!-- get data from server -->
         <script type="text/javascript">
-            let fen = '<%-fen%>'
-            let sparePieces = '<%-JSON.stringify(sparePieces)%>'
-            sparePieces = JSON.parse(sparePieces) // TODO: Why do I need to stringify sparePieces?
+            let data = '<%-JSON.stringify(data)%>'
+            data = JSON.parse(data)
         </script>
         <!-- import socket lib -->
         <script src="/socket.io/socket.io.js"></script>
