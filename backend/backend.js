@@ -26,6 +26,7 @@ const server = http.createServer(function (request, response) {
             // TODO: retrieve game information
             // this info should be vetted because it's coming form client side (fen & sparePieces)
             // and user can temper with it, i.e. insert executable code
+            currentGame = games[gameId]
             
         // start new game
         } else {
@@ -33,6 +34,8 @@ const server = http.createServer(function (request, response) {
             currentGame = start_new_game()
         }
     }
+
+    //TODO: gameId should be sent to client ! ! !
 
     // infer correct content type 
     var contentType = utils.ext_to_type(filePath)
@@ -98,6 +101,10 @@ let io = socket(server);
 
 io.on('connection', (client) => {
     console.log('A user just connected.');
+
+    client.on('move', (move) => {
+        client.broadcast.emit('move', move)
+    })
 
     client.on('disconnect', () => {
         console.log('A user has disconnected.');

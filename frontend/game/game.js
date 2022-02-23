@@ -5,6 +5,21 @@ var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
 
+// io is imported in game.ejs
+const socket = io();
+socket.on('move', (move) => { //TODO: this function shares code with onDrop
+  game.move(move)
+  if(move.from === 'offboard') {
+    var moveStr = (move.color + move.piece.toUpperCase()) + '-' + move.to
+  } else {
+    var moveStr = move.from + '-' + move.to
+  }
+  board.move(moveStr) //TODO: why can it work without this as well, but with delay??
+  updateStatus()
+  setTimeout(() => {console.log(game.ascii() + '\n')}, 200)
+  setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
+})
+
 function deepCopy(obj) {
     var copy = {}
 
@@ -23,6 +38,7 @@ function onDragStart (source, piece, position, orientation) {
   // do not pick up pieces if the game is over
   if (game.game_over()) return false
 
+  // TODO: only pick up your pieces, when it's your turn to move
   // only pick up pieces for the side to move
   if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
       (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
@@ -44,9 +60,13 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
   // illegal move
   if (move === null) return 'snapback'
 
+  // send move to server
+  socket.emit('move', move)
+
   updateStatus()
   // sanity check
   setTimeout(() => {console.log(game.ascii() + '\n')}, 200)
+  setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
 }
 
 // update the board position after the piece snap

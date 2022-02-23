@@ -22,6 +22,8 @@
   var RUN_ASSERTS = false
   var START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
   var START_POSITION = fenToObj(START_FEN)
+  var PIECES = ['wP', 'wN', 'wB', 'wR', 'wQ',
+                'bP', 'bN', 'bB', 'bR', 'bQ']
   var DEFAULT_SPARE_PIECES = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
                               'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}}
   var sparePiecesToSquares = {'P': 2, 'N': 3, 'B': 4, 'R': 5, 'Q': 6}
@@ -195,7 +197,8 @@
     var squares = move.split('-')
     if (squares.length !== 2) return false
 
-    return validSquare(squares[0]) && validSquare(squares[1])
+    return (validSquare(squares[0]) || PIECES.includes(squares[0])) 
+            && validSquare(squares[1])
   }
 
   function validSquare (square) {
@@ -497,25 +500,6 @@
     }
 
     return surroundingSquares
-  }
-
-  // given a position and a set of moves, return a new position
-  // with the moves executed
-  function calculatePositionFromMoves (position, moves) {
-    var newPosition = deepCopy(position)
-
-    for (var i in moves) {
-      if (!moves.hasOwnProperty(i)) continue
-
-      // skip the move if the position doesn't have a piece on the source square
-      if (!newPosition.hasOwnProperty(i)) continue
-
-      var piece = newPosition[i]
-      delete newPosition[i]
-      newPosition[moves[i]] = piece
-    }
-
-    return newPosition
   }
 
   // TODO: add some asserts here for calculatePositionFromMoves
@@ -1129,6 +1113,43 @@
       return animations
     }
 
+    ///////////////////////////////////////////////////////////
+    //    TODO: this really should be placed somewhere else
+
+    // given a position and a set of moves, return a new position
+    // with the moves executed
+    function calculatePositionFromMoves (position, moves) {
+      var newPosition = deepCopy(position)
+
+      for (var i in moves) {
+        if (!moves.hasOwnProperty(i)) continue
+
+        // regular move has to have a piece on a source square
+        if (newPosition.hasOwnProperty(i)) {
+          var piece = newPosition[i]
+          delete newPosition[i]
+          newPosition[moves[i]] = piece
+          
+        // else if it is a spare move
+        } else if(PIECES.includes(i)) {
+          // update spare pieces
+          var piece = i
+          var color = i.charAt(0) === 'w' ? 'white' : 'black'
+          config.sparePieces[color][piece] -= 1
+
+          // insert piece
+          newPosition[moves[i]] = piece
+
+          // update display counter of spare piece
+          var counter = config.sparePieces[color][piece]
+          updateSparePieceDisplay(piece, counter)
+        }
+
+      }
+
+      return newPosition
+    }
+
     // -------------------------------------------------------------------------
     // Control Flow
     // -------------------------------------------------------------------------
@@ -1162,6 +1183,30 @@
       // redraw them
       buildSparePiecesHTML('black')
       buildSparePiecesHTML('white')
+    }
+
+    function updateSparePieceDisplay(piece, counter) { //TODO: move this somewhere
+      var color = piece.charAt(0) === 'w' ? 'white' : 'black'
+      var i = sparePiecesToSquares[piece.charAt(1)]
+
+      // hide spare piece
+      if(counter === 0) {
+        $('#' + spareSquareElsIds[color+i])
+          .find('.' + CSS.piece)
+          .css('display', 'none')
+
+      // hide display counter
+      } else if(counter === 1) {
+        $('#' + spareSquareElsIds[color+i])
+          .find('.' + CSS.display_count)
+          .css('display', 'none')
+
+      // decrement display counter
+      } else {
+        $('#' + spareSquareElsIds[color+i])
+          .find('.' + CSS.display_count)
+          .text(counter)
+      }
     }
 
     function setCurrentPosition (position) {
@@ -1356,28 +1401,10 @@
 
       // spare piece
       } else {
-        var color = draggedPiece.charAt(0) === 'w' ? 'white' : 'black'
-        var i = sparePiecesToSquares[draggedPiece.charAt(1)]
-        var displayCounter = config.sparePieces[color][draggedPiece]
-
-        // hide spare piece
-        if(displayCounter === 1) {
-          $('#' + spareSquareElsIds[color+i])
-            .find('.' + CSS.piece)
-            .css('display', 'none')
-
-        // hide display counter
-        } else if(displayCounter === 2){
-          $('#' + spareSquareElsIds[color+i])
-            .find('.' + CSS.display_count)
-            .css('display', 'none')
-
-        // decrement display counter
-        } else {
-          $('#' + spareSquareElsIds[color+i])
-            .find('.' + CSS.display_count)
-            .text(displayCounter - 1)
-        }
+        var color = piece.charAt(0) === 'w' ? 'white' : 'black'
+        var i = sparePiecesToSquares[piece.charAt(1)]
+        var displayCounter = config.sparePieces[color][piece]
+        updateSparePieceDisplay(draggedPiece, displayCounter - 1)
       }
     }
 
@@ -1442,8 +1469,6 @@
         if (draggedPieceSource === 'offboard' && validSquare(location)) {
           // add the piece to the board
           newPosition[location] = draggedPiece
-          // decrease counter of spare pieces
-          var color = draggedPiece.charAt(0) === 'w' ? 'white' : 'black'
         }
 
         // source piece was on the board and position is off the board
@@ -1575,6 +1600,46 @@
       }
 
       error(5482, 'Invalid value passed to the orientation method.', arg)
+    }
+
+    //TODO: remove this
+    widget.ascii = function () {
+      var s = ''
+  
+      s += '   +------------------------+\n'
+      for (var i = 8; i >= 1; i--) { //row
+        for(var j = 1; j<=8; j++) { //column
+          // get column && row
+          var column = 'abcdefgh'[j-1]
+          var row = i
+
+          /* display the rank */
+          if (j === 1) {
+            s += ' ' + row + ' |'
+          }
+
+          // get piece from position
+          var piece = currentPosition[column+row]
+
+          /* empty piece */
+          if (piece === undefined) {
+            s += ' . '
+          } else {
+          	var color = piece.charAt(0)
+            var p = piece.charAt(1)
+            var symbol = color === 'w' ? p.toUpperCase() : p.toLowerCase()
+            s += ' ' + symbol + ' '
+          }
+    
+          if (j === 8) {
+            s += '|\n'
+          }
+        }
+      }
+      s += '   +------------------------+\n'
+      s += '     a  b  c  d  e  f  g  h\n'
+  
+      return s
     }
 
     widget.position = function (position, useAnimation) {

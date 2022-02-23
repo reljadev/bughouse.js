@@ -38,6 +38,8 @@
             let sparePieces = '<%-JSON.stringify(sparePieces)%>'
             sparePieces = JSON.parse(sparePieces) // TODO: Why do I need to stringify sparePieces?
         </script>
+        <!-- import socket lib -->
+        <script src="/socket.io/socket.io.js"></script>
         <!-- import game logic -->
         <script src="game.js"></script>
     </body>
