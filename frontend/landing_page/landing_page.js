@@ -2,13 +2,28 @@ var $ = window['jQuery']
 
 // set default username
 var $username = $('#username_input')
-var min = 1000
-var max = 10000
-var username = 'Guest' + getRandomInt(min, max) // TODO: should be randomly generated
-$username.attr("placeholder", username) 
+var username = setRandomUsername($username)
 
 // start new game
 $('#start_button').click(() => {startGame()})
+// join game
+$('#join_button').click(() => {joinGame()})
+
+function setRandomUsername($username) {
+    var min = 1000
+    var max = 10000
+    var username = 'guest' + getRandomInt(min, max)
+    $username.attr("placeholder", username) 
+    
+    return username
+}
+
+function getRandomInt(min, max) {
+    //The maximum is exclusive and the minimum is inclusive
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min);
+}
 
 function startGame() {
     username = $username.val() === '' ? username : $username.val()
@@ -17,9 +32,20 @@ function startGame() {
     window.location.replace(url)
 }
 
-function getRandomInt(min, max) {
-    //The maximum is exclusive and the minimum is inclusive
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min) + min);
+function joinGame() {
+    $('#gameId_input').css('display', 'block')
+    $go_button = $('#go_button')
+    $go_button.css('display', 'block')
+    // go game
+    $go_button.click(() => {goGame()}) //TODO: needs to be changed
+}
+
+function goGame() {
+    username = $username.val() === '' ? username : $username.val()
+    var game_id = $('#gameId_input').val()
+    var url = window.location.href + 'game.ejs?'
+    url += 'username=' + username
+    url += '&'
+    url += 'gameId=' + game_id
+    window.location.replace(url)
 }
