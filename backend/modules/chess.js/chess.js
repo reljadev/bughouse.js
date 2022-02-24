@@ -2132,3 +2132,5 @@ if (typeof define !== 'undefined')
   define(function () {
     return Chess
   })
+// if using node
+if(typeof module !== 'undefined') module.exports = Chess

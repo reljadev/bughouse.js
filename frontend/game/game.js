@@ -14,7 +14,7 @@ var $pgn = $('#pgn')
 // initialize chessboard
 var config = {
   draggable: true,
-  position: 'start', //TODO: should start chess and chessboard with same fen
+  position: fen,
   onDragStart: onDragStart,
   onDrop: onDrop,
   onSnapEnd: onSnapEnd,

@@ -3,6 +3,7 @@ const http = require('http')
 const socket = require('socket.io')
 const fs = require('fs')
 const utils = require('./utils')
+const Chess = require('./modules/chess.js/chess.js')
 
 // CONSTANTS
 const PORT = 3000
@@ -58,7 +59,7 @@ const server = http.createServer(function (request, response) {
             response.writeHead(200, { 'Content-Type': contentType });
             // renderize page
             if(fileName === 'game.ejs') {
-                var renderizedPage = ejs.render(content, {data: currentGame});
+                var renderizedPage = ejs.render(content, {data: currentGame.info});
                 response.end(renderizedPage, 'utf-8'); // nor here
             // plain html, js or css
             } else {
@@ -81,16 +82,40 @@ function uuid () {
 
 function start_new_game() {
     var game_id = uuid()
+    //TODO: fen, sparePieces and time should be set up by game creator
+    var fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+    var sparePieces = {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
+                       'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}}
+    // initialize game server side
+    var game = new Chess(fen, sparePieces)
     //TODO: this should really be a prototype
-    var new_game = {id: game_id,
-                    playing: false,
-                    state: {fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-                            sparePieces: {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
-                                          'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}}},
-                    players: []}
+    var new_game = {game: game,
+                    players: [],
+                    info: {id: game_id,
+                           playing: false,
+                           state: {fen: game.fen(),
+                                   sparePieces: game.sparePieces()},
+                           usernames: [],
+                           }
+                    }
     games[game_id] = new_game
 
     return new_game
+}
+
+function updateGame(game_id, move) {
+    var game = games[game_id]
+    // update game
+    var executed_move = game.game.move(move)
+
+    // not a valid move
+    if(executed_move === null) return false
+
+    // valid move (update game info)
+    game.info.state.fen = game.game.fen()
+    game.info.state.sparePieces = game.game.sparePieces()
+
+    return true
 }
 
 ////////////////////////////////////////////////////
@@ -102,14 +127,24 @@ io.on('connection', (client) => {
     console.log('A user just connected.');
 
     // join game
-    var game_id = client.request._query['gameId'] //TODO: check if valid id
-    client.join(game_id)
-    client.data.game_id = game_id
-    //games[game_id]['players'].unshift(client)
+    var game_id = client.request._query['gameId']
+    if(game_id !== 'undefined' && games.hasOwnProperty(game_id)) {
+        client.join(game_id)
+        client.data.game_id = game_id
+        games[game_id].players.unshift(client)
+        //TODO: add username as well
+    } else {
+        //TODO: user should be redirected to landing page
+    }
 
     // on player move
     client.on('move', (move) => {
-        client.broadcast.to(client.data.game_id).emit('move', move)
+        var updated = updateGame(client.data.game_id, move)
+        if(updated) {
+            client.broadcast.to(client.data.game_id).emit('move', move)
+        } else {
+            client.emit('invalid_move') //TODO: figure out if this is needed for premove
+        }
     })
 
     // on player disconnect
