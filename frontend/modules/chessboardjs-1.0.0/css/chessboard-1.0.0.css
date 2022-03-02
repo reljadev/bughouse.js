@@ -23,12 +23,23 @@
 }
 
 .spare-pieces-7492f {
+  display: inline-block;
   border-left: 2px solid transparent;
 }
 
 .spare_square-871g9 {
   display: inline-block;
   position: relative;
+}
+
+.username_top-007jb {
+  display: inline-block;
+  color: yellow;
+}
+
+.username_bottom-987lp {
+  display: inline-block;
+  color: yellow;
 }
 
 .display_count-7654a {

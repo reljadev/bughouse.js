@@ -32,7 +32,8 @@ const server = http.createServer(function (request, response) {
         // start new game
         } else {
             // set current game
-            currentGame = start_new_game()
+            var admin = params.username
+            currentGame = start_new_game(admin)
         }
     }
 
@@ -80,7 +81,7 @@ function uuid () {
     })
 }
 
-function start_new_game() {
+function start_new_game(admin) {
     var game_id = uuid()
     //TODO: fen, sparePieces and time should be set up by game creator
     var fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
@@ -95,6 +96,7 @@ function start_new_game() {
                            playing: false,
                            state: {fen: game.fen(),
                                    sparePieces: game.sparePieces()},
+                           admin: admin,
                            usernames: [],
                            }
                     }

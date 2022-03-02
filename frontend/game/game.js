@@ -2,6 +2,7 @@
 // NOTE: data variable is included at renderization time (runtime)
 let game_id = data.id
 console.log(game_id) //TODO: this should be displayed on page
+let admin = data.admin
 let fen = data.state.fen
 let sparePieces = data.state.sparePieces
 
@@ -18,7 +19,8 @@ var config = {
   onDragStart: onDragStart,
   onDrop: onDrop,
   onSnapEnd: onSnapEnd,
-  sparePieces: deepCopy(sparePieces)
+  sparePieces: deepCopy(sparePieces),
+  admin: admin,
 }
 var board = Chessboard('myBoard', config)
 

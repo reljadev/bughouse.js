@@ -26,7 +26,7 @@
                 'bP', 'bN', 'bB', 'bR', 'bQ']
   var DEFAULT_SPARE_PIECES = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
                               'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}}
-  var sparePiecesToSquares = {'P': 2, 'N': 3, 'B': 4, 'R': 5, 'Q': 6}
+  var sparePiecesToSquares = {'P': 0, 'N': 1, 'B': 2, 'R': 3, 'Q': 4}
   // NOTE: path for importing this lib
   let MODULE_PATH = './modules/chessboardjs-1.0.0/';
   let RELATIVE_PATH = HOST_PATH + MODULE_PATH;
@@ -46,6 +46,10 @@
   CSS['black'] = 'black-3c85d'
   CSS['board'] = 'board-b72b1'
   CSS['chessboard'] = 'chessboard-63f37'
+  CSS['board_top'] = 'board_top-450qr'
+  CSS['board_bottom'] = 'board_bottom-fp13q'
+  CSS['username_top'] = 'username_top-007jb'
+  CSS['username_bottom'] = 'username_bottom-987lp'
   CSS['clearfix'] = 'clearfix-7da63'
   CSS['highlight1'] = 'highlight1-32417'
   CSS['highlight2'] = 'highlight2-9c5d2'
@@ -511,12 +515,26 @@
   function buildContainerHTML () {
     var html = '<div class="{chessboard}">'
 
+    // top of the board
+    html += '<div class="{board_top}">'
+    // username
+    html += '<text class={username_top}></text>'
     // spare pieces on top
     html += '<div class="{sparePieces} {sparePiecesTop}"></div>'
+    // close top board div
+    html += '</div>'
+
     // chessboard
     html += '<div class="{board}"></div>'
+
+    // bottom of the board
+    html += '<div class="{board_bottom}">'
+    // username
+    html += '<text class={username_bottom}></text>'
     // spare pieces on bottom
     html += '<div class="{sparePieces} {sparePiecesBottom}"></div>'
+    // close bottom board div
+    html += '</div>'
 
     html += '</div>'
 
@@ -647,6 +665,8 @@
     // DOM elements
     var $board = null
     var $draggedPiece = null
+    var $username_top = null
+    var $username_bottom = null
     var $sparePiecesTop = null
     var $sparePiecesBottom = null
 
@@ -773,7 +793,7 @@
       // spare squares
       var colors = ['white', 'black']
       for(var idx in colors) {
-        for(var i=0; i<8; i++) {
+        for(var i=0; i<6; i++) {
           spareSquareElsIds[colors[idx]+i] = colors[idx]+i + '-' + uuid()
         }
       }
@@ -851,7 +871,7 @@
 
       for(var color in sp) {
         var html = '<div class="{row}" style="height:' + squareSize + 'px;">'
-        for (var i = 0; i < 8; i++) {
+        for (var i = 0; i < 6; i++) {
           html += '<div class="{spare_square}" ' + ' ' +
               'style="width:' + squareSize + 'px;height:' + squareSize + 'px;" ' +
               'id="' + spareSquareElsIds[color+i] + '"></div>'
@@ -1169,6 +1189,11 @@
     function drawBoard () {
       $board.html(buildBoardHTML(currentOrientation, squareSize, config.showNotation))
       drawPositionInstant()
+    }
+
+    function drawUsernames() {
+      // TODO: implement
+      $username_bottom.text(config.admin)
     }
 
     function drawSpares() {
@@ -1694,9 +1719,13 @@
       // set board width
       $board.css('width', squareSize * 8 + 'px')
 
-      // spare pieces
-      $sparePiecesTop.css('width', squareSize * 8 + 'px')
-      $sparePiecesBottom.css('width', squareSize * 8 + 'px')
+      // usernames width
+      $username_top.css('width', squareSize * 2 + 'px')
+      $username_bottom.css('width', squareSize * 2 + 'px')
+
+      // spare pieces width
+      $sparePiecesTop.css('width', squareSize * 6 + 'px')
+      $sparePiecesBottom.css('width', squareSize * 6 + 'px')
 
       // set drag piece size
       $draggedPiece.css({
@@ -1704,6 +1733,8 @@
         width: squareSize
       })
 
+      // redraw usernames
+      drawUsernames()
       // redraw the board & pieces
       drawBoard()
       drawSpares()
@@ -1901,6 +1932,10 @@
       // build board and save it in memory
       $container.html(buildContainerHTML())
       $board = $container.find('.' + CSS.board)
+
+      // usernames
+      $username_top = $container.find('.' + CSS.username_top)
+      $username_bottom = $container.find('.' + CSS.username_bottom)
 
       // spare pieces
       $sparePiecesTop = $container.find('.' + CSS.sparePiecesTop)
