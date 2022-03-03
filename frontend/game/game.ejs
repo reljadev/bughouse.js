@@ -19,26 +19,30 @@
         <link rel="stylesheet" href="../modules/chessboardjs-1.0.0/css/chessboard-1.0.0.css"> <!-- TODO: Change this to min later -->
         <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
         <script src="../modules/chessboardjs-1.0.0/js/chessboard-1.0.0.js"></script> <!-- TODO: Change this to min later -->
+        <script src="./sidebar.js"></script>
 
     </head>
 
     <body>
-        <!-- define chessboard element -->
-        <div id="myBoard" style="width: 400px"></div>
-        <label>Status:</label>
-        <div id="status"></div>
-        <label>FEN:</label>
-        <div id="fen"></div>
-        <label>PGN:</label>
-        <div id="pgn"></div>
+        <!-- Side navigation -->
+        <div class="sidebar" id="mySidebar"> <!--TODO: add title to sidebar -->
+            <h4>players</h4>
+        </div>
 
-        <!-- define players sidebar -->
-        <!-- <div id="player_sidebar" class="sidebar">
-            <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-          </div> -->
+        <div class="main">
+            <!-- define chessboard element -->
+            <div id="myBoard" style="width: 400px"></div>
+            <label>Status:</label>
+            <div id="status"></div>
+            <label>FEN:</label>
+            <div id="fen"></div>
+            <label>PGN:</label>
+            <div id="pgn"></div>
+        </div>
 
         <!-- get data from server -->
         <script type="text/javascript">
+            let username = '<%-username%>'
             let data = '<%-JSON.stringify(data)%>'
             data = JSON.parse(data)
         </script>

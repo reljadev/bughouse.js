@@ -12,10 +12,11 @@ function parse_url(request) {
     // convert request url to file path
     var folder_name = parser.pathname.substring(0, parser.pathname.indexOf('.'))
     if(folder_name === '') {
-        // var filePath = DIRPATH + '/game/game.html'
         var filePath = DIRPATH + DEFAULT_PAGE
     } else if(folder_name === '/game' || folder_name === '/landing_page') {
         var filePath = DIRPATH + folder_name + parser.pathname
+    } else if(folder_name === '/sidebar') {
+        var filePath = DIRPATH + '/game/sidebar.js'
     } else {
         var filePath = DIRPATH + parser.pathname
     }
@@ -35,5 +36,15 @@ function ext_to_type(filePath) {
     return ext_to_type[extname]
 }
 
+function remove_item(arr, value) {
+    var index = arr.indexOf(value);
+    if (index > -1) {
+      arr.splice(index, 1);
+    }
+    return arr;
+}
+
 // export all functions
-module.exports = {parse_url: parse_url, ext_to_type: ext_to_type}
+module.exports = {parse_url: parse_url, 
+                  ext_to_type: ext_to_type,
+                  remove_item: remove_item,}

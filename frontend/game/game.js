@@ -3,6 +3,7 @@
 let game_id = data.id
 console.log(game_id) //TODO: this should be displayed on page
 let admin = data.admin
+let players = data.usernames
 let fen = data.state.fen
 let sparePieces = data.state.sparePieces
 
@@ -24,9 +25,17 @@ var config = {
 }
 var board = Chessboard('myBoard', config)
 
+// initialize sidebar
+var sidebar = Sidebar('mySidebar')
+
+//////////////// socket io ///////////////////////
+
 // connect to server
 // NOTE: io is imported in game.ejs
-const socket = io('localhost:3000', { query: "gameId=" + game_id })
+const socket = io('localhost:3000', 
+                  { query: "gameId=" + game_id + "&username=" + username})
+
+// opponent moved
 socket.on('move', (move) => { //TODO: this function shares code with onDrop
   game.move(move)
   if(move.from === 'offboard') {
@@ -40,6 +49,19 @@ socket.on('move', (move) => { //TODO: this function shares code with onDrop
   setTimeout(() => {console.log(game.ascii() + '\n')}, 200)
   setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
 })
+
+// some player joined
+socket.on('joined', (username) => {
+  sidebar.addPlayer(username)
+})
+
+// some player disconnected
+// TODO: but what if he is playing??
+socket.on('disconnected', (username) => {
+  sidebar.removePlayer(username)
+})
+
+/////////////////////////////////////////////////
 
 function deepCopy(obj) {
     var copy = {}

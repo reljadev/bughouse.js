@@ -39,6 +39,7 @@ const server = http.createServer(function (request, response) {
 
     // infer correct content type 
     var contentType = utils.ext_to_type(filePath)
+    //NOTE: undefined is actually window.undefined which can actually be defined, in that case, this would break!
     var encoding = contentType === 'image/png' ? undefined : 'utf-8'
 
     // read file & send it to client
@@ -60,7 +61,7 @@ const server = http.createServer(function (request, response) {
             response.writeHead(200, { 'Content-Type': contentType });
             // renderize page
             if(fileName === 'game.ejs') {
-                var renderizedPage = ejs.render(content, {data: currentGame.info});
+                var renderizedPage = ejs.render(content, {username: params.username, data: currentGame.info});
                 response.end(renderizedPage, 'utf-8'); // nor here
             // plain html, js or css
             } else {
@@ -130,11 +131,16 @@ io.on('connection', (client) => {
 
     // join game
     var game_id = client.request._query['gameId']
-    if(game_id !== 'undefined' && games.hasOwnProperty(game_id)) {
+    var username = client.request._query['username']
+    if((typeof game_id !== 'undefined' && games.hasOwnProperty(game_id)) &&
+       (typeof username !== 'undefined')) {
         client.join(game_id)
         client.data.game_id = game_id
         games[game_id].players.unshift(client)
-        //TODO: add username as well
+
+        client.data.username = username
+        games[game_id].info.usernames.unshift(username)
+        client.broadcast.to(game_id).emit('joined', username)
     } else {
         //TODO: user should be redirected to landing page
     }
@@ -152,6 +158,13 @@ io.on('connection', (client) => {
     // on player disconnect
     client.on('disconnect', () => {
         console.log('A user has disconnected.');
+        var game_id = client.data.game_id
+        var username = client.data.username
+        if(typeof games[game_id] !== 'undefined') {
+            client.broadcast.to(game_id).emit('disconnected', username)
+            utils.remove_item(games[game_id].players, client)
+            utils.remove_item(games[game_id].info.usernames, username)
+        }
     })
 });
 
