@@ -33,13 +33,39 @@
 }
 
 .username_top-007jb {
-  display: inline-block;
-  color: yellow;
+  display:inline-block;
+  background-color:#eaeaea;
+  color: black;
+  border-radius:4px;
+  position: relative;
+  padding:6px;
+  /* padding-right: 5px; */
+  font-size:12px;
+  /* cursor:pointer; */
+  margin:4px;
+  pointer-events: none;
+}
+
+.username_top-007jb::after {
+  content: 'X';
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  pointer-events: all;
 }
 
 .username_bottom-987lp {
-  display: inline-block;
-  color: yellow;
+  display:inline-block;
+  background-color:#eaeaea;
+  color: black;
+  border-radius:4px;
+  position: relative;
+  padding:6px;
+  /* padding-right: 5px; */
+  font-size:12px;
+  /* cursor:pointer; */
+  margin:4px;
 }
 
 .display_count-7654a {

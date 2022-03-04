@@ -3,7 +3,7 @@
     const DRAG_THROTTLE_RATE = 20
 
     //TODO: this should def be changed! no passing updateUsername
-    function constructor (element, updateUsername) {
+    function constructor (element, $username_top) {
         var $sidebar = $('#' + element)
         var players = {}
 
@@ -19,6 +19,8 @@
         // piece drag
         $(window).on('mousemove', mousemoveWindow) //TODO: can you even call two functions on mouse move?
                  .on('mouseup', mouseUp)
+
+        $username_top.on('click', removeOpponent)
 
         var dragging = false
         function mouseDown(evt) {
@@ -39,22 +41,6 @@
             dragging = true
         }
 
-        function mouseUp(evt) {
-            if(dragging) {
-                var username = $draggedPlayer.text()
-                var $player = players[username]
-                // hide dragged player
-                $draggedPlayer.css('display', 'none')
-
-                if(updateUsername(evt.pageX, evt.pageY, username)) {
-                    $player.remove()
-                } else {
-                    $player.css('display', '')
-                }
-                dragging = false
-            }
-        }
-
         function mousemoveWindow(evt) {
             if (dragging) {
                 $draggedPlayer.css({
@@ -63,6 +49,43 @@
                   })
             }
         }
+
+        function mouseUp(evt) {
+            if(dragging) {
+                var username = $draggedPlayer.text()
+                var $player = players[username]
+                // hide dragged player
+                $draggedPlayer.css('display', 'none')
+
+                if(updateOpponent(evt.pageX, evt.pageY, username)) {
+                    $player.remove()
+                } else {
+                    $player.css('display', '')
+                }
+                dragging = false
+            }
+        }
+
+        function updateOpponent(x, y, username) {
+            var user_left = $username_top.offset().left
+            var user_width = $username_top.width()
+            var user_top = $username_top.offset().top
+      
+            if((x >= user_left && x <= user_left + user_width) && 
+                y <= user_top && y >= user_top - 40) { //TODO: shouldn't be hardcoded
+                  $username_top.text(username)
+                  return true
+            }
+            return false
+        }
+
+        function removeOpponent(evt) {
+            var username = $username_top.text()
+            if(username !== '') {
+                addPlayer(username)
+                $username_top.text('')
+            }
+        } 
 
         // throttle mouse movement
         // var throttledMousemoveWindow = throttle(mousemoveWindow, DRAG_THROTTLE_RATE)
@@ -98,13 +121,18 @@
         //     }
         // }
 
+        ///////////////////// MISC UTIL /////////////////////
+        function addPlayer(username) {
+            var $new_player = $('<div class="player">' + username + '</div>')
+            players[username] = $new_player //TODO: keeping all of these references might be two expensive
+            $sidebar.append($new_player)
+        }
+
         ///////////////////// PUBLIC API /////////////////////
         var widget = {}
 
         widget.addPlayer = function(username) {
-            var $new_player = $('<div class="player">' + username + '</div>')
-            players[username] = $new_player //TODO: keeping all of these references might be two expensive
-            $sidebar.append($new_player)
+            addPlayer(username)
         }
 
         widget.removePlayer = function(username) {
