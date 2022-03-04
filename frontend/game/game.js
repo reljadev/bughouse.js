@@ -26,7 +26,7 @@ var config = {
 var board = Chessboard('myBoard', config)
 
 // initialize sidebar
-var sidebar = Sidebar('mySidebar')
+var sidebar = Sidebar('mySidebar', board.updateOpponent)
 
 //////////////// socket io ///////////////////////
 

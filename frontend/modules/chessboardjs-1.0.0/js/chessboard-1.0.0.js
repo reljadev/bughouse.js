@@ -1539,6 +1539,20 @@
     // Public Methods
     // -------------------------------------------------------------------------
 
+    // TODO: remove this
+    widget.updateOpponent = function(x, y, username) {
+      var user_left = $username_top.offset().left
+      var user_width = $username_top.width()
+      var user_top = $username_top.offset().top
+
+      if((x >= user_left && x <= user_left + user_width) && 
+          y <= user_top && y >= user_top - 40) { //TODO: shouldn't be hardcoded
+            $username_top.text(username)
+            return true
+      }
+      return false
+    }
+
     // clear the board
     widget.clear = function (useAnimation) {
       widget.position({}, useAnimation)
