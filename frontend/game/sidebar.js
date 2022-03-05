@@ -3,9 +3,13 @@
     const DRAG_THROTTLE_RATE = 20
 
     //TODO: this should def be changed! no passing updateUsername
-    function constructor (element, $username_top) {
+    function constructor (element, admin, myUsername, $username_top, opponentJoined, opponentRemoved) {
+
+        ///////////////////// INITIALIZATION /////////////////////
+
         var $sidebar = $('#' + element)
         var players = {}
+        addPlayer(myUsername)
 
         ///////////////////// MOVING PLAYERS /////////////////////
         
@@ -24,8 +28,17 @@
 
         var dragging = false
         function mouseDown(evt) {
-            // hide player
+            // only admin can place opponents
+            if(myUsername !== admin) {
+                return
+            }
+            
             var $player = $(this)
+            // you can't manipulate admin
+            if($player.text() === admin) {
+                return
+            }
+            // hide player
             $player.css('display', 'none')
 
             // create draggable player
@@ -42,6 +55,10 @@
         }
 
         function mousemoveWindow(evt) {
+            // only admin can place opponents
+            if(myUsername !== admin) {
+                return
+            }
             if (dragging) {
                 $draggedPlayer.css({
                     left: evt.pageX,
@@ -51,6 +68,10 @@
         }
 
         function mouseUp(evt) {
+            // only admin can place opponents
+            if(myUsername !== admin) {
+                return
+            }
             if(dragging) {
                 var username = $draggedPlayer.text()
                 var $player = players[username]
@@ -59,6 +80,7 @@
 
                 if(updateOpponent(evt.pageX, evt.pageY, username)) {
                     $player.remove()
+                    opponentJoined(username)
                 } else {
                     $player.css('display', '')
                 }
@@ -73,17 +95,25 @@
       
             if((x >= user_left && x <= user_left + user_width) && 
                 y <= user_top && y >= user_top - 40) { //TODO: shouldn't be hardcoded
-                  $username_top.text(username)
-                  return true
+                    if($username_top.text() === '') {
+                        $username_top.text(username)
+                        return true
+                    }
             }
             return false
         }
 
         function removeOpponent(evt) {
+            // TODO: x shouldn't even be present there
+            // only admin can remove opponents
+            if(myUsername !== admin) {
+                return
+            }
             var username = $username_top.text()
             if(username !== '') {
                 addPlayer(username)
                 $username_top.text('')
+                opponentRemoved(username)
             }
         } 
 
@@ -124,6 +154,9 @@
         ///////////////////// MISC UTIL /////////////////////
         function addPlayer(username) {
             var $new_player = $('<div class="player">' + username + '</div>')
+            if(username === myUsername) {
+                $new_player.css('background-color', 'black')
+            }
             players[username] = $new_player //TODO: keeping all of these references might be two expensive
             $sidebar.append($new_player)
         }
@@ -131,14 +164,35 @@
         ///////////////////// PUBLIC API /////////////////////
         var widget = {}
 
-        widget.addPlayer = function(username) {
-            addPlayer(username)
+        widget.addPlayer = function(arg) {
+            if(Array.isArray(arg)) {
+                for(var i in arg) {
+                  addPlayer(arg[i])
+                }
+              } else {
+                addPlayer(arg)
+              }
         }
 
         widget.removePlayer = function(username) {
             var $player = players[username]
             if(typeof $player !== 'undefined') {
                 $player.remove()
+            }
+        }
+
+        widget.addOpponent = function(username) {
+            var $player = players[username]
+            if(typeof $player !== 'undefined') {
+                $username_top.text(username)
+                $player.remove()
+            }
+        }
+
+        widget.removeOpponent = function(username) {
+            if(username !== '') {
+                addPlayer(username)
+                $username_top.text('')
             }
         }
 

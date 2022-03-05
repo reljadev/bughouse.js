@@ -145,6 +145,16 @@ io.on('connection', (client) => {
         //TODO: user should be redirected to landing page
     }
 
+    // opponent set at chessboard
+    client.on('opponentJoined', (username) => {
+        client.broadcast.to(client.data.game_id).emit('opponentJoined', username)
+    })
+
+    // opponent removed from chessboard
+    client.on('opponentRemoved', (username) => {
+        client.broadcast.to(client.data.game_id).emit('opponentRemoved', username)
+    })
+
     // on player move
     client.on('move', (move) => {
         var updated = updateGame(client.data.game_id, move)

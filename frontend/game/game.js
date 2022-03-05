@@ -26,17 +26,19 @@ var config = {
 var board = Chessboard('myBoard', config)
 
 // initialize sidebar
-var sidebar = Sidebar('mySidebar', board.getOpponentUsername())
+var sidebar = Sidebar('mySidebar', admin, myUsername, board.getOpponentUsername(), 
+                        opponentJoined, opponentRemoved)
+sidebar.addPlayer(players)
 
 //////////////// socket io ///////////////////////
 
 // connect to server
 // NOTE: io is imported in game.ejs
-const socket = io('localhost:3000', 
-                  { query: "gameId=" + game_id + "&username=" + username})
+const server = io('localhost:3000', 
+                  { query: "gameId=" + game_id + "&username=" + myUsername})
 
 // opponent moved
-socket.on('move', (move) => { //TODO: this function shares code with onDrop
+server.on('move', (move) => { //TODO: this function shares code with onDrop
   game.move(move)
   if(move.from === 'offboard') {
     var moveStr = (move.color + move.piece.toUpperCase()) + '-' + move.to
@@ -51,17 +53,35 @@ socket.on('move', (move) => { //TODO: this function shares code with onDrop
 })
 
 // some player joined
-socket.on('joined', (username) => {
+server.on('joined', (username) => {
   sidebar.addPlayer(username)
+})
+
+// opponent added to chessboard
+server.on('opponentJoined', (username) => {
+  sidebar.addOpponent(username)
+})
+
+// removed opponent from chessboard
+server.on('opponentRemoved', (username) => {
+  sidebar.removeOpponent(username)
 })
 
 // some player disconnected
 // TODO: but what if he is playing??
-socket.on('disconnected', (username) => {
+server.on('disconnected', (username) => {
   sidebar.removePlayer(username)
 })
 
 /////////////////////////////////////////////////
+
+function opponentJoined(username) {
+  server.emit('opponentJoined', username)
+}
+
+function opponentRemoved(username) {
+  server.emit('opponentRemoved', username)
+}
 
 function deepCopy(obj) {
     var copy = {}
@@ -104,7 +124,7 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
   if (move === null) return 'snapback'
 
   // send move to server
-  socket.emit('move', move)
+  server.emit('move', move)
 
   updateStatus()
   // sanity check
