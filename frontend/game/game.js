@@ -7,6 +7,8 @@ let players = data.usernames
 let fen = data.state.fen
 let sparePieces = data.state.sparePieces
 
+//////////////// initialization ///////////////////////
+
 // initialize chess
 var game = new Chess(fen, deepCopy(sparePieces)) //TODO: won't this cause name conflict with chess and app?
 var $status = $('#status')
@@ -29,6 +31,14 @@ var board = Chessboard('myBoard', config)
 var sidebar = Sidebar('mySidebar', admin, myUsername, board.getOpponentUsername(), 
                         opponentJoined, opponentRemoved)
 sidebar.addPlayer(players)
+
+// init admin page
+if(myUsername === admin) {
+  var $start_button = $('<button id="start_game">Start</button>')
+  $('#main_page').append($start_button)
+  $start_button.attr('disabled', 'disabled')
+  $start_button.on('click', start_game)
+}
 
 //////////////// socket io ///////////////////////
 
@@ -67,13 +77,29 @@ server.on('opponentRemoved', (username) => {
   sidebar.removeOpponent(username)
 })
 
+// admin can start a game
+server.on('can_start_game', () => {
+  // this will never be sent to a client that's not an admin
+  $start_button.removeAttr('disabled')
+})
+
+// admin can't start a game
+server.on('cant_start_game', () => {
+  // this will never be sent to a client that's not an admin
+  $start_button.attr('disabled', 'disabled')
+})
+
+server.on('game_has_started', () => {
+  console.log('game has started')
+})
+
 // some player disconnected
 // TODO: but what if he is playing??
 server.on('disconnected', (username) => {
   sidebar.removePlayer(username)
 })
 
-/////////////////////////////////////////////////
+//////////////// sidebar functions ///////////////////////
 
 function opponentJoined(username) {
   server.emit('opponentJoined', username)
@@ -82,6 +108,19 @@ function opponentJoined(username) {
 function opponentRemoved(username) {
   server.emit('opponentRemoved', username)
 }
+
+//////////////// start the game ///////////////////////
+
+function start_game(evt) {
+  // hide start button
+  $start_button.css('display', 'none')
+  // disable updating opponent
+  sidebar.disableUpdatingOpponent()
+  // notify server of game started
+  server.emit('game_has_started')
+}
+
+//////////////// chessboard functions ///////////////////////
 
 function deepCopy(obj) {
     var copy = {}

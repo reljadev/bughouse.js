@@ -121,9 +121,8 @@ function updateGame(game_id, move) {
     return true
 }
 
-////////////////////////////////////////////////////
+//////////////// set up websocket /////////////////////
 
-// set up websocket
 let io = socket(server);
 
 io.on('connection', (client) => {
@@ -148,11 +147,21 @@ io.on('connection', (client) => {
     // opponent set at chessboard
     client.on('opponentJoined', (username) => {
         client.broadcast.to(client.data.game_id).emit('opponentJoined', username)
+        // this checks if all conditions for starting a game are fullfiled
+        // and if so, send a signal to start a game
+        client.emit('can_start_game')
     })
 
     // opponent removed from chessboard
     client.on('opponentRemoved', (username) => {
         client.broadcast.to(client.data.game_id).emit('opponentRemoved', username)
+        // this informs admin that it can't start a game
+        client.emit('cant_start_game')
+    })
+
+    // game has started
+    client.on('game_has_started', () => {
+        client.broadcast.to(client.data.game_id).emit('game_has_started')
     })
 
     // on player move

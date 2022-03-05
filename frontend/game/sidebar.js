@@ -1,7 +1,5 @@
 ;(function () {
 
-    const DRAG_THROTTLE_RATE = 20
-
     //TODO: this should def be changed! no passing updateUsername
     function constructor (element, admin, myUsername, $username_top, opponentJoined, opponentRemoved) {
 
@@ -26,10 +24,11 @@
 
         $username_top.on('click', removeOpponent)
 
+        var can_update_opponent = true
         var dragging = false
         function mouseDown(evt) {
-            // only admin can place opponents
-            if(myUsername !== admin) {
+            // only admin can place opponents while game hasn't started
+            if(myUsername !== admin && can_update_opponent) {
                 return
             }
             
@@ -55,8 +54,8 @@
         }
 
         function mousemoveWindow(evt) {
-            // only admin can place opponents
-            if(myUsername !== admin) {
+            // only admin can place opponents while game hasn't started
+            if(myUsername !== admin && can_update_opponent) {
                 return
             }
             if (dragging) {
@@ -68,8 +67,8 @@
         }
 
         function mouseUp(evt) {
-            // only admin can place opponents
-            if(myUsername !== admin) {
+            // only admin can place opponents while game hasn't started
+            if(myUsername !== admin && can_update_opponent) {
                 return
             }
             if(dragging) {
@@ -105,8 +104,8 @@
 
         function removeOpponent(evt) {
             // TODO: x shouldn't even be present there
-            // only admin can remove opponents
-            if(myUsername !== admin) {
+            // only admin can remove opponents while game hasn't started
+            if(myUsername !== admin || !can_update_opponent) {
                 return
             }
             var username = $username_top.text()
@@ -118,6 +117,7 @@
         } 
 
         // throttle mouse movement
+        // const DRAG_THROTTLE_RATE = 20
         // var throttledMousemoveWindow = throttle(mousemoveWindow, DRAG_THROTTLE_RATE)
 
         // function throttle (f, interval, scope) {
@@ -194,6 +194,10 @@
                 addPlayer(username)
                 $username_top.text('')
             }
+        }
+
+        widget.disableUpdatingOpponent = function() {
+            can_update_opponent = false
         }
 
         return widget
