@@ -92,11 +92,12 @@ function start_new_game(admin) {
     var game = new Chess(fen, sparePieces)
     //TODO: this should really be a prototype
     var new_game = {game: game,
-                    players: [],
+                    players: [], //TODO: this is probably not needed
                     info: {id: game_id,
                            playing: false,
                            state: {fen: game.fen(),
-                                   sparePieces: game.sparePieces()},
+                                   sparePieces: game.sparePieces(),
+                                   pgn: ''},
                            white_player: null,
                            black_player: null,
                            admin: admin,
@@ -119,6 +120,7 @@ function updateGame(game_id, move) {
     // valid move (update game info)
     game.info.state.fen = game.game.fen()
     game.info.state.sparePieces = game.game.sparePieces()
+    game.info.state.pgn = game.game.pgn()
 
     return true
 }
@@ -195,6 +197,27 @@ io.on('connection', (client) => {
         } else {
             client.emit('invalid_move') //TODO: figure out if this is needed for premove
         }
+    })
+
+    client.on('game_is_over', () => {
+        // TODO: check if it's really over
+        games[client.data.game_id].info.playing = false
+        client.broadcast.to(client.data.game_id).emit('game_is_over')
+    })
+
+    client.on('reset_game', (fen, sparePieces) => {
+        var game_id = client.data.game_id
+        // update game
+        games[game_id].game.load(fen)
+        games[game_id].game.loadSpares(sparePieces)
+        // update game info
+        games[game_id].info.state.fen = fen
+        games[game_id].info.state.sparePieces = sparePieces
+        games[game_id].info.state.pgn = ''
+        games[game_id].info.white_player = null
+        games[game_id].info.black_player = null
+        // broadcast changes
+        client.broadcast.to(client.data.game_id).emit('reset_game', fen, sparePieces)
     })
 
     // on player disconnect

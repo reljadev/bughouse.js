@@ -221,6 +221,17 @@
             }
         }
 
+        widget.swapUsernamesAtBoard = function() {
+            var tmp = $username_bottom.text()
+            $username_bottom.text($username_top.text())
+            $username_top.text(tmp)
+        }
+
+        widget.clearBoardUsernames = function() {
+            widget.removePlayerFromBoard('top')
+            widget.removePlayerFromBoard('bottom')
+        }
+
         return widget
     }
 

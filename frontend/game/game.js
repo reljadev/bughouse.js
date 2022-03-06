@@ -9,11 +9,20 @@ let players = data.usernames
 let playing = data.playing
 let fen = data.state.fen
 let sparePieces = data.state.sparePieces
+let pgn = data.state.pgn
 
 //////////////// initialization ///////////////////////
 
 // initialize chess
-var game = new Chess(fen, deepCopy(sparePieces)) //TODO: won't this cause name conflict with chess and app?
+if(!playing) {
+  var game = new Chess(fen, deepCopy(sparePieces)) //TODO: won't this cause name conflict with chess and app?
+} else {
+  var game = new Chess(undefined, deepCopy(sparePieces))
+  console.log(game.load_pgn(pgn)) //problem is that you need sparePieces for this
+}
+// sanity check
+setTimeout(() => {console.log(game.ascii() + '\n')}, 200)
+setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
 var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
@@ -28,6 +37,11 @@ var config = {
   sparePieces: deepCopy(sparePieces),
 }
 var board = Chessboard('myBoard', config)
+
+// when player joins midgame, update status immedietely
+if(playing) {
+  updateStatus()
+}
 
 // initialize sidebar
 var sidebar = Sidebar('mySidebar', 
@@ -50,10 +64,16 @@ if(black_player !== null) {
 // init admin page
 if(myUsername === admin) {
   // start button
-  var $start_button = $('<button id="start_game">Start</button>')
+  var $start_button = $('<button id="start_game">start</button>')
   $('#main_page').append($start_button)
   $start_button.attr('disabled', 'disabled')
   $start_button.on('click', start_game)
+
+  // reset button
+  var $reset_button = $('<button id="reset_game">reset</button>')
+  $('#main_page').append($reset_button)
+  $reset_button.css('display', 'none')
+  $reset_button.on('click', reset_game)
 }
 
 function start_game(evt) {
@@ -61,8 +81,59 @@ function start_game(evt) {
   playing = true
   // hide start button
   $start_button.css('display', 'none')
+  // update board orientation
+  updateBoardOrientation()
+  // update status
+  updateStatus()
   // notify server of game started
   server.emit('game_has_started')
+}
+
+function reset_game(evt) {
+  // hide reset button
+  $reset_button.css('display', 'none')
+  // show start button
+  $start_button.css('display', '')
+  $start_button.attr('disabled', 'disabled')
+  // chess
+  game.load(fen)
+  game.loadSpares(sparePieces)
+  // board
+  resetBoard(fen, sparePieces)
+  // status
+  resetStatus()
+  // sanity check
+  setTimeout(() => {console.log(game.ascii() + '\n')}, 200)
+  setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
+  // send signal to server
+  server.emit('reset_game', fen, sparePieces)
+}
+
+function resetBoard(fen, sparePieces) {
+  board.orientation('white')
+  board.position(fen)
+  // reset spare pieces
+  board.sparePieces(sparePieces)
+  // reset usernames
+  sidebar.clearBoardUsernames()
+}
+
+function updateBoardOrientation() {
+  if((board.orientation() === 'white' && black_player === myUsername) ||
+      (board.orientation() === 'black' && white_player === myUsername)) {
+        board.flip()
+        sidebar.swapUsernamesAtBoard()
+  }
+}
+
+function gameIsOver() {
+  // update playing status
+  playing = false
+
+  if(myUsername === admin) {
+    $reset_button.css('display', '')
+  }
+  server.emit('game_is_over')
 }
 
 //////////////// socket io ///////////////////////
@@ -120,7 +191,28 @@ server.on('cant_start_game', () => {
 
 // admin initiated new game
 server.on('game_has_started', () => {
+  // update playing status
   playing = true
+  //update board orientation
+  updateBoardOrientation()
+  // update status
+  updateStatus()
+})
+
+server.on('game_is_over', () => {
+  // update playing status
+  playing = false
+  // show reset button
+  if(myUsername === admin) {
+    $reset_button.css('display', '')
+  }
+})
+
+server.on('reset_game', (fen, sparePieces) => {
+  game.load(fen)
+  game.loadSpares(sparePieces)
+  resetBoard(fen, sparePieces)
+  resetStatus()
 })
 
 // some player disconnected
@@ -179,7 +271,7 @@ function locationOfPlayer(color) {
   }
 }
 
-// sidebar uses to know whether game can be updated
+// used by sidebar
 function isPlaying() {
   return playing
 }
@@ -258,6 +350,7 @@ function updateStatus () {
   // checkmate?
   if (game.in_checkmate()) {
     status = 'Game over, ' + moveColor + ' is in checkmate.'
+    gameIsOver()
   }
 
   // draw?
@@ -280,4 +373,8 @@ function updateStatus () {
   $pgn.html(game.pgn())
 }
 
-updateStatus()
+function resetStatus() {
+  $status.html('')
+  $fen.html('')
+  $pgn.html('')
+}

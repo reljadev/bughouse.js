@@ -1534,15 +1534,6 @@
     // Public Methods
     // -------------------------------------------------------------------------
 
-    // TODO: remove this
-    widget.getTopUsername = function() {
-      return $username_top
-    }
-
-    widget.getBottomUsername = function() {
-      return $username_bottom
-    }
-
     // clear the board
     widget.clear = function (useAnimation) {
       widget.position({}, useAnimation)
@@ -1714,6 +1705,23 @@
         drawPositionInstant()
         drawSparePieces()
       }
+    }
+
+    widget.sparePieces = function(pieces) {
+      // if no argument is specified return current spare pieces
+      if(typeof pieces === 'undefined') {
+        return config.sparePieces
+      }
+      // else update spare pieces
+      config.sparePieces = pieces
+    }
+
+    widget.getTopUsername = function() {
+      return $username_top
+    }
+
+    widget.getBottomUsername = function() {
+      return $username_bottom
     }
 
     widget.resize = function () {
