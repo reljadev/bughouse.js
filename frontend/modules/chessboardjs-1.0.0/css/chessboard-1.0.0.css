@@ -68,6 +68,15 @@
   margin:4px;
 }
 
+.username_bottom-987lp::after {
+  content: 'X';
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  pointer-events: all;
+}
+
 .display_count-7654a {
   /* position it at bottom right */
   position: absolute;

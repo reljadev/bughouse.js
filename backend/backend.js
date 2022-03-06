@@ -97,6 +97,8 @@ function start_new_game(admin) {
                            playing: false,
                            state: {fen: game.fen(),
                                    sparePieces: game.sparePieces()},
+                           white_player: null,
+                           black_player: null,
                            admin: admin,
                            usernames: [],
                            }
@@ -144,23 +146,44 @@ io.on('connection', (client) => {
         //TODO: user should be redirected to landing page
     }
 
-    // opponent set at chessboard
-    client.on('opponentJoined', (username) => {
-        client.broadcast.to(client.data.game_id).emit('opponentJoined', username)
+    // player set at chessboard
+    client.on('playerJoined', (color, username) => {
+        client.broadcast.to(client.data.game_id).emit('playerJoined', color, username)
+
+        var info = games[client.data.game_id].info
+        // update players
+        if(color === 'white') {
+            info.white_player = username
+        } else {
+            info.black_player = username
+        }
+
         // this checks if all conditions for starting a game are fullfiled
-        // and if so, send a signal to start a game
-        client.emit('can_start_game')
+        if(info.white_player !== null && info.black_player !== null) {
+            client.emit('can_start_game')
+        }
     })
 
-    // opponent removed from chessboard
-    client.on('opponentRemoved', (username) => {
-        client.broadcast.to(client.data.game_id).emit('opponentRemoved', username)
+    // TODO: i don;t think you need username
+    // player removed from chessboard
+    client.on('playerRemoved', (color) => {
+        client.broadcast.to(client.data.game_id).emit('playerRemoved', color)
+
+        var info = games[client.data.game_id].info
+        // update players
+        if(color === 'white') {
+            info.white_player = null
+        } else {
+            info.black_player = null
+        }
+
         // this informs admin that it can't start a game
         client.emit('cant_start_game')
     })
 
     // game has started
     client.on('game_has_started', () => {
+        games[client.data.game_id].info.playing = true
         client.broadcast.to(client.data.game_id).emit('game_has_started')
     })
 

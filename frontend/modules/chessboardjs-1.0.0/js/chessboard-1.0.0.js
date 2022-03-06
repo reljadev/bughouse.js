@@ -1191,11 +1191,6 @@
       drawPositionInstant()
     }
 
-    function drawUsernames() {
-      // TODO: implement
-      $username_bottom.text(config.admin)
-    }
-
     function drawSpares() {
       drawSpareSquares()
       drawSparePieces()
@@ -1540,8 +1535,12 @@
     // -------------------------------------------------------------------------
 
     // TODO: remove this
-    widget.getOpponentUsername = function() {
+    widget.getTopUsername = function() {
       return $username_top
+    }
+
+    widget.getBottomUsername = function() {
+      return $username_bottom
     }
 
     // clear the board
@@ -1741,8 +1740,6 @@
         width: squareSize
       })
 
-      // redraw usernames
-      drawUsernames()
       // redraw the board & pieces
       drawBoard()
       drawSpares()

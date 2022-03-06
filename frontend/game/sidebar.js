@@ -1,42 +1,44 @@
 ;(function () {
 
     //TODO: this should def be changed! no passing updateUsername
-    function constructor (element, admin, myUsername, $username_top, opponentJoined, opponentRemoved) {
+    function constructor (element,
+                            admin, myUsername,
+                            $username_top, $username_bottom,
+                            playerJoined, playerRemoved,
+                            isPlaying) {
 
         ///////////////////// INITIALIZATION /////////////////////
 
         var $sidebar = $('#' + element)
         var players = {}
-        addPlayer(myUsername)
 
         ///////////////////// MOVING PLAYERS /////////////////////
         
-        // create hidden element
-        $('body').append('<div class="player" id="draggingPlayer" style="display: none;"></div>')
-        var $draggedPlayer = $('#draggingPlayer')
+        if(myUsername === admin) {
+            // create hidden element
+            $('body').append('<div class="player" id="draggingPlayer" style="display: none;"></div>')
+            var $draggedPlayer = $('#draggingPlayer')
 
-        // add event listeners
-        $sidebar.on('mousedown', '.player', mouseDown)
+            // add event listeners
+            $sidebar.on('mousedown', '.player', mouseDown)
 
-        // piece drag
-        $(window).on('mousemove', mousemoveWindow) //TODO: can you even call two functions on mouse move?
-                 .on('mouseup', mouseUp)
+            // player drag
+            $(window).on('mousemove', mousemoveWindow) //TODO: can you even call two functions on mouse move?
+                    .on('mouseup', mouseUp)
 
-        $username_top.on('click', removeOpponent)
+            // remove opponent by clicking x
+            $username_top.on('click', removeTopPlayer)
+            $username_bottom.on('click', removeBottomPlayer)
+        }
 
-        var can_update_opponent = true
         var dragging = false
         function mouseDown(evt) {
-            // only admin can place opponents while game hasn't started
-            if(myUsername !== admin && can_update_opponent) {
+            // updates are not possible midgame
+            if(isPlaying()) {
                 return
             }
             
             var $player = $(this)
-            // you can't manipulate admin
-            if($player.text() === admin) {
-                return
-            }
             // hide player
             $player.css('display', 'none')
 
@@ -54,8 +56,8 @@
         }
 
         function mousemoveWindow(evt) {
-            // only admin can place opponents while game hasn't started
-            if(myUsername !== admin && can_update_opponent) {
+            // updates are not possible midgame
+            if(isPlaying()) {
                 return
             }
             if (dragging) {
@@ -67,8 +69,8 @@
         }
 
         function mouseUp(evt) {
-            // only admin can place opponents while game hasn't started
-            if(myUsername !== admin && can_update_opponent) {
+            // updates are not possible midgame
+            if(isPlaying()) { 
                 return
             }
             if(dragging) {
@@ -77,9 +79,12 @@
                 // hide dragged player
                 $draggedPlayer.css('display', 'none')
 
-                if(updateOpponent(evt.pageX, evt.pageY, username)) {
+                if(updateTopPlayer(evt.pageX, evt.pageY, username)) {
                     $player.remove()
-                    opponentJoined(username)
+                    playerJoined('top', username)
+                } else if(updateBottomPlayer(evt.pageX, evt.pageY, username)) {
+                    $player.remove()
+                    playerJoined('bottom', username)
                 } else {
                     $player.css('display', '')
                 }
@@ -87,34 +92,51 @@
             }
         }
 
-        function updateOpponent(x, y, username) {
-            var user_left = $username_top.offset().left
-            var user_width = $username_top.width()
-            var user_top = $username_top.offset().top
+        function updateTopPlayer(x, y, username) {
+            return updatePlayer($username_top, x, y, username)
+        }
+
+        function updateBottomPlayer(x, y, username) {
+            return updatePlayer($username_bottom, x, y, username)
+        }
+
+        function updatePlayer($player, x, y, username) {
+            var user_left = $player.offset().left
+            var user_width = $player.width()
+            var user_top = $player.offset().top
       
             if((x >= user_left && x <= user_left + user_width) && 
                 y <= user_top && y >= user_top - 40) { //TODO: shouldn't be hardcoded
-                    if($username_top.text() === '') {
-                        $username_top.text(username)
+                    if($player.text() === '') {
+                        $player.text(username)
                         return true
                     }
             }
             return false
         }
 
-        function removeOpponent(evt) {
+        function removeTopPlayer(evt) {
+            removePlayer($username_top, 'top', playerRemoved)
+        } 
+
+        function removeBottomPlayer(evt) {
+            removePlayer($username_bottom, 'bottom', playerRemoved)
+        }
+
+        function removePlayer($username, position, playerRemoved) {
             // TODO: x shouldn't even be present there
-            // only admin can remove opponents while game hasn't started
-            if(myUsername !== admin || !can_update_opponent) {
+            // updates are not possible midgame
+            if(isPlaying()) {
                 return
             }
-            var username = $username_top.text()
+
+            var username = $username.text()
             if(username !== '') {
                 addPlayer(username)
-                $username_top.text('')
-                opponentRemoved(username)
+                $username.text('')
+                playerRemoved(position)
             }
-        } 
+        }
 
         // throttle mouse movement
         // const DRAG_THROTTLE_RATE = 20
@@ -181,23 +203,22 @@
             }
         }
 
-        widget.addOpponent = function(username) {
+        widget.addPlayerToBoard = function(position, username) {
+            var $username = position === 'top' ? $username_top : $username_bottom
             var $player = players[username]
             if(typeof $player !== 'undefined') {
-                $username_top.text(username)
+                $username.text(username)
                 $player.remove()
             }
         }
 
-        widget.removeOpponent = function(username) {
+        widget.removePlayerFromBoard = function(position) {
+            var $username = position === 'top' ? $username_top : $username_bottom
+            var username = $username.text()
             if(username !== '') {
                 addPlayer(username)
-                $username_top.text('')
+                $username.text('')
             }
-        }
-
-        widget.disableUpdatingOpponent = function() {
-            can_update_opponent = false
         }
 
         return widget
