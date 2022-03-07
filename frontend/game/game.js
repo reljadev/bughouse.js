@@ -9,6 +9,8 @@ let players = data.usernames
 let playing = data.playing
 let fen = data.state.fen
 let sparePieces = data.state.sparePieces
+let start_fen = data.state.start_fen
+let start_spares = data.state.start_spares
 let pgn = data.state.pgn
 
 //////////////// initialization ///////////////////////
@@ -16,13 +18,14 @@ let pgn = data.state.pgn
 // initialize chess
 if(!playing) {
   var game = new Chess(fen, deepCopy(sparePieces)) //TODO: won't this cause name conflict with chess and app?
+// if player joins midgame
 } else {
-  var game = new Chess(undefined, deepCopy(sparePieces))
-  console.log(game.load_pgn(pgn)) //problem is that you need sparePieces for this
+  var game = new Chess(start_fen, deepCopy(start_spares))
+  game.load_pgn(pgn)
+  // sanity check
+  setTimeout(() => {console.log(game.ascii() + '\n')}, 50)
+  setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
 }
-// sanity check
-setTimeout(() => {console.log(game.ascii() + '\n')}, 200)
-setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
 var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')

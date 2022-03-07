@@ -95,8 +95,10 @@ function start_new_game(admin) {
                     players: [], //TODO: this is probably not needed
                     info: {id: game_id,
                            playing: false,
-                           state: {fen: game.fen(),
+                           state: {fen: game.fen(), //do i need fen, spares if i have start and pgn?
                                    sparePieces: game.sparePieces(),
+                                   start_fen: game.fen(),
+                                   start_spares: deepCopy(game.sparePieces()),
                                    pgn: ''},
                            white_player: null,
                            black_player: null,
@@ -107,6 +109,20 @@ function start_new_game(admin) {
     games[game_id] = new_game
 
     return new_game
+}
+
+function deepCopy(obj) { //TODO: replace this or move it somewhere
+    var copy = {}
+
+    for (var property in obj) {
+      if (typeof obj[property] === 'object') {
+        copy[property] = deepCopy(obj[property])
+      } else {
+        copy[property] = obj[property]
+      }
+    }
+
+    return copy
 }
 
 function updateGame(game_id, move) {
