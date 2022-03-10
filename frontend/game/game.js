@@ -1,4 +1,4 @@
-// retrieve data
+//// retrieve data ////
 // NOTE: data variable is included at renderization time (runtime)
 let game_id = data.id
 console.log(game_id) //TODO: this should be displayed on page
@@ -15,8 +15,8 @@ let pgn = data.state.pgn
 
 //////////////// initialization ///////////////////////
 
-// initialize chess
-if(!playing) {
+//// initialize chess ////
+if(!playing) { //TODO: deepCopy IN COSTRUCTOR NOT HERE!!!
   var game = new Chess(fen, deepCopy(sparePieces)) //TODO: won't this cause name conflict with chess and app?
 // if player joins midgame
 } else {
@@ -30,7 +30,7 @@ var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
 
-// initialize chessboard
+//// initialize chessboard ////
 var config = {
   draggable: true,
   position: fen,
@@ -46,7 +46,7 @@ if(playing) {
   updateStatus()
 }
 
-// initialize sidebar
+//// initialize sidebar ////
 var sidebar = Sidebar('mySidebar', 
                         admin, myUsername,
                         board.getTopUsername(), board.getBottomUsername(), 
@@ -64,7 +64,7 @@ if(black_player !== null) {
   sidebar.addPlayerToBoard(position, black_player)
 }
 
-// init admin page
+//// init admin page ////
 if(myUsername === admin) {
   // start button
   var $start_button = $('<button id="start_game">start</button>')
@@ -79,6 +79,26 @@ if(myUsername === admin) {
   $reset_button.on('click', reset_game)
 }
 
+//// buttons & events ////
+var movesToDo = []
+var movesToDo2 = [] //TODO: this is really ugly
+
+// forward and backward buttons
+var $backward_button = $('#backward_button')
+$backward_button.on('click', backward_move)
+var $forward_button = $('#forward_button')
+$forward_button.on('click', forward_move)
+// hide buttons if not playing
+if(!playing) {
+  $backward_button.css('display', 'none')
+  $forward_button.css('display', 'none')
+} 
+
+// resign button
+var $resign_button = $('#resign_game')
+$resign_button.css('display', 'none')
+$resign_button.on('click', resign_game)
+
 function start_game(evt) {
   // update playing status
   playing = true
@@ -88,8 +108,61 @@ function start_game(evt) {
   updateBoardOrientation()
   // update status
   updateStatus()
+  // show resign button to players
+  if(myUsername === white_player || myUsername === black_player) {
+    $resign_button.css('display', '')
+  }
+  // show forward, backward buttons
+  $forward_button.css('display', '')
+  $backward_button.css('display', '')
   // notify server of game started
   server.emit('game_has_started')
+}
+
+function backward_move(evt) {
+  var move = game.undo()
+  if(move !== null) {
+    movesToDo.push(move)
+    board.position(game.fen())
+    // update spares
+    if(move.from === 'offboard') {
+      var color = move.color === 'w' ? 'white' : 'black'
+      var piece = move.color + move.piece.toUpperCase()
+      var spares = board.sparePieces()
+      spares[color][piece] += 1
+      board.sparePieces(spares)
+    }
+    // board.undo(move) // This ins't quite right
+  }
+  // sanity check
+  setTimeout(() => {console.log(game.ascii() + '\n')}, 50)
+  setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
+}
+
+function forward_move(evt) {
+  // get move
+  var move = movesToDo.pop()
+  if(typeof move === 'undefined') {
+    move = movesToDo2.pop()
+    if(typeof move === 'undefined') return
+  }
+  // make move
+  game.move(move)
+  if(move.from === 'offboard') {
+    var moveStr = (move.color + move.piece.toUpperCase()) + '-' + move.to
+  } else {
+    var moveStr = move.from + '-' + move.to
+  }
+  board.move(moveStr)
+  // sanity check
+  setTimeout(() => {console.log(game.ascii() + '\n')}, 50)
+  setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
+}
+
+function resign_game(evt) {
+  gameIsOver()
+  // hide resign button
+  $resign_button.css('display', 'none')
 }
 
 function reset_game(evt) {
@@ -130,9 +203,6 @@ function updateBoardOrientation() {
 }
 
 function gameIsOver() {
-  // update playing status
-  playing = false
-
   if(myUsername === admin) {
     $reset_button.css('display', '')
   }
@@ -148,14 +218,19 @@ const server = io('localhost:3000',
 
 // opponent moved
 server.on('move', (move) => { //TODO: this function shares code with onDrop
-  game.move(move)
-  if(move.from === 'offboard') {
-    var moveStr = (move.color + move.piece.toUpperCase()) + '-' + move.to
+  if(movesToDo.length === 0) {
+    game.move(move)
+    if(move.from === 'offboard') {
+      var moveStr = (move.color + move.piece.toUpperCase()) + '-' + move.to
+    } else {
+      var moveStr = move.from + '-' + move.to
+    }
+    board.move(moveStr) //TODO: why can it work without this as well, but with delay??
+    updateStatus()
   } else {
-    var moveStr = move.from + '-' + move.to
+    movesToDo2.push(move)
   }
-  board.move(moveStr) //TODO: why can it work without this as well, but with delay??
-  updateStatus()
+  
   // sanity check
   setTimeout(() => {console.log(game.ascii() + '\n')}, 200)
   setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
@@ -200,14 +275,31 @@ server.on('game_has_started', () => {
   updateBoardOrientation()
   // update status
   updateStatus()
+  // show resign button for players
+  if(myUsername === white_player || myUsername === black_player) {
+    $resign_button.css('display', '')
+  }
+  // show forward, backward buttons
+  $forward_button.css('display', '')
+  $backward_button.css('display', '')
 })
 
-server.on('game_is_over', () => {
-  // update playing status
-  playing = false
-  // show reset button
-  if(myUsername === admin) {
-    $reset_button.css('display', '')
+server.on('game_is_over', (message) => {
+  if(playing) {
+    // update playing status
+    playing = false
+    // show reset button
+    if(myUsername === admin) {
+      $reset_button.css('display', '')
+    }
+    // hide resign button
+    $resign_button.css('display', 'none')
+    // hide forward & backward buttons
+    $backward_button.css('display', 'none')
+    $forward_button.css('display', 'none')
+    // show popup
+    console.log(message)
+    // TODO: show pop up dialog
   }
 })
 
@@ -216,6 +308,8 @@ server.on('reset_game', (fen, sparePieces) => {
   game.loadSpares(sparePieces)
   resetBoard(fen, sparePieces)
   resetStatus()
+  $backward_button.css('display', 'none')
+  $forward_button.css('display', 'none')
 })
 
 // some player disconnected
@@ -300,6 +394,8 @@ function onDragStart (source, piece, position, orientation) {
   if (game.game_over()) return false
   // do not pick up pieces if the game hasn't started
   if(!playing) return false
+  // do not pick up pieces if user is checking history
+  if(movesToDo.length !== 0) return false
 
   // only pick up your pieces
   if((game.turn() === 'w' && white_player !== myUsername) ||

@@ -1597,6 +1597,26 @@
       return newPos
     }
 
+    // TODO: remove this
+    widget.undo = function(move) {
+      // get new position
+      var newPosition = deepCopy(currentPosition)
+      delete newPosition[move.to]
+      var piece = move.color + move.piece.toUpperCase()
+      if(move.from !== 'offboard') {
+        newPosition[move.from] = piece
+      } else {
+        var color = move.color === 'w' ? 'white' : 'black'
+        config.sparePieces[color][piece] += 1 //TODO: should i compute this animation manually?
+      }
+
+      // update the board
+      widget.position(newPosition)
+
+      // return the new position object
+      return newPosition
+    }
+
     widget.orientation = function (arg) {
       // no arguments, return the current orientation
       if (arguments.length === 0) {
@@ -1625,6 +1645,17 @@
     //TODO: remove this
     widget.ascii = function () {
       var s = ''
+
+      // TODO: print the board according to rotation
+      var top = 'black'
+      var bottom = 'white'
+      if(widget.orientation() === 'black') {
+        top = 'white'
+        bottom = 'black'
+      }
+
+      s += sparesAscii('black')
+      s += '\n'
   
       s += '   +------------------------+\n'
       for (var i = 8; i >= 1; i--) { //row
@@ -1658,7 +1689,21 @@
       }
       s += '   +------------------------+\n'
       s += '     a  b  c  d  e  f  g  h\n'
+
+      s += sparesAscii('white')
+      s += '\n'
   
+      return s
+    }
+
+    function sparesAscii(color) {
+      var s = '      '
+      var spares = config.sparePieces[color]
+      for(var piece in spares) {
+        var p = piece.charAt(1)
+        p = color === 'white' ? p : p.toLowerCase()
+        s += p + ':' + spares[piece] + ' '
+      }
       return s
     }
 
@@ -1710,10 +1755,10 @@
     widget.sparePieces = function(pieces) {
       // if no argument is specified return current spare pieces
       if(typeof pieces === 'undefined') {
-        return config.sparePieces
+        return deepCopy(config.sparePieces)
       }
       // else update spare pieces
-      config.sparePieces = pieces
+      config.sparePieces = deepCopy(pieces)
     }
 
     widget.getTopUsername = function() {

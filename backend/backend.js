@@ -141,6 +141,43 @@ function updateGame(game_id, move) {
     return true
 }
 
+function getPopUpMessages(game, white_player, black_player, player) {
+    var msgForWatchers = ''
+    var msgForWhite = ''
+    var msgForBlack = ''
+
+    // checkmate
+    if (game.in_checkmate()) {
+        if(game.turn() === 'w') {
+            msgForWatchers = 'Game over, ' + white_player + ' is in checkmate.'
+            msgForWhite = 'You lost, by checkmate'
+            msgForBlack = 'You won, by checkmate'
+        } else {
+            msgForWatchers = 'Game over, ' + black_player + ' is in checkmate.'
+            msgForWhite = 'You won, by checkmate'
+            msgForBlack = 'You lost, by checkmate'
+        }
+    // draw
+    } else if (game.in_draw()) {
+        msgForWatchers = 'Draw'
+        msgForWhite = 'Draw'
+        msgForBlack = 'Draw' //TODO: why is it a draw, insufficient material??
+    // resignation
+    } else {
+        if(player === white_player) {
+            msgForWatchers = 'Game over, ' + white_player + ' resigned'
+            msgForWhite = 'You lost, by resignation'
+            msgForBlack = 'You won, by resignation'
+        } else {
+            msgForWatchers = 'Game over, ' + black_player + ' resigned'
+            msgForWhite = 'You won, by resignation'
+            msgForBlack = 'You lost, by resignation'
+        }
+    }
+
+    return {white: msgForWhite, black: msgForBlack, watcher: msgForWatchers}        
+}
+
 //////////////// set up websocket /////////////////////
 
 let io = socket(server);
@@ -216,9 +253,24 @@ io.on('connection', (client) => {
     })
 
     client.on('game_is_over', () => {
-        // TODO: check if it's really over
-        games[client.data.game_id].info.playing = false
-        client.broadcast.to(client.data.game_id).emit('game_is_over')
+        var game = games[client.data.game_id]
+        game.info.playing = false
+        var messages = getPopUpMessages(game.game,
+                                        game.info.white_player, game.info.black_player,
+                                        client.data.username)
+        for(var i in game.players) {
+            var player = game.players[i]
+            // white player
+            if(player.data.username === game.info.white_player) {
+                player.emit('game_is_over', messages.white)
+            // black player
+            } else if(player.data.username === game.info.black_player) {
+                player.emit('game_is_over', messages.black)
+            // watcher    
+            } else {
+                player.emit('game_is_over', messages.watcher)
+            }
+        }
     })
 
     client.on('reset_game', (fen, sparePieces) => {
