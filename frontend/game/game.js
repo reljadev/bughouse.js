@@ -5,6 +5,8 @@ console.log(game_id) //TODO: this should be displayed on page
 let admin = data.admin
 let white_player = data.white_player
 let black_player = data.black_player
+let turn = data.turn
+let times = data.state.times
 let players = data.usernames
 let playing = data.playing
 let fen = data.state.fen
@@ -15,7 +17,7 @@ let pgn = data.state.pgn
 
 //////////////// initialization ///////////////////////
 
-//// initialize chess ////
+//// chess ////
 if(!playing) { //TODO: deepCopy IN COSTRUCTOR NOT HERE!!!
   var game = new Chess(fen, deepCopy(sparePieces)) //TODO: won't this cause name conflict with chess and app?
 // if player joins midgame
@@ -30,7 +32,7 @@ var $status = $('#status')
 var $fen = $('#fen')
 var $pgn = $('#pgn')
 
-//// initialize chessboard ////
+//// chessboard ////
 var config = {
   draggable: true,
   position: fen,
@@ -46,7 +48,7 @@ if(playing) {
   updateStatus()
 }
 
-//// initialize sidebar ////
+//// sidebar ////
 var sidebar = Sidebar('mySidebar', 
                         admin, myUsername,
                         board.getTopUsername(), board.getBottomUsername(), 
@@ -64,6 +66,97 @@ if(black_player !== null) {
   sidebar.addPlayerToBoard(position, black_player)
 }
 
+let options = {
+  timeZone: 'Europe/Belgrade',
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
+  fractionalSecondDigits: 1,
+},
+formatter = new Intl.DateTimeFormat([], options);
+
+var $clock = $('<span>00:00:00:000</span>')
+$('body').append($clock)
+
+function timeUpdater() {
+  $clock.text(formatter.format(new Date()))
+}
+
+setInterval(timeUpdater, 100)
+
+//// timers ////
+var $white_timer = $('#white_timer')
+var $black_timer = $('#black_timer')
+if(!playing) {
+  $white_timer.css('display', 'none')
+  $black_timer.css('display', 'none')
+} else {
+  if(turn === 'w') {
+    whiteTimer()
+  } else {
+    blackTimer()
+  }
+}
+
+function whiteTimer() {
+  // don't update time if white isn't playing currently
+  if(!playing || turn !== 'w') return
+
+  var t = updateTime(times.w_min, times.w_sec)
+  times.w_min = t[0], times.w_sec = t[1]
+  $white_timer.text('white timer: ' + times.w_min + ':' + times.w_sec + ':00')
+  setTimeout(whiteTimer, 1000)
+}
+
+function blackTimer() {
+  // don't update time if black isn't playing currently
+  if(!playing || turn !== 'b') return
+
+  var t = updateTime(times.b_min, times.b_sec)
+  times.b_min = t[0], times.b_sec = t[1]
+  $black_timer.text('black timer ' + times.b_min + ':' + times.b_sec + ':00')
+  setTimeout(blackTimer, 1000)
+}
+
+function updateTime(min, sec) {
+  sec -= 1
+  if(sec < 0) {
+    min -= 1
+    sec = 59
+    if(min < 0) {
+      min = sec = 0
+      console.log('times up')
+      gameIsOver()
+    }
+  }
+  return [min, sec]
+}
+
+//// buttons ////
+
+// forward and backward buttons
+var movesToDo = []
+var newMoves = [] //TODO: this is really ugly
+
+var $backward_button = $('#backward_button')
+$backward_button.on('click', backward_move)
+var $forward_button = $('#forward_button')
+$forward_button.on('click', forward_move)
+// hide buttons if not playing
+if(!playing) {
+  $backward_button.css('display', 'none')
+  $forward_button.css('display', 'none')
+} 
+
+// resign button
+var $resign_button = $('#resign_game')
+$resign_button.css('display', 'none')
+$resign_button.on('click', resign_game)
+
+
 //// init admin page ////
 if(myUsername === admin) {
   // start button
@@ -79,25 +172,7 @@ if(myUsername === admin) {
   $reset_button.on('click', reset_game)
 }
 
-//// buttons & events ////
-var movesToDo = []
-var movesToDo2 = [] //TODO: this is really ugly
-
-// forward and backward buttons
-var $backward_button = $('#backward_button')
-$backward_button.on('click', backward_move)
-var $forward_button = $('#forward_button')
-$forward_button.on('click', forward_move)
-// hide buttons if not playing
-if(!playing) {
-  $backward_button.css('display', 'none')
-  $forward_button.css('display', 'none')
-} 
-
-// resign button
-var $resign_button = $('#resign_game')
-$resign_button.css('display', 'none')
-$resign_button.on('click', resign_game)
+//// events ////
 
 function start_game(evt) {
   // update playing status
@@ -115,6 +190,11 @@ function start_game(evt) {
   // show forward, backward buttons
   $forward_button.css('display', '')
   $backward_button.css('display', '')
+  // show timers
+  $white_timer.css('display', '')
+  $black_timer.css('display', '')
+  // start timer
+  whiteTimer()
   // notify server of game started
   server.emit('game_has_started')
 }
@@ -132,7 +212,6 @@ function backward_move(evt) {
       spares[color][piece] += 1
       board.sparePieces(spares)
     }
-    // board.undo(move) // This ins't quite right
   }
   // sanity check
   setTimeout(() => {console.log(game.ascii() + '\n')}, 50)
@@ -143,7 +222,7 @@ function forward_move(evt) {
   // get move
   var move = movesToDo.pop()
   if(typeof move === 'undefined') {
-    move = movesToDo2.pop()
+    move = newMoves.pop()
     if(typeof move === 'undefined') return
   }
   // make move
@@ -213,22 +292,40 @@ function gameIsOver() {
 
 // connect to server
 // NOTE: io is imported in game.ejs
-const server = io('localhost:3000', 
-                  { query: "gameId=" + game_id + "&username=" + myUsername})
+const server = io('/',  { query: "gameId=" + game_id + "&username=" + myUsername})
 
 // opponent moved
-server.on('move', (move) => { //TODO: this function shares code with onDrop
+server.on('move', (move, serverTimes) => { //TODO: this function shares code with onDrop
+  var m = null
   if(movesToDo.length === 0) {
-    game.move(move)
-    if(move.from === 'offboard') {
-      var moveStr = (move.color + move.piece.toUpperCase()) + '-' + move.to
-    } else {
-      var moveStr = move.from + '-' + move.to
+    m = game.move(move)
+    if(m !== null) {
+      if(move.from === 'offboard') {
+        var moveStr = (move.color + move.piece.toUpperCase()) + '-' + move.to
+      } else {
+        var moveStr = move.from + '-' + move.to
+      }
+      board.move(moveStr) //TODO: why can it work without this as well, but with delay??
+      updateStatus()
     }
-    board.move(moveStr) //TODO: why can it work without this as well, but with delay??
-    updateStatus()
   } else {
-    movesToDo2.push(move)
+    newMoves.push(move)
+  }
+  // update turn
+  if(m !== null) {
+    if(turn === 'w') {
+      turn = 'b'
+    } else {
+      turn = 'w'
+    }
+  }
+  // update times
+  times = serverTimes
+  // start timer
+  if(turn === 'w') {
+    whiteTimer()
+  } else {
+    blackTimer()
   }
   
   // sanity check
@@ -282,6 +379,11 @@ server.on('game_has_started', () => {
   // show forward, backward buttons
   $forward_button.css('display', '')
   $backward_button.css('display', '')
+  // show timers
+  $white_timer.css('display', '')
+  $black_timer.css('display', '')
+  // start timer
+  whiteTimer()
 })
 
 server.on('game_is_over', (message) => {
@@ -297,6 +399,9 @@ server.on('game_is_over', (message) => {
     // hide forward & backward buttons
     $backward_button.css('display', 'none')
     $forward_button.css('display', 'none')
+    // hide timers
+    $white_timer.css('display', 'none')
+    $black_timer.css('display', 'none')
     // show popup
     console.log(message)
     // TODO: show pop up dialog
@@ -425,6 +530,19 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
 
   // send move to server
   server.emit('move', move)
+
+  // update turn
+  if(turn === 'w') {
+    turn = 'b'
+  } else {
+    turn = 'w'
+  }
+  // start timer
+  if(turn === 'w') {
+    whiteTimer()
+  } else {
+    blackTimer()
+  }
 
   updateStatus()
   // sanity check

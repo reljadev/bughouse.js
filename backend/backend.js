@@ -6,7 +6,7 @@ const utils = require('./utils')
 const Chess = require('./modules/chess.js/chess.js')
 
 // CONSTANTS
-const PORT = 3000
+const PORT = process.env.PORT || 3000
 
 // create server
 const server = http.createServer(function (request, response) {
@@ -93,15 +93,22 @@ function start_new_game(admin) {
     //TODO: this should really be a prototype
     var new_game = {game: game,
                     players: [], //TODO: this is probably not needed
-                    info: {id: game_id,
+                    info: {id: game_id, //don't need this
                            playing: false,
                            state: {fen: game.fen(), //do i need fen, spares if i have start and pgn?
                                    sparePieces: game.sparePieces(),
                                    start_fen: game.fen(),
                                    start_spares: deepCopy(game.sparePieces()),
-                                   pgn: ''},
+                                   pgn: '',
+                                   times: {w_min: 1,
+                                           w_sec: 0,
+                                           b_min: 1,
+                                           b_sec: 0,
+                                          },
+                                   },
                            white_player: null,
                            black_player: null,
+                           turn: 'w',
                            admin: admin,
                            usernames: [],
                            }
@@ -141,7 +148,28 @@ function updateGame(game_id, move) {
     return true
 }
 
-function getPopUpMessages(game, white_player, black_player, player) {
+function gameOver(game, username) {
+    game.info.playing = false
+    var messages = getPopUpMessages(game,
+                                    game.info.white_player, game.info.black_player,
+                                    username)
+    for(var i in game.players) {
+        var player = game.players[i]
+        // white player
+        if(player.data.username === game.info.white_player) {
+            player.emit('game_is_over', messages.white)
+        // black player
+        } else if(player.data.username === game.info.black_player) {
+            player.emit('game_is_over', messages.black)
+        // watcher    
+        } else {
+            player.emit('game_is_over', messages.watcher)
+        }
+    }
+}
+
+function getPopUpMessages(g, white_player, black_player, player) {
+    var game = g.game
     var msgForWatchers = ''
     var msgForWhite = ''
     var msgForBlack = ''
@@ -149,11 +177,11 @@ function getPopUpMessages(game, white_player, black_player, player) {
     // checkmate
     if (game.in_checkmate()) {
         if(game.turn() === 'w') {
-            msgForWatchers = 'Game over, ' + white_player + ' is in checkmate.'
+            msgForWatchers = 'Game over, ' + white_player + ' is in checkmate'
             msgForWhite = 'You lost, by checkmate'
             msgForBlack = 'You won, by checkmate'
         } else {
-            msgForWatchers = 'Game over, ' + black_player + ' is in checkmate.'
+            msgForWatchers = 'Game over, ' + black_player + ' is in checkmate'
             msgForWhite = 'You won, by checkmate'
             msgForBlack = 'You lost, by checkmate'
         }
@@ -162,6 +190,16 @@ function getPopUpMessages(game, white_player, black_player, player) {
         msgForWatchers = 'Draw'
         msgForWhite = 'Draw'
         msgForBlack = 'Draw' //TODO: why is it a draw, insufficient material??
+    // white's time is up
+    } else if(g.info.state.times.w_min === 0 && g.info.state.times.w_sec === 0) {
+        msgForWatchers = 'Game over, ' + white_player + ' ran out of time'
+        msgForWhite = 'You lost, on time'
+        msgForBlack = 'You won, on time'
+    // black's time is up
+    } else if(g.info.state.times.b_min === 0 && g.info.state.times.b_sec === 0) {
+        msgForWatchers = 'Game over, ' + black_player + ' ran out of time'
+        msgForWhite = 'You won, on time'
+        msgForBlack = 'You lost, on time'
     // resignation
     } else {
         if(player === white_player) {
@@ -176,6 +214,52 @@ function getPopUpMessages(game, white_player, black_player, player) {
     }
 
     return {white: msgForWhite, black: msgForBlack, watcher: msgForWatchers}        
+}
+
+function whiteTimer(game_id) {
+    var info = games[game_id].info
+    // don't update time if white isn't playing currently
+    if(!info.playing || info.turn !== 'w') return
+  
+    var times = updateTime(info.state.times.w_min,
+                           info.state.times.w_sec)
+    info.state.times.w_min = times[0]
+    info.state.times.w_sec = times[1]
+
+    if(times[0] === 0 && times[1] === 1) {
+        gameOver(games[game_id], info.white_player)
+        return
+    }
+    setTimeout(() => { whiteTimer(game_id) }, 1000)
+}
+  
+  function blackTimer(game_id) {
+    var info = games[game_id].info
+    // don't update time if black isn't playing currently
+    if(!info.playing || info.turn !== 'b') return
+  
+    var times = updateTime(info.state.times.b_min,
+                           info.state.times.b_sec)
+    info.state.times.b_min = times[0]
+    info.state.times.b_sec = times[1]
+
+    if(times[0] === 0 && times[1] === 1) {
+        gameOver(games[game_id], info.black_player)
+        return
+    }
+    setTimeout(() => { blackTimer(game_id) }, 1000)
+}
+  
+  function updateTime(min, sec) {
+    sec -= 1
+    if(sec < 0) {
+      min -= 1
+      sec = 59
+      if(min < 0) {
+        min = sec = 0
+      }
+    }
+    return [min, sec]
 }
 
 //////////////// set up websocket /////////////////////
@@ -238,15 +322,30 @@ io.on('connection', (client) => {
 
     // game has started
     client.on('game_has_started', () => {
-        games[client.data.game_id].info.playing = true
-        client.broadcast.to(client.data.game_id).emit('game_has_started')
+        var info = games[client.data.game_id].info
+        info.playing = true
+        client.broadcast.to(client.data.game_id).emit('game_has_started', info.state.times)
+        if(info.turn === 'w') {
+            whiteTimer(client.data.game_id)
+        } else {
+            blackTimer(client.data.game_id)
+        }
     })
 
     // on player move
     client.on('move', (move) => {
         var updated = updateGame(client.data.game_id, move)
         if(updated) {
-            client.broadcast.to(client.data.game_id).emit('move', move)
+            var game = games[client.data.game_id]
+            // does this actually send move to everyone??
+            client.to(client.data.game_id).emit('move', move, game.info.state.times)
+            game.info.turn = game.game.turn()
+            // start timer
+            if(game.info.turn === 'w') {
+                whiteTimer(client.data.game_id)
+            } else {
+                blackTimer(client.data.game_id)
+            }
         } else {
             client.emit('invalid_move') //TODO: figure out if this is needed for premove
         }
@@ -254,23 +353,7 @@ io.on('connection', (client) => {
 
     client.on('game_is_over', () => {
         var game = games[client.data.game_id]
-        game.info.playing = false
-        var messages = getPopUpMessages(game.game,
-                                        game.info.white_player, game.info.black_player,
-                                        client.data.username)
-        for(var i in game.players) {
-            var player = game.players[i]
-            // white player
-            if(player.data.username === game.info.white_player) {
-                player.emit('game_is_over', messages.white)
-            // black player
-            } else if(player.data.username === game.info.black_player) {
-                player.emit('game_is_over', messages.black)
-            // watcher    
-            } else {
-                player.emit('game_is_over', messages.watcher)
-            }
-        }
+        gameOver(game, client.data.username)
     })
 
     client.on('reset_game', (fen, sparePieces) => {

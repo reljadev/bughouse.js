@@ -1597,26 +1597,6 @@
       return newPos
     }
 
-    // TODO: remove this
-    widget.undo = function(move) {
-      // get new position
-      var newPosition = deepCopy(currentPosition)
-      delete newPosition[move.to]
-      var piece = move.color + move.piece.toUpperCase()
-      if(move.from !== 'offboard') {
-        newPosition[move.from] = piece
-      } else {
-        var color = move.color === 'w' ? 'white' : 'black'
-        config.sparePieces[color][piece] += 1 //TODO: should i compute this animation manually?
-      }
-
-      // update the board
-      widget.position(newPosition)
-
-      // return the new position object
-      return newPosition
-    }
-
     widget.orientation = function (arg) {
       // no arguments, return the current orientation
       if (arguments.length === 0) {

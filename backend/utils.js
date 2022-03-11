@@ -1,9 +1,8 @@
 const path = require('path')
 
-const DIRPATH = '../frontend'
+const DIRPATH = './frontend'
 const DEFAULT_PAGE = '/landing_page/landing_page.html'
 
-//TODO: this is an ugly hack
 function parse_url(request) {
     // form URL
     var baseURL = 'http://' + request.headers.host + '/';
