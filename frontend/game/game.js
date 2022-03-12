@@ -74,7 +74,7 @@ let options = {
   hour: 'numeric',
   minute: 'numeric',
   second: 'numeric',
-  fractionalSecondDigits: 1,
+  fractionalSecondDigits: 3,
 },
 formatter = new Intl.DateTimeFormat([], options);
 
@@ -293,6 +293,23 @@ function gameIsOver() {
 // connect to server
 // NOTE: io is imported in game.ejs
 const server = io('/',  { query: "gameId=" + game_id + "&username=" + myUsername})
+
+//measure time///
+setTimeout(bla, 2000)
+
+var time1 = null
+function bla() {
+  time1 = formatter.format(new Date())
+  server.emit('request')
+}
+
+server.on('response', () => {
+  var time2 = formatter.format(new Date())
+  console.log('time1: ' + time1)
+  console.log('time2: ' + time2)
+
+})
+/////////////////
 
 // opponent moved
 server.on('move', (move, serverTimes) => { //TODO: this function shares code with onDrop

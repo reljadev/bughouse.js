@@ -285,6 +285,10 @@ io.on('connection', (client) => {
         //TODO: user should be redirected to landing page
     }
 
+    client.on('request', () => {
+        client.emit('response')
+    })
+
     // player set at chessboard
     client.on('playerJoined', (color, username) => {
         client.broadcast.to(client.data.game_id).emit('playerJoined', color, username)
