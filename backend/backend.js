@@ -100,11 +100,6 @@ function start_new_game(admin) {
                                    start_fen: game.fen(),
                                    start_spares: deepCopy(game.sparePieces()),
                                    pgn: '',
-                                   times: {w_min: 1,
-                                           w_sec: 0,
-                                           b_min: 1,
-                                           b_sec: 0,
-                                          },
                                    },
                            white_player: null,
                            black_player: null,
@@ -191,17 +186,19 @@ function getPopUpMessages(g, white_player, black_player, player) {
         msgForWhite = 'Draw'
         msgForBlack = 'Draw' //TODO: why is it a draw, insufficient material??
     // white's time is up
-    } else if(g.info.state.times.w_min === 0 && g.info.state.times.w_sec === 0) {
-        msgForWatchers = 'Game over, ' + white_player + ' ran out of time'
-        msgForWhite = 'You lost, on time'
-        msgForBlack = 'You won, on time'
-    // black's time is up
-    } else if(g.info.state.times.b_min === 0 && g.info.state.times.b_sec === 0) {
-        msgForWatchers = 'Game over, ' + black_player + ' ran out of time'
-        msgForWhite = 'You won, on time'
-        msgForBlack = 'You lost, on time'
-    // resignation
-    } else {
+    } 
+    // else if(g.info.state.times.w_min === 0 && g.info.state.times.w_sec === 0) {
+    //     msgForWatchers = 'Game over, ' + white_player + ' ran out of time'
+    //     msgForWhite = 'You lost, on time'
+    //     msgForBlack = 'You won, on time'
+    // // black's time is up
+    // } else if(g.info.state.times.b_min === 0 && g.info.state.times.b_sec === 0) {
+    //     msgForWatchers = 'Game over, ' + black_player + ' ran out of time'
+    //     msgForWhite = 'You won, on time'
+    //     msgForBlack = 'You lost, on time'
+    // // resignation
+    // } 
+    else {
         if(player === white_player) {
             msgForWatchers = 'Game over, ' + white_player + ' resigned'
             msgForWhite = 'You lost, by resignation'
@@ -214,52 +211,6 @@ function getPopUpMessages(g, white_player, black_player, player) {
     }
 
     return {white: msgForWhite, black: msgForBlack, watcher: msgForWatchers}        
-}
-
-function whiteTimer(game_id) {
-    var info = games[game_id].info
-    // don't update time if white isn't playing currently
-    if(!info.playing || info.turn !== 'w') return
-  
-    var times = updateTime(info.state.times.w_min,
-                           info.state.times.w_sec)
-    info.state.times.w_min = times[0]
-    info.state.times.w_sec = times[1]
-
-    if(times[0] === 0 && times[1] === 1) {
-        gameOver(games[game_id], info.white_player)
-        return
-    }
-    setTimeout(() => { whiteTimer(game_id) }, 1000)
-}
-  
-  function blackTimer(game_id) {
-    var info = games[game_id].info
-    // don't update time if black isn't playing currently
-    if(!info.playing || info.turn !== 'b') return
-  
-    var times = updateTime(info.state.times.b_min,
-                           info.state.times.b_sec)
-    info.state.times.b_min = times[0]
-    info.state.times.b_sec = times[1]
-
-    if(times[0] === 0 && times[1] === 1) {
-        gameOver(games[game_id], info.black_player)
-        return
-    }
-    setTimeout(() => { blackTimer(game_id) }, 1000)
-}
-  
-  function updateTime(min, sec) {
-    sec -= 1
-    if(sec < 0) {
-      min -= 1
-      sec = 59
-      if(min < 0) {
-        min = sec = 0
-      }
-    }
-    return [min, sec]
 }
 
 //////////////// set up websocket /////////////////////
@@ -284,10 +235,6 @@ io.on('connection', (client) => {
     } else {
         //TODO: user should be redirected to landing page
     }
-
-    client.on('request', () => {
-        client.emit('response')
-    })
 
     // player set at chessboard
     client.on('playerJoined', (color, username) => {
@@ -328,27 +275,26 @@ io.on('connection', (client) => {
     client.on('game_has_started', () => {
         var info = games[client.data.game_id].info
         info.playing = true
-        client.broadcast.to(client.data.game_id).emit('game_has_started', info.state.times)
+        client.broadcast.to(client.data.game_id).emit('game_has_started')
         if(info.turn === 'w') {
-            whiteTimer(client.data.game_id)
+            // whiteTimer(client.data.game_id)
         } else {
-            blackTimer(client.data.game_id)
+            // blackTimer(client.data.game_id)
         }
     })
 
     // on player move
-    client.on('move', (move) => {
+    client.on('move', (move, elapsedTime) => {
         var updated = updateGame(client.data.game_id, move)
         if(updated) {
             var game = games[client.data.game_id]
-            // does this actually send move to everyone??
-            client.to(client.data.game_id).emit('move', move, game.info.state.times)
+            client.broadcast.to(client.data.game_id).emit('move', move, elapsedTime)
             game.info.turn = game.game.turn()
             // start timer
             if(game.info.turn === 'w') {
-                whiteTimer(client.data.game_id)
+                // whiteTimer(client.data.game_id)
             } else {
-                blackTimer(client.data.game_id)
+                // blackTimer(client.data.game_id)
             }
         } else {
             client.emit('invalid_move') //TODO: figure out if this is needed for premove

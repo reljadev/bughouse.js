@@ -14,6 +14,8 @@ function parse_url(request) {
         var filePath = DIRPATH + DEFAULT_PAGE
     } else if(folder_name === '/game' || folder_name === '/landing_page') {
         var filePath = DIRPATH + folder_name + parser.pathname
+    } else if(folder_name === '/stopwatch') {
+        var filePath = DIRPATH + '/game' + parser.pathname
     } else if(folder_name === '/sidebar') {
         var filePath = DIRPATH + '/game/sidebar.js'
     } else {

@@ -66,73 +66,24 @@ if(black_player !== null) {
   sidebar.addPlayerToBoard(position, black_player)
 }
 
-let options = {
-  timeZone: 'Europe/Belgrade',
-  year: 'numeric',
-  month: 'numeric',
-  day: 'numeric',
-  hour: 'numeric',
-  minute: 'numeric',
-  second: 'numeric',
-  fractionalSecondDigits: 3,
-},
-formatter = new Intl.DateTimeFormat([], options);
-
-var $clock = $('<span>00:00:00:000</span>')
-$('body').append($clock)
-
-function timeUpdater() {
-  $clock.text(formatter.format(new Date()))
-}
-
-setInterval(timeUpdater, 100)
-
 //// timers ////
-var $white_timer = $('#white_timer')
-var $black_timer = $('#black_timer')
+var white_timer = new Stopwatch($('#white_timer').get(0), {
+                            clock: 1 * 1100 * 60, // 5 minutes
+                            delay: 100, 
+                          });
+var black_timer = new Stopwatch($('#black_timer').get(0), {
+                            clock: 1 * 1100 * 60, // 5 minutes
+                            delay: 100, 
+                          });
 if(!playing) {
-  $white_timer.css('display', 'none')
-  $black_timer.css('display', 'none')
+  white_timer.hide()
+  black_timer.hide()
 } else {
   if(turn === 'w') {
-    whiteTimer()
+    white_timer.start()
   } else {
-    blackTimer()
+    black_timer.start()
   }
-}
-
-function whiteTimer() {
-  // don't update time if white isn't playing currently
-  if(!playing || turn !== 'w') return
-
-  var t = updateTime(times.w_min, times.w_sec)
-  times.w_min = t[0], times.w_sec = t[1]
-  $white_timer.text('white timer: ' + times.w_min + ':' + times.w_sec + ':00')
-  setTimeout(whiteTimer, 1000)
-}
-
-function blackTimer() {
-  // don't update time if black isn't playing currently
-  if(!playing || turn !== 'b') return
-
-  var t = updateTime(times.b_min, times.b_sec)
-  times.b_min = t[0], times.b_sec = t[1]
-  $black_timer.text('black timer ' + times.b_min + ':' + times.b_sec + ':00')
-  setTimeout(blackTimer, 1000)
-}
-
-function updateTime(min, sec) {
-  sec -= 1
-  if(sec < 0) {
-    min -= 1
-    sec = 59
-    if(min < 0) {
-      min = sec = 0
-      console.log('times up')
-      gameIsOver()
-    }
-  }
-  return [min, sec]
 }
 
 //// buttons ////
@@ -190,11 +141,14 @@ function start_game(evt) {
   // show forward, backward buttons
   $forward_button.css('display', '')
   $backward_button.css('display', '')
+  // reset timers
+  white_timer.reset()
+  black_timer.reset()
   // show timers
-  $white_timer.css('display', '')
-  $black_timer.css('display', '')
+  white_timer.show()
+  black_timer.show()
   // start timer
-  whiteTimer()
+  white_timer.start()
   // notify server of game started
   server.emit('game_has_started')
 }
@@ -257,6 +211,9 @@ function reset_game(evt) {
   resetBoard(fen, sparePieces)
   // status
   resetStatus()
+  // hide timers
+  white_timer.hide()
+  black_timer.hide()
   // sanity check
   setTimeout(() => {console.log(game.ascii() + '\n')}, 200)
   setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
@@ -294,55 +251,40 @@ function gameIsOver() {
 // NOTE: io is imported in game.ejs
 const server = io('/',  { query: "gameId=" + game_id + "&username=" + myUsername})
 
-//measure time///
-setTimeout(bla, 2000)
-
-var time1 = null
-function bla() {
-  time1 = formatter.format(new Date())
-  server.emit('request')
-}
-
-server.on('response', () => {
-  var time2 = formatter.format(new Date())
-  console.log('time1: ' + time1)
-  console.log('time2: ' + time2)
-
-})
-/////////////////
-
 // opponent moved
-server.on('move', (move, serverTimes) => { //TODO: this function shares code with onDrop
-  var m = null
+server.on('move', (move, elapsedTime) => { //TODO: this function shares code with onDrop
   if(movesToDo.length === 0) {
-    m = game.move(move)
-    if(m !== null) {
-      if(move.from === 'offboard') {
-        var moveStr = (move.color + move.piece.toUpperCase()) + '-' + move.to
-      } else {
-        var moveStr = move.from + '-' + move.to
-      }
-      board.move(moveStr) //TODO: why can it work without this as well, but with delay??
-      updateStatus()
+    game.move(move)
+    if(move.from === 'offboard') {
+      var moveStr = (move.color + move.piece.toUpperCase()) + '-' + move.to
+    } else {
+      var moveStr = move.from + '-' + move.to
     }
+    board.move(moveStr) //TODO: why can it work without this as well, but with delay??
+    updateStatus()
   } else {
     newMoves.push(move)
   }
+
   // update turn
-  if(m !== null) {
-    if(turn === 'w') {
-      turn = 'b'
-    } else {
-      turn = 'w'
-    }
-  }
-  // update times
-  times = serverTimes
-  // start timer
   if(turn === 'w') {
-    whiteTimer()
+    turn = 'b'
   } else {
-    blackTimer()
+    turn = 'w'
+  }
+  // update timers
+  if(turn === 'w') {
+    black_timer.stop()
+    white_timer.start()
+    var offset = black_timer.elapsedTime() - elapsedTime
+    var clampedOffset = Math.min(Math.max(-1000, offset), 1000)
+    black_timer.add(clampedOffset)
+  } else {
+    white_timer.stop()
+    black_timer.start()
+    var offset = white_timer.elapsedTime() - elapsedTime
+    var clampedOffset = Math.min(Math.max(-1000, offset), 1000)
+    white_timer.add(clampedOffset)
   }
   
   // sanity check
@@ -396,11 +338,14 @@ server.on('game_has_started', () => {
   // show forward, backward buttons
   $forward_button.css('display', '')
   $backward_button.css('display', '')
+  // reset timers
+  white_timer.reset()
+  black_timer.reset()
   // show timers
-  $white_timer.css('display', '')
-  $black_timer.css('display', '')
+  white_timer.show()
+  black_timer.show()
   // start timer
-  whiteTimer()
+  white_timer.start()
 })
 
 server.on('game_is_over', (message) => {
@@ -416,9 +361,9 @@ server.on('game_is_over', (message) => {
     // hide forward & backward buttons
     $backward_button.css('display', 'none')
     $forward_button.css('display', 'none')
-    // hide timers
-    $white_timer.css('display', 'none')
-    $black_timer.css('display', 'none')
+    // stop timers
+    white_timer.stop()
+    black_timer.stop()
     // show popup
     console.log(message)
     // TODO: show pop up dialog
@@ -432,6 +377,9 @@ server.on('reset_game', (fen, sparePieces) => {
   resetStatus()
   $backward_button.css('display', 'none')
   $forward_button.css('display', 'none')
+  // hide timers
+  white_timer.hide()
+  black_timer.hide()
 })
 
 // some player disconnected
@@ -545,9 +493,6 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
   // illegal move
   if (move === null) return 'snapback'
 
-  // send move to server
-  server.emit('move', move)
-
   // update turn
   if(turn === 'w') {
     turn = 'b'
@@ -556,10 +501,17 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
   }
   // start timer
   if(turn === 'w') {
-    whiteTimer()
+    white_timer.start()
+    black_timer.stop()
+    var elapsedTime = black_timer.elapsedTime()
   } else {
-    blackTimer()
+    black_timer.start()
+    white_timer.stop()
+    var elapsedTime = white_timer.elapsedTime()
   }
+
+  // send move to server
+  server.emit('move', move, elapsedTime)
 
   updateStatus()
   // sanity check
