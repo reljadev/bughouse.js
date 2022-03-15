@@ -92,7 +92,9 @@ var Stopwatch = function (elem, options) {
 
     function time(t) {
         if(t) {
+            console.log('updating to ' + t)
             clock = t
+            render()
         }
         return clock
     }

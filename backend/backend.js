@@ -318,6 +318,7 @@ io.on('connection', (client) => {
             updateTimers(game, elapsedTime)
             console.log(game.white_timer.time())
             console.log(game.black_timer.time())
+            console.log('\n')
             // broadcast move & updated timers
             client.broadcast.to(client.data.game_id).emit('move', move,
                                                                   game.white_timer.time(),
