@@ -266,8 +266,6 @@ server.on('move', (move, whiteClock, blackClock) => { //TODO: this function shar
   // correct the clocks
   white_timer.time(whiteClock)
   black_timer.time(blackClock)
-  console.log(white_timer.time())
-  console.log(black_timer.time())
   // update timers
   if(turn === 'w') {
     black_timer.stop()
@@ -492,9 +490,6 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
     white_timer.stop()
     var elapsedTime = white_timer.elapsedTime()
   }
-
-  console.log(white_timer.time())
-  console.log(black_timer.time())
 
   // send move to server
   server.emit('move', move, elapsedTime)
