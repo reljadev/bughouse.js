@@ -97,7 +97,7 @@ function start_new_game(admin) {
     var new_game = {game: game,
                     players: [], //TODO: this is probably not needed
                     white_timer: new Stopwatch({delay: 100, 
-                                                clock: 1 * 200 * 60,
+                                                clock: 1 *1100 * 60,
                                                 onTimesUp: () => { gameOver(new_game) }}),
                     black_timer: new Stopwatch({delay: 100,
                                                 clock: 1 * 1100 * 60,
