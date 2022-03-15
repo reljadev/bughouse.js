@@ -1,7 +1,6 @@
-var Stopwatch = function (elem, options) {
+var Stopwatch = function (options) {
 
-    var timer = createTimer(),
-        offset,
+    var offset,
         clock,
         interval,
         startTime;
@@ -18,17 +17,10 @@ var Stopwatch = function (elem, options) {
     options.clock = options.clock || 5 * 1000 * 60; // 5 minutes
     options.delay = options.delay || 1; // 1 ms
 
-    // append elements     
-    elem.appendChild(timer);
-
     // initialize
     reset();
 
     // functions
-    function createTimer() {
-        return document.createElement("span");
-    }
-
     function start() {
         if (!interval) {
             offset = performance.now()
@@ -52,12 +44,10 @@ var Stopwatch = function (elem, options) {
 
     function add(t) {
         clock += t;
-        render();
     }
 
     function reset() {
         clock = options.clock;
-        render();
     }
 
     function update() {
@@ -69,17 +59,6 @@ var Stopwatch = function (elem, options) {
                 options.onTimesUp()
             }
         }
-        render();
-    }
-
-    function render() {
-        if(clock < 1000 * 60 && !showingFractions) {
-            delete formatterOptions.minute
-            formatterOptions.fractionalSecondDigits = 1
-            formatter = new Intl.DateTimeFormat([], formatterOptions);
-            showingFractions = true
-        }
-        timer.innerHTML = formatter.format(clock);
     }
 
     function delta() {
@@ -97,14 +76,6 @@ var Stopwatch = function (elem, options) {
         return clock
     }
 
-    function show() {
-        elem.style.display = ''
-    }
-
-    function hide() {
-        elem.style.display = 'none'
-    }
-
     // public API
     this.start = start;
     this.stop = stop;
@@ -112,6 +83,6 @@ var Stopwatch = function (elem, options) {
     this.add = add;
     this.reset = reset;
     this.time = time;
-    this.show = show;
-    this.hide = hide;
 };
+
+if(module) module.exports = Stopwatch

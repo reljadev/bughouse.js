@@ -68,12 +68,12 @@ if(black_player !== null) {
 
 //// timers ////
 var white_timer = new Stopwatch($('#white_timer').get(0), {
-                            clock: 1 * 1100 * 60, // 5 minutes
-                            delay: 100, 
+                            clock: time_white, // injected in game.ejs
+                            delay: 100,
                           });
 var black_timer = new Stopwatch($('#black_timer').get(0), {
-                            clock: 1 * 1100 * 60, // 5 minutes
-                            delay: 100, 
+                            clock: time_black, // injected in game.ejs
+                            delay: 100,
                           });
 if(!playing) {
   white_timer.hide()
@@ -193,7 +193,7 @@ function forward_move(evt) {
 }
 
 function resign_game(evt) {
-  gameIsOver()
+  gameIsOver('resignation')
   // hide resign button
   $resign_button.css('display', 'none')
 }
@@ -252,39 +252,29 @@ function gameIsOver() {
 const server = io('/',  { query: "gameId=" + game_id + "&username=" + myUsername})
 
 // opponent moved
-server.on('move', (move, elapsedTime) => { //TODO: this function shares code with onDrop
+server.on('move', (move, whiteClock, blackClock) => { //TODO: this function shares code with onDrop
   if(movesToDo.length === 0) {
     game.move(move)
-    if(move.from === 'offboard') {
-      var moveStr = (move.color + move.piece.toUpperCase()) + '-' + move.to
-    } else {
-      var moveStr = move.from + '-' + move.to
-    }
-    board.move(moveStr) //TODO: why can it work without this as well, but with delay??
+    board.move(move) //TODO: why can it work without this as well, but with delay??
     updateStatus()
   } else {
     newMoves.push(move)
   }
 
   // update turn
-  if(turn === 'w') {
-    turn = 'b'
-  } else {
-    turn = 'w'
-  }
+  turn = turn === 'w' ? 'b' : 'w'
+  // correct the clocks
+  white_timer.time(whiteClock)
+  black_timer.time(blackClock)
+  console.log(white_timer.time())
+  console.log(black_timer.time())
   // update timers
   if(turn === 'w') {
     black_timer.stop()
     white_timer.start()
-    var offset = black_timer.elapsedTime() - elapsedTime
-    var clampedOffset = Math.min(Math.max(-1000, offset), 1000)
-    black_timer.add(clampedOffset)
   } else {
     white_timer.stop()
     black_timer.start()
-    var offset = white_timer.elapsedTime() - elapsedTime
-    var clampedOffset = Math.min(Math.max(-1000, offset), 1000)
-    white_timer.add(clampedOffset)
   }
   
   // sanity check
@@ -358,9 +348,6 @@ server.on('game_is_over', (message) => {
     }
     // hide resign button
     $resign_button.css('display', 'none')
-    // hide forward & backward buttons
-    $backward_button.css('display', 'none')
-    $forward_button.css('display', 'none')
     // stop timers
     white_timer.stop()
     black_timer.stop()
@@ -494,12 +481,8 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
   if (move === null) return 'snapback'
 
   // update turn
-  if(turn === 'w') {
-    turn = 'b'
-  } else {
-    turn = 'w'
-  }
-  // start timer
+  turn = turn === 'w' ? 'b' : 'w'
+  // update timers
   if(turn === 'w') {
     white_timer.start()
     black_timer.stop()
@@ -509,6 +492,9 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
     white_timer.stop()
     var elapsedTime = white_timer.elapsedTime()
   }
+
+  console.log(white_timer.time())
+  console.log(black_timer.time())
 
   // send move to server
   server.emit('move', move, elapsedTime)
@@ -536,7 +522,7 @@ function updateStatus () {
   // checkmate?
   if (game.in_checkmate()) {
     status = 'Game over, ' + moveColor + ' is in checkmate.'
-    gameIsOver()
+    gameIsOver('checkmate')
   }
 
   // draw?

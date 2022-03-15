@@ -438,6 +438,14 @@
       .replace(/2/g, '11')
   }
 
+  function moveToStr(moveObj) {
+    if(moveObj.from === 'offboard') {
+      return (moveObj.color + moveObj.piece.toUpperCase()) + '-' + moveObj.to
+    } else {
+      return moveObj.from + '-' + moveObj.to
+    }
+  }
+
   // returns the distance between two squares
   function squareDistance (squareA, squareB) {
     var squareAArray = squareA.split('')
@@ -1571,19 +1579,25 @@
       // collect the moves into an object
       var moves = {}
       for (var i = 0; i < arguments.length; i++) {
+        if(typeof arguments[i] === 'object') {
+          var move = moveToStr(arguments[i])
+        } else {
+          var move = arguments[i]
+        }
+
         // any "false" to this function means no animations
-        if (arguments[i] === false) {
+        if (move === false) {
           useAnimation = false
           continue
         }
 
         // skip invalid arguments
-        if (!validMove(arguments[i])) {
-          error(2826, 'Invalid move passed to the move method.', arguments[i])
+        if (!validMove(move)) {
+          error(2826, 'Invalid move passed to the move method.', move)
           continue
         }
 
-        var tmp = arguments[i].split('-')
+        var tmp = move.split('-')
         moves[tmp[0]] = tmp[1]
       }
 

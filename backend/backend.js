@@ -4,6 +4,7 @@ const socket = require('socket.io')
 const fs = require('fs')
 const utils = require('./utils')
 const Chess = require('./modules/chess.js/chess.js')
+const Stopwatch = require('./stopwatch')
 
 // CONSTANTS
 const PORT = process.env.PORT || 3000
@@ -61,7 +62,9 @@ const server = http.createServer(function (request, response) {
             response.writeHead(200, { 'Content-Type': contentType });
             // renderize page
             if(fileName === 'game.ejs') {
-                var renderizedPage = ejs.render(content, {username: params.username, data: currentGame.info});
+                var renderizedPage = ejs.render(content, {username: params.username, data: currentGame.info,
+                                                          white_time: currentGame.white_timer.time(),
+                                                          black_time: currentGame.black_timer.time()});
                 response.end(renderizedPage, 'utf-8'); // nor here
             // plain html, js or css
             } else {
@@ -93,6 +96,12 @@ function start_new_game(admin) {
     //TODO: this should really be a prototype
     var new_game = {game: game,
                     players: [], //TODO: this is probably not needed
+                    white_timer: new Stopwatch({delay: 100, 
+                                                clock: 1 * 1100 * 60,
+                                                onTimesUp: gameOver}), //TODO: pass the game that it is attached to
+                    black_timer: new Stopwatch({delay: 100,
+                                                clock: 1 * 1100 * 60,
+                                                onTimesUp: gameOver}),
                     info: {id: game_id, //don't need this
                            playing: false,
                            state: {fen: game.fen(), //do i need fen, spares if i have start and pgn?
@@ -139,12 +148,15 @@ function updateGame(game_id, move) {
     game.info.state.fen = game.game.fen()
     game.info.state.sparePieces = game.game.sparePieces()
     game.info.state.pgn = game.game.pgn()
+    game.info.turn = game.game.turn()
 
     return true
 }
 
 function gameOver(game, username) {
     game.info.playing = false
+    game.white_timer.stop()
+    game.black_timer.stop()
     var messages = getPopUpMessages(game,
                                     game.info.white_player, game.info.black_player,
                                     username)
@@ -185,20 +197,18 @@ function getPopUpMessages(g, white_player, black_player, player) {
         msgForWatchers = 'Draw'
         msgForWhite = 'Draw'
         msgForBlack = 'Draw' //TODO: why is it a draw, insufficient material??
-    // white's time is up
-    } 
-    // else if(g.info.state.times.w_min === 0 && g.info.state.times.w_sec === 0) {
-    //     msgForWatchers = 'Game over, ' + white_player + ' ran out of time'
-    //     msgForWhite = 'You lost, on time'
-    //     msgForBlack = 'You won, on time'
-    // // black's time is up
-    // } else if(g.info.state.times.b_min === 0 && g.info.state.times.b_sec === 0) {
-    //     msgForWatchers = 'Game over, ' + black_player + ' ran out of time'
-    //     msgForWhite = 'You won, on time'
-    //     msgForBlack = 'You lost, on time'
-    // // resignation
-    // } 
-    else {
+    // white ran out of time
+    } else if(g.white_timer.time() === 0) {
+        msgForWatchers = 'Game over, ' + white_player + ' ran out of time'
+        msgForWhite = 'You lost, on time'
+        msgForBlack = 'You won, on time'
+    // black ran out of time
+    } else if(g.black_timer.time() === 0) {
+        msgForWatchers = 'Game over, ' + black_player + ' ran out of time'
+        msgForWhite = 'You won, on time'
+        msgForBlack = 'You lost, on time'
+    // resignation
+    } else {
         if(player === white_player) {
             msgForWatchers = 'Game over, ' + white_player + ' resigned'
             msgForWhite = 'You lost, by resignation'
@@ -211,6 +221,24 @@ function getPopUpMessages(g, white_player, black_player, player) {
     }
 
     return {white: msgForWhite, black: msgForBlack, watcher: msgForWatchers}        
+}
+
+function updateTimers(game, elapsedTime) {
+    if(game.info.turn === 'w') {
+        game.black_timer.stop()
+        game.white_timer.start()
+        refundLagTime(game.black_timer, elapsedTime)
+    } else {
+        game.white_timer.stop()
+        game.black_timer.start()
+        refundLagTime(game.white_timer, elapsedTime)
+    }
+}
+
+function refundLagTime(timer, elapsedTime) {
+    var offset = timer.elapsedTime() - elapsedTime
+    var clampedOffset = Math.min(Math.max(-1000, offset), 1000)
+    timer.add(clampedOffset)
 }
 
 //////////////// set up websocket /////////////////////
@@ -273,14 +301,12 @@ io.on('connection', (client) => {
 
     // game has started
     client.on('game_has_started', () => {
-        var info = games[client.data.game_id].info
-        info.playing = true
+        var game = games[client.data.game_id]
+        game.info.playing = true
+        game.white_timer.reset()
+        game.black_timer.reset()
+        game.white_timer.start()
         client.broadcast.to(client.data.game_id).emit('game_has_started')
-        if(info.turn === 'w') {
-            // whiteTimer(client.data.game_id)
-        } else {
-            // blackTimer(client.data.game_id)
-        }
     })
 
     // on player move
@@ -288,14 +314,14 @@ io.on('connection', (client) => {
         var updated = updateGame(client.data.game_id, move)
         if(updated) {
             var game = games[client.data.game_id]
-            client.broadcast.to(client.data.game_id).emit('move', move, elapsedTime)
-            game.info.turn = game.game.turn()
-            // start timer
-            if(game.info.turn === 'w') {
-                // whiteTimer(client.data.game_id)
-            } else {
-                // blackTimer(client.data.game_id)
-            }
+            
+            updateTimers(game, elapsedTime)
+            console.log(game.white_timer.time())
+            console.log(game.black_timer.time())
+            // broadcast move & updated timers
+            client.broadcast.to(client.data.game_id).emit('move', move,
+                                                                  game.white_timer.time(),
+                                                                  game.black_timer.time())
         } else {
             client.emit('invalid_move') //TODO: figure out if this is needed for premove
         }
