@@ -97,11 +97,11 @@ function start_new_game(admin) {
     var new_game = {game: game,
                     players: [], //TODO: this is probably not needed
                     white_timer: new Stopwatch({delay: 100, 
-                                                clock: 1 * 1100 * 60,
-                                                onTimesUp: gameOver(this, new_game)}), //TODO: this should be changed !
+                                                clock: 1 * 200 * 60,
+                                                onTimesUp: () => { gameOver(new_game) }}),
                     black_timer: new Stopwatch({delay: 100,
                                                 clock: 1 * 1100 * 60,
-                                                onTimesUp: gameOver(this, new_game)}),
+                                                onTimesUp: () => { gameOver(new_game) }}),
                     info: {id: game_id, //don't need this
                            playing: false,
                            state: {fen: game.fen(), //do i need fen, spares if i have start and pgn?
