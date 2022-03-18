@@ -95,7 +95,7 @@ function start_new_game(admin) {
     var game = new Chess(fen, sparePieces)
     //TODO: this should really be a prototype
     var new_game = {game: game,
-                    players: [], //TODO: this is probably not needed
+                    players: [],
                     white_timer: new Stopwatch({delay: 100, 
                                                 clock: 1 *1100 * 60,
                                                 onTimesUp: () => { gameOver(new_game) }}),
@@ -103,7 +103,7 @@ function start_new_game(admin) {
                                                 clock: 1 * 1100 * 60,
                                                 onTimesUp: () => { gameOver(new_game) }}),
                     info: {id: game_id, //don't need this
-                           playing: false,
+                           stage: 'pre-game',
                            state: {fen: game.fen(), //do i need fen, spares if i have start and pgn?
                                    sparePieces: game.sparePieces(),
                                    start_fen: game.fen(),
@@ -154,7 +154,7 @@ function updateGame(game_id, move) {
 }
 
 function gameOver(game, username) {
-    game.info.playing = false
+    game.info.stage = 'post-game'
     game.white_timer.stop()
     game.black_timer.stop()
     var messages = getPopUpMessages(game,
@@ -302,7 +302,7 @@ io.on('connection', (client) => {
     // game has started
     client.on('game_has_started', () => {
         var game = games[client.data.game_id]
-        game.info.playing = true
+        game.info.stage = 'playing'
         game.white_timer.reset()
         game.black_timer.reset()
         game.white_timer.start()
@@ -332,17 +332,19 @@ io.on('connection', (client) => {
 
     client.on('reset_game', (fen, sparePieces) => {
         var game_id = client.data.game_id
+        var g = games[game_id]
         // update game
-        games[game_id].game.load(fen)
-        games[game_id].game.loadSpares(sparePieces)
+        g.game.load(fen)
+        g.game.loadSpares(sparePieces)
         // update game info
-        games[game_id].info.state.fen = fen
-        games[game_id].info.state.sparePieces = sparePieces
-        games[game_id].info.state.pgn = ''
-        games[game_id].info.white_player = null
-        games[game_id].info.black_player = null
+        g.info.stage = 'pre-game'
+        g.info.state.fen = fen
+        g.info.state.sparePieces = sparePieces
+        g.info.state.pgn = ''
+        g.info.white_player = null
+        g.info.black_player = null
         // broadcast changes
-        client.broadcast.to(client.data.game_id).emit('reset_game', fen, sparePieces)
+        client.broadcast.to(game_id).emit('reset_game', fen, sparePieces)
     })
 
     // on player disconnect

@@ -1507,7 +1507,7 @@ var Chess = function (fen, sparePieces) {
     },
 
     loadSpares: function(spares) {
-      sparePieces = spares
+      sparePieces = spares //TODO: deep copy
     },
 
     reset: function () {
@@ -1592,8 +1592,12 @@ var Chess = function (fen, sparePieces) {
       return generate_fen()
     },
 
+    move_count: function() {
+      return history.length
+    },
+
     sparePieces: function() {
-      return sparePieces
+      return sparePieces //TODO: deep copy
     },
 
     board: function () {
@@ -2040,6 +2044,17 @@ var Chess = function (fen, sparePieces) {
     undo: function () {
       var move = undo_move()
       return move ? make_pretty(move) : null
+    },
+
+    getMove: function(moveNum) {
+      var h = history[moveNum - 1]
+      if(typeof h !== 'undefined') {
+        var move = deepCopy(h.move)
+        move.from = algebraic(move.from)
+        move.to = algebraic(move.to)
+        return move
+      }
+      return null
     },
 
     clear: function () {

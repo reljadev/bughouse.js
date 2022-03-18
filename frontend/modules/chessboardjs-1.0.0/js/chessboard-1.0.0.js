@@ -53,6 +53,7 @@
   CSS['clearfix'] = 'clearfix-7da63'
   CSS['highlight1'] = 'highlight1-32417'
   CSS['highlight2'] = 'highlight2-9c5d2'
+  CSS['highlight_red'] = 'highlight_red-lkmd7'
   CSS['notation'] = 'notation-322f9'
   CSS['numeric'] = 'numeric-fc462'
   CSS['piece'] = 'piece-417db'
@@ -439,11 +440,12 @@
   }
 
   function moveToStr(moveObj) {
+    if(!moveObj) return
+
     if(moveObj.from === 'offboard') {
       return (moveObj.color + moveObj.piece.toUpperCase()) + '-' + moveObj.to
-    } else {
-      return moveObj.from + '-' + moveObj.to
     }
+    return moveObj.from + '-' + moveObj.to
   }
 
   // returns the distance between two squares
@@ -688,6 +690,8 @@
     var boardBorderSize = 2
     var currentOrientation = 'white'
     var currentPosition = {}
+    var moveHistory = []
+    var premoves = []
     var draggedPiece = null
     var draggedPieceLocation = null
     var draggedPieceSource = null
@@ -1288,6 +1292,22 @@
         .removeClass(CSS.highlight1 + ' ' + CSS.highlight2)
     }
 
+    function highlightRed(square) {
+      $('#' + squareElsIds[square])
+          .addClass(CSS.highlight_red)
+    }
+
+    function removeHighlightRed(square) {
+      $('#' + squareElsIds[square])
+          .removeClass(CSS.highlight_red)
+    }
+
+    function removeSquareHighlightsRed () {
+      $board
+        .find('.' + CSS.square)
+        .removeClass(CSS.highlight_red)
+    }
+
     function snapbackDraggedPiece () {
       removeSquareHighlights()
 
@@ -1523,7 +1543,7 @@
           currentOrientation
         )
 
-        if (result === 'snapback' || result === 'trash') {
+        if (result === 'snapback' || result === 'trash' || result === 'premove') {
           action = result
         }
       }
@@ -1534,7 +1554,14 @@
       } else if (action === 'trash') {
         trashDraggedPiece()
       } else if (action === 'drop') {
+        var m = {move: draggedPieceSource + '-' + location,
+                  captured: currentPosition[location]}
+        moveHistory.push(m)
         dropDraggedPieceOnSquare(location)
+      } else if(action === 'premove') {
+        dropDraggedPieceOnSquare(location)
+        highlightRed(location)
+        premoves.push(draggedPieceSource + '-' + location)
       }
     }
 
@@ -1560,6 +1587,10 @@
     // shorthand method to get the current FEN
     widget.fen = function () {
       return widget.position('fen')
+    }
+
+    widget.move_count = function() {
+      return moveHistory.length
     }
 
     // flip orientation
@@ -1599,6 +1630,9 @@
 
         var tmp = move.split('-')
         moves[tmp[0]] = tmp[1]
+
+        var m = {move: move, captured: currentPosition[tmp[1]]}
+        moveHistory.push(m) //TODO: shouldn't push it here for premoves
       }
 
       // calculate position from moves
@@ -1609,6 +1643,60 @@
 
       // return the new position object
       return newPos
+    }
+
+    widget.premove = function() {
+      widget.move(...arguments, false)
+      // highlight premove squares
+      for(var i in arguments) {
+        var square = arguments[i].to
+        highlightRed(square)
+        premoves.push(moveToStr(arguments[i]))
+      }
+    }
+
+    widget.undo = function(m) {
+      // get move
+      var m = m ? m : moveHistory.pop()
+      if(!m) return
+      var move = m.move
+      var captured = m.captured
+      var tmp = move.split('-')
+      var from = tmp[0], to = tmp[1]
+
+      // undo move
+      var newPosition = deepCopy(currentPosition)
+      delete newPosition[to]
+      // get piece
+      var piece = currentPosition[to]
+      // added piece
+      if(from === 'offboard') {
+        var color = piece.charAt(0) === 'w' ? 'white' : 'black'
+        config.sparePieces[color][piece] += 1
+      // normal move
+      } else {
+        newPosition[from] = piece
+        if(captured) {
+          newPosition[to] = captured
+        }
+      }
+
+      // animate
+      var animations = calculateAnimations(currentPosition, newPosition)
+      doAnimations(animations, currentPosition, newPosition)  
+      // update position
+      setCurrentPosition(newPosition)    
+    }
+
+    widget.undoPremove = function() {
+      var premove = premoves.pop()
+      widget.undo(premove)
+      removeHighlightRed(premove.split('-')[1])
+    }
+
+    // TODO: remove this function
+    widget.clearPremoveHighlights = function() {
+      removeSquareHighlightsRed()
     }
 
     widget.orientation = function (arg) {
