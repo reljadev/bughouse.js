@@ -1592,6 +1592,7 @@ var Chess = function (fen, sparePieces) {
       return generate_fen()
     },
 
+    // TODO: do i need this
     move_count: function() {
       return history.length
     },
@@ -2046,15 +2047,25 @@ var Chess = function (fen, sparePieces) {
       return move ? make_pretty(move) : null
     },
 
-    getMove: function(moveNum) {
-      var h = history[moveNum - 1]
-      if(typeof h !== 'undefined') {
-        var move = deepCopy(h.move)
-        move.from = algebraic(move.from)
-        move.to = algebraic(move.to)
-        return move
+    get_state: function(moveNum) {
+      var moves = []
+      // undo moves
+      var currMoveNum = history.length
+      while(currMoveNum !== 0 && currMoveNum > moveNum) {
+        moves.push(undo_move())
+        currMoveNum--
       }
-      return null
+
+      // get state
+      var fen = generate_fen()
+      var spares = deepCopy(sparePieces)
+
+      // redo moves
+      while(moves.length !== 0) {
+        make_move(moves.pop())
+      }
+
+      return {fen: fen, spares: spares, move_count: currMoveNum}
     },
 
     clear: function () {

@@ -153,19 +153,24 @@ function start_game(evt) {
 }
 
 function backward_move(evt) {
-  board.undo()
+  updateBoardToMove(board.move_count() - 1)
   // sanity check
   setTimeout(() => {console.log(game.ascii() + '\n')}, 50)
   setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
 }
 
 function forward_move(evt) {
-  var move = game.getMove(board.move_count() + 1)
-  console.log(move)
-  board.move(move)
+  updateBoardToMove(board.move_count() + 1)
   // sanity check
   setTimeout(() => {console.log(game.ascii() + '\n')}, 50)
   setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
+}
+
+function updateBoardToMove(moveNum) {
+  var state = game.get_state(moveNum)
+  board.position(state.fen)
+  board.sparePieces(state.sparePieces)
+  board.move_count(state.move_count)
 }
 
 function viewingHistory() {
@@ -483,8 +488,6 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
   // illegal move
   if (move === null) return 'snapback'
 
-  console.log(move)
-
   // update turn
   turn = turn === 'w' ? 'b' : 'w'
   // update timers
@@ -514,7 +517,7 @@ function updateTimers() {
 // update the board position after the piece snap
 // for castling, en passant, pawn promotion
 function onSnapEnd () {
-  if(premoves.length === 0) {
+  if(premoves.length === 0) { //TODO: change this
     board.position(game.fen())
   }
 }

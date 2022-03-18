@@ -690,7 +690,7 @@
     var boardBorderSize = 2
     var currentOrientation = 'white'
     var currentPosition = {}
-    var moveHistory = []
+    var move_count = 0
     var premoves = []
     var draggedPiece = null
     var draggedPieceLocation = null
@@ -1554,10 +1554,8 @@
       } else if (action === 'trash') {
         trashDraggedPiece()
       } else if (action === 'drop') {
-        var m = {move: draggedPieceSource + '-' + location,
-                  captured: currentPosition[location]}
-        moveHistory.push(m)
         dropDraggedPieceOnSquare(location)
+        move_count++
       } else if(action === 'premove') {
         dropDraggedPieceOnSquare(location)
         highlightRed(location)
@@ -1589,8 +1587,11 @@
       return widget.position('fen')
     }
 
-    widget.move_count = function() {
-      return moveHistory.length
+    widget.move_count = function(move_cnt) {
+      if(move_cnt >= 0) {
+        move_count = move_cnt
+      }
+      return move_count
     }
 
     // flip orientation
@@ -1631,8 +1632,7 @@
         var tmp = move.split('-')
         moves[tmp[0]] = tmp[1]
 
-        var m = {move: move, captured: currentPosition[tmp[1]]}
-        moveHistory.push(m) //TODO: shouldn't push it here for premoves
+        move_count++
       }
 
       // calculate position from moves
@@ -1653,39 +1653,6 @@
         highlightRed(square)
         premoves.push(moveToStr(arguments[i]))
       }
-    }
-
-    widget.undo = function(m) {
-      // get move
-      var m = m ? m : moveHistory.pop()
-      if(!m) return
-      var move = m.move
-      var captured = m.captured
-      var tmp = move.split('-')
-      var from = tmp[0], to = tmp[1]
-
-      // undo move
-      var newPosition = deepCopy(currentPosition)
-      delete newPosition[to]
-      // get piece
-      var piece = currentPosition[to]
-      // added piece
-      if(from === 'offboard') {
-        var color = piece.charAt(0) === 'w' ? 'white' : 'black'
-        config.sparePieces[color][piece] += 1
-      // normal move
-      } else {
-        newPosition[from] = piece
-        if(captured) {
-          newPosition[to] = captured
-        }
-      }
-
-      // animate
-      var animations = calculateAnimations(currentPosition, newPosition)
-      doAnimations(animations, currentPosition, newPosition)  
-      // update position
-      setCurrentPosition(newPosition)    
     }
 
     widget.undoPremove = function() {
