@@ -471,6 +471,10 @@ function deepCopy(obj) {
 }
 
 function onRightClick() {
+  // do nothing if the player is viewing history
+  if(viewingHistory()) return
+  
+  // remove premoves
   var state = game.get_state(game.move_count())
   updateBoardToState(state)
   board.clearPremoves()
