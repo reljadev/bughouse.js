@@ -5,7 +5,6 @@ console.log(game_id) //TODO: this should be displayed on page
 let admin = data.admin
 let white_player = data.white_player
 let black_player = data.black_player
-let turn = data.turn
 let times = data.state.times
 let players = data.usernames
 let stage = data.stage
@@ -19,7 +18,6 @@ let pgn = data.state.pgn
 //////////////// initialization ///////////////////////
 
 //// chess ////
-var premoves = []
 if(stage === 'pre-game') { //TODO: deepCopy IN COSTRUCTOR NOT HERE!!!
   var game = new Chess(fen, deepCopy(sparePieces)) //TODO: won't this cause name conflict with chess and app?
 // if player joins midgame
@@ -41,6 +39,7 @@ var config = {
   onDragStart: onDragStart,
   onDrop: onDrop,
   onSnapEnd: onSnapEnd,
+  onRightClick: onRightClick,
   sparePieces: deepCopy(sparePieces),
 }
 var board = Chessboard('myBoard', config)
@@ -81,7 +80,7 @@ if(stage === 'pre-game') {
   white_timer.hide()
   black_timer.hide()
 } else if(stage === 'playing') {
-  if(turn === 'w') {
+  if(game.turn() === 'w') {
     white_timer.start()
   } else {
     black_timer.start()
@@ -153,24 +152,51 @@ function start_game(evt) {
 }
 
 function backward_move(evt) {
-  updateBoardToMove(board.move_count() - 1)
+  board.clearPremoves()
+  var state = game.get_state(board.move_count() - 1)
+  updateBoardToState(state)
   // sanity check
   setTimeout(() => {console.log(game.ascii() + '\n')}, 50)
   setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
 }
 
 function forward_move(evt) {
-  updateBoardToMove(board.move_count() + 1)
+  var state = game.get_state(board.move_count() + 1)
+  updateBoardToState(state)
   // sanity check
   setTimeout(() => {console.log(game.ascii() + '\n')}, 50)
   setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
 }
 
-function updateBoardToMove(moveNum) {
-  var state = game.get_state(moveNum)
-  board.position(state.fen)
+function updateBoardToState(state, animation = true) {
+  board.position(state.fen, animation)
   board.sparePieces(state.sparePieces)
   board.move_count(state.move_count)
+}
+
+function highlightPremoveSquares() {
+  var game_pos = game.position()
+  var brd_pos = board.position()
+  //highlight squares that aren't the same
+  for (var i in game_pos) {
+    if (!game_pos.hasOwnProperty(i)) continue
+
+    if (brd_pos.hasOwnProperty(i) && brd_pos[i] === game_pos[i]) {
+      delete brd_pos[i]
+      delete game_pos[i]
+    }
+  }
+
+  var squares = []
+  for(var i in game_pos) {
+    squares.push(i)
+  }
+  for(var i in brd_pos) {
+    squares.push(i)
+  }
+
+  board.clearPremoveHighlights()
+  board.highlightSquaresRed(squares)
 }
 
 function viewingHistory() {
@@ -190,8 +216,7 @@ function reset_game(evt) {
   $start_button.css('display', '')
   $start_button.attr('disabled', 'disabled')
   // chess
-  game.load(fen)
-  game.loadSpares(sparePieces)
+  game.reset()
   // board
   resetBoard(fen, sparePieces)
   // status
@@ -209,10 +234,11 @@ function reset_game(evt) {
   server.emit('reset_game', fen, sparePieces)
 }
 
+// TODO: this should be in board
 function resetBoard(fen, sparePieces) {
   board.orientation('white')
+  board.move_count(0)
   board.position(fen)
-  // reset spare pieces
   board.sparePieces(sparePieces)
   // reset usernames
   sidebar.clearBoardUsernames()
@@ -240,38 +266,36 @@ function gameIsOver() {
 const server = io('/',  { query: "gameId=" + game_id + "&username=" + myUsername})
 
 // opponent moved
-server.on('move', (move, whiteClock, blackClock) => { //TODO: this function shares code with onDrop
-
-  board.position(game.fen(), false)
-  board.sparePieces(game.sparePieces())
-  board.clearPremoveHighlights() //TODO: this should be controled by chessboard
+server.on('move', (move, whiteClock, blackClock) => {
 
   game.move(move)
-  board.move(move)
 
-  var m = premoves.shift()
-  var pm = game.move(m)
-  if(pm) {
-    board.move(pm, false)
-    board.premove(...premoves)
-    server.emit('move', pm, 0)
-  } else {
-    premoves = []
-    // update turn
-    turn = turn === 'w' ? 'b' : 'w'
-    // update timers
-    updateTimers()
+  // if not vewing history
+  if(board.move_count() === game.move_count() - 1) {
+    // update board to move
+    var state = game.get_state(game.move_count())
+    var opponentColor = game.turn() === 'w' ? 'b' : 'w'
+    updateBoardToState(state, opponentColor)
+
+    var m = board.getPremove()
+    var pm = game.move(m)
+    // execute premove
+    if(pm) {
+      board.move(pm, false)
+      state = game.premove_state(board.getPremoves())
+      updateBoardToState(state, false)
+      highlightPremoveSquares()
+
+      server.emit('move', pm, 0)
+    // premove not valid
+    } else {
+      board.clearPremoves()
+    }
+
   }
-
+  
+  updateTimers()
   updateStatus()
-
-  // if(previousMoves.length === 0) {
-    
-  // } else {
-  //   newMoves.push(move)
-  //   // TODO: if I already have a premove, do it & add move to previousMoves instead of newMoves
-  //   // timers should be updated
-  // }
 
   // correct the clocks
   white_timer.time(whiteClock)
@@ -446,17 +470,19 @@ function deepCopy(obj) {
     return copy
 }
 
+function onRightClick() {
+  var state = game.get_state(game.move_count())
+  updateBoardToState(state)
+  board.clearPremoves()
+}
+
 function onDragStart (source, piece, position, orientation) {
   // do not pick up pieces if the game is over
   if (game.game_over()) return false
   // do not pick up pieces if the game hasn't started
   if(stage !== 'playing') return false
   // do not pick up pieces if user is checking history
-  if(viewingHistory()) {
-    console.log(board.move_count())
-    console.log(game.move_count())
-    return false
-  } 
+  if(viewingHistory()) return false
 
   // only pick up your pieces
   if((piece.search(/^b/) !== -1 && white_player === myUsername) ||
@@ -477,10 +503,21 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
   // if it's not our turn, then premove
   if ((game.turn() === 'w' && draggedPiece.search(/^b/) !== -1) ||
       (game.turn() === 'b' && draggedPiece.search(/^w/) !== -1)) {
-        if(source === target) return 'snapback' 
+        if(source === target) {
+          return 'snapback'
+        }
 
-        premoves.push(m)
-        return 'premove'
+        board.addPremove(m)
+        var state = game.premove_state(board.getPremoves())
+        if(state === null || !state.allExecuted) {
+          board.popPremove()
+          return 'snapback'
+        } else {
+          updateBoardToState(state, false)
+          highlightPremoveSquares()
+
+          return 'premove'
+        }
   }
 
   // make a move
@@ -488,8 +525,6 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
   // illegal move
   if (move === null) return 'snapback'
 
-  // update turn
-  turn = turn === 'w' ? 'b' : 'w'
   // update timers
   var elapsedTime = updateTimers()
 
@@ -503,7 +538,7 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
 }
 
 function updateTimers() {
-  if(turn === 'w') {
+  if(game.turn() === 'w') {
     white_timer.start()
     black_timer.stop()
     return black_timer.elapsedTime()
@@ -517,7 +552,7 @@ function updateTimers() {
 // update the board position after the piece snap
 // for castling, en passant, pawn promotion
 function onSnapEnd () {
-  if(premoves.length === 0) { //TODO: change this
+  if(!board.arePremoves()) {
     board.position(game.fen())
   }
 }

@@ -595,6 +595,10 @@
       config.pieceTheme = RELATIVE_PATH + 'img/chesspieces/wikipedia/{piece}.png'
     }
 
+    if(typeof config.onRightClick === 'undefined') {
+      config.onRightClick = () => {}
+    }
+
     // animation speeds
     if (!validAnimationSpeed(config.appearSpeed)) config.appearSpeed = DEFAULT_APPEAR_SPEED
     if (!validAnimationSpeed(config.moveSpeed)) config.moveSpeed = DEFAULT_MOVE_SPEED
@@ -1075,7 +1079,7 @@
 
     // calculate an array of animations that need to happen in order to get
     // from pos1 to pos2
-    function calculateAnimations (pos1, pos2) {
+    function calculateAnimations (pos1, pos2, animColor) {
       // make copies of both
       pos1 = deepCopy(pos1)
       pos2 = deepCopy(pos2)
@@ -1096,6 +1100,8 @@
       // find all the "move" animations
       for (i in pos2) {
         if (!pos2.hasOwnProperty(i)) continue
+        // animate only the specified color
+        if (animColor && (animColor !== true && pos2[i].charAt(0) !== animColor)) continue
 
         var closestPiece = findClosestPiece(pos1, pos2[i], i)
         if (closestPiece) {
@@ -1115,6 +1121,8 @@
       // "add" animations
       for (i in pos2) {
         if (!pos2.hasOwnProperty(i)) continue
+        // animate only the specified color
+        if (animColor && (animColor !== true && pos2[i].charAt(0) !== animColor)) continue
 
         animations.push({
           type: 'add',
@@ -1128,6 +1136,8 @@
       // "clear" animations
       for (i in pos1) {
         if (!pos1.hasOwnProperty(i)) continue
+        // animate only the specified color
+        if (animColor && (animColor !== true && pos1[i].charAt(0) !== animColor)) continue
 
         // do not clear a piece if it is on a square that is the result
         // of a "move", ie: a piece capture
@@ -1557,9 +1567,8 @@
         dropDraggedPieceOnSquare(location)
         move_count++
       } else if(action === 'premove') {
+        //basically, just do it, so that you are no longer dragging that piece
         dropDraggedPieceOnSquare(location)
-        highlightRed(location)
-        premoves.push(draggedPieceSource + '-' + location)
       }
     }
 
@@ -1645,25 +1654,39 @@
       return newPos
     }
 
-    widget.premove = function() {
-      widget.move(...arguments, false)
-      // highlight premove squares
-      for(var i in arguments) {
-        var square = arguments[i].to
-        highlightRed(square)
-        premoves.push(moveToStr(arguments[i]))
-      }
+    widget.addPremove = function(move) {
+      premoves.push(move)
     }
 
-    widget.undoPremove = function() {
-      var premove = premoves.pop()
-      widget.undo(premove)
-      removeHighlightRed(premove.split('-')[1])
+    widget.getPremove = function() {
+      return premoves.shift()
     }
 
-    // TODO: remove this function
+    widget.popPremove = function() {
+      return premoves.pop()
+    }
+
+    widget.getPremoves = function() {
+      return premoves
+    }
+
+    widget.arePremoves = function() {
+      return premoves.length !== 0
+    }
+
+    widget.clearPremoves = function() {
+      premoves = []
+      removeSquareHighlightsRed()
+    }
+
     widget.clearPremoveHighlights = function() {
       removeSquareHighlightsRed()
+    }
+
+    widget.highlightSquaresRed = function(squares) {
+      for(var i in squares) {
+        highlightRed(squares[i])
+      }
     }
 
     widget.orientation = function (arg) {
@@ -1756,7 +1779,7 @@
       return s
     }
 
-    widget.position = function (position, useAnimation) {
+    widget.position = function (position, animation) {
       // no arguments, return the current position
       if (arguments.length === 0) {
         return deepCopy(currentPosition)
@@ -1783,12 +1806,12 @@
         return
       }
 
-      // default for useAnimations is true
-      if (useAnimation !== false) useAnimation = true
+      // default for animations is true (do all animations)
+      if (typeof animation === 'undefined') animation = true
 
-      if (useAnimation) {
+      if (animation) {
         // start the animations
-        var animations = calculateAnimations(currentPosition, position)
+        var animations = calculateAnimations(currentPosition, position, animation)
         doAnimations(animations, currentPosition, position)
 
         // set the new position
@@ -1865,7 +1888,7 @@
       if (!config.draggable) return
 
       // do nothing if there is no piece on this square
-      var square = $(this).attr('data-square')
+      var square = $(evt.currentTarget).attr('data-square')
       if (!validSquare(square)) return
       if (!currentPosition.hasOwnProperty(square)) return
 
@@ -2007,8 +2030,20 @@
       // prevent "image drag"
       $('body').on('mousedown mousemove', '.' + CSS.piece, stopDefault)
 
-      // mouse drag pieces
-      $board.on('mousedown', '.' + CSS.square, mousedownSquare)
+      var delegate_click = (evt) => {
+        // left click
+        if(evt.which === 1) {
+          // mouse drag pieces
+          mousedownSquare(evt)
+        // right click
+        } else if(evt.which === 3) {
+          evt.preventDefault()
+          config.onRightClick(evt)
+        }
+      }
+      $board
+          .on('contextmenu', stopDefault, false)
+          .on('mousedown', '.' + CSS.square, delegate_click)
       $container.on('mousedown', '.' + CSS.sparePieces + ' .' + CSS.piece, mousedownSparePiece)
 
       // mouse enter / leave square

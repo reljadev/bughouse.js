@@ -112,7 +112,6 @@ function start_new_game(admin) {
                                    },
                            white_player: null,
                            black_player: null,
-                           turn: 'w',
                            admin: admin,
                            usernames: [],
                            }
@@ -148,7 +147,6 @@ function updateGame(game_id, move) {
     game.info.state.fen = game.game.fen()
     game.info.state.sparePieces = game.game.sparePieces()
     game.info.state.pgn = game.game.pgn()
-    game.info.turn = game.game.turn()
 
     return true
 }
@@ -224,7 +222,7 @@ function getPopUpMessages(g, white_player, black_player, player) {
 }
 
 function updateTimers(game, elapsedTime) {
-    if(game.info.turn === 'w') {
+    if(game.game.turn() === 'w') {
         game.black_timer.stop()
         game.white_timer.start()
         refundLagTime(game.black_timer, elapsedTime)
@@ -321,7 +319,7 @@ io.on('connection', (client) => {
                                                                   game.white_timer.time(),
                                                                   game.black_timer.time())
         } else {
-            client.emit('invalid_move') //TODO: figure out if this is needed for premove
+            client.emit('invalid_move', move) //TODO: figure out if this is needed for premove
         }
     })
 

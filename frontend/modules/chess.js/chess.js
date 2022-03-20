@@ -162,6 +162,8 @@ var Chess = function (fen, sparePieces) {
   var half_moves = 0
   var move_number = 1
   var history = []
+  var start_fen = null
+  var start_spares = null
   var header = {}
   var comments = {}
 
@@ -170,8 +172,10 @@ var Chess = function (fen, sparePieces) {
    */
   if (typeof fen === 'undefined') {
     load(DEFAULT_POSITION)
+    start_fen = DEFAULT_POSITION
   } else {
     load(fen)
+    start_fen = fen
   }
 
   //load spare pieces
@@ -179,6 +183,7 @@ var Chess = function (fen, sparePieces) {
     var sparePieces = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
                        'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}}
   }
+  start_spares = deepCopy(sparePieces)
 
   function clear(keep_headers) {
     if (typeof keep_headers === 'undefined') {
@@ -218,7 +223,8 @@ var Chess = function (fen, sparePieces) {
   }
 
   function reset() {
-    load(DEFAULT_POSITION)
+    load(start_fen)
+    loadSpares(start_spares)
   }
 
   function load(fen, keep_headers) {
@@ -273,6 +279,10 @@ var Chess = function (fen, sparePieces) {
     update_setup(generate_fen())
 
     return true
+  }
+
+  function loadSpares(spares) {
+    sparePieces = deepCopy(spares)
   }
 
   /* TODO: this function is pretty much crap - it validates structure but
@@ -591,6 +601,12 @@ var Chess = function (fen, sparePieces) {
       }
     }
 
+    // are we ignoring occupied squares
+    var ignore = false
+    if(typeof options !== 'undefined' && 'ignoreOccupiedSquares' in options) {
+      if(options.ignoreOccupiedSquares) ignore = true
+    }
+
     // for each of our pieces on the board, generate available moves
     for (var i = first_sq; i <= last_sq; i++) {
       // did we run off the end of the board
@@ -609,12 +625,12 @@ var Chess = function (fen, sparePieces) {
       if (piece.type === PAWN && (piece_type === true || piece_type === PAWN)) {
         // single square, non-capturing
         var square = i + PAWN_OFFSETS[us][0]
-        if (board[square] == null) {
+        if (board[square] == null || ignore) {
           add_move(board, moves, i, square, BITS.NORMAL)
 
           // double square
           var square = i + PAWN_OFFSETS[us][1]
-          if (second_rank[us] === rank(i) && board[square] == null) {
+          if (second_rank[us] === rank(i) && (board[square] == null || ignore)) {
             add_move(board, moves, i, square, BITS.BIG_PAWN)
           }
         }
@@ -624,7 +640,7 @@ var Chess = function (fen, sparePieces) {
           var square = i + PAWN_OFFSETS[us][j]
           if (square & 0x88) continue
 
-          if (board[square] != null && board[square].color === them) {
+          if ((board[square] != null && board[square].color === them) || ignore) {
             add_move(board, moves, i, square, BITS.CAPTURE)
           } else if (square === ep_square) {
             add_move(board, moves, i, ep_square, BITS.EP_CAPTURE)
@@ -641,7 +657,7 @@ var Chess = function (fen, sparePieces) {
             square += offset
             if (square & 0x88) break
 
-            if (board[square] == null) {
+            if (board[square] == null || ignore) {
               add_move(board, moves, i, square, BITS.NORMAL)
             } else {
               if (board[square].color === us) break
@@ -677,7 +693,7 @@ var Chess = function (fen, sparePieces) {
               i += 7
               continue
             }
-            if(board[i] == null) {
+            if(board[i] == null || ignore) {
               add_move(board, moves, 'offboard', i, BITS.INSERT, curr_piece_type)
             }
           }
@@ -695,7 +711,7 @@ var Chess = function (fen, sparePieces) {
               i += 7
               continue
             }
-            if(board[i] == null) {
+            if(board[i] == null || ignore) {
               add_move(board, moves, 'offboard', i, BITS.INSERT, curr_piece_type)
             }
           }
@@ -1149,6 +1165,35 @@ var Chess = function (fen, sparePieces) {
     return move
   }
 
+  function find_move(move, moves) {
+    var move_obj = null
+
+    /* convert the pretty move object to an ugly move object */
+    for (var i = 0, len = moves.length; i < len; i++) {
+
+      // for spare pieces
+      if((moves[i].from === 'offboard' && move.from === 'offboard') &&
+          move.to === algebraic(moves[i].to) &&
+          move.piece === moves[i].piece) {
+        move_obj = moves[i]
+        break
+      }
+
+      // for normal moves
+      if (
+        move.from === algebraic(moves[i].from) &&
+        move.to === algebraic(moves[i].to) &&
+        (!('promotion' in moves[i]) ||
+          move.promotion === moves[i].promotion)
+      ) {
+        move_obj = moves[i]
+        break
+      }
+    }
+
+    return move_obj
+  }
+
   /* this function is used to uniquely identify ambiguous moves */
   function get_disambiguator(move, moves) {
 
@@ -1507,7 +1552,7 @@ var Chess = function (fen, sparePieces) {
     },
 
     loadSpares: function(spares) {
-      sparePieces = spares //TODO: deep copy
+      loadSpares(spares)
     },
 
     reset: function () {
@@ -1619,6 +1664,25 @@ var Chess = function (fen, sparePieces) {
       }
 
       return output
+    },
+
+    position: function() {
+      var pos = {}
+
+      for(var i = SQUARES.a8; i<= SQUARES.h1; i++) {
+        // did we run off the edge of the board
+        if(i & 0x88) {
+          i += 7
+          continue
+        }
+
+        if(board[i] !== null) {
+          var piece = board[i].color + board[i].type.toUpperCase()
+          pos[algebraic(i)] = piece
+        }
+      }
+
+      return pos
     },
 
     pgn: function (options) {
@@ -2002,29 +2066,7 @@ var Chess = function (fen, sparePieces) {
         move_obj = move_from_san(move, sloppy)
       } else if (typeof move === 'object') {
         var moves = generate_moves()
-
-        /* convert the pretty move object to an ugly move object */
-        for (var i = 0, len = moves.length; i < len; i++) {
-
-          // for spare pieces
-          if((moves[i].from === 'offboard' && move.from === 'offboard') &&
-              move.to === algebraic(moves[i].to) &&
-              move.piece === moves[i].piece) {
-            move_obj = moves[i]
-            break
-          }
-
-          // for normal moves
-          if (
-            move.from === algebraic(moves[i].from) &&
-            move.to === algebraic(moves[i].to) &&
-            (!('promotion' in moves[i]) ||
-              move.promotion === moves[i].promotion)
-          ) {
-            move_obj = moves[i]
-            break
-          }
-        }
+        move_obj = find_move(move, moves)
       }
 
       /* failed to find move */
@@ -2040,6 +2082,40 @@ var Chess = function (fen, sparePieces) {
       make_move(move_obj)
 
       return pretty_move
+    },
+
+    premove_state: function(premoves) {
+
+      // memorize current state of the game so it can be restored
+      var original_state = this.pgn()
+
+      // execute premoves
+      var allExecuted = true
+      for(var i in premoves) {
+        turn = turn === WHITE ? BLACK : WHITE
+        var moves = generate_moves({legal: false,
+                                    ignoreOccupiedSquares: true})
+        var move_obj = find_move(premoves[i], moves)
+
+        // invalid premove
+        if (!move_obj) {
+          allExecuted = false
+          break
+        }
+
+        make_move(move_obj)
+      }
+
+      // save state after premoves
+      var fen = generate_fen()
+      var spares = sparePieces
+
+      // restore game
+      reset()
+      this.load_pgn(original_state)
+
+      return {fen: fen, spares: spares, 
+              move_count: history.length, allExecuted: allExecuted}
     },
 
     undo: function () {
