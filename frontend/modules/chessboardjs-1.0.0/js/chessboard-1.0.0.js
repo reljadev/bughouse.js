@@ -63,6 +63,7 @@
   CSS['sparePiecesTop'] = 'spare-pieces-top-4028b'
   CSS['square'] = 'square-55d63'
   CSS['spare_square'] = 'spare_square-871g9'
+  CSS['promotion_square'] = 'promotion_square-nm8l0'
   CSS['display_count'] = 'display_count-7654a'
   CSS['white'] = 'white-1e1d7'
 
@@ -1679,13 +1680,44 @@
       removeSquareHighlightsRed()
     }
 
-    widget.clearPremoveHighlights = function() {
-      removeSquareHighlightsRed()
-    }
-
     widget.highlightSquaresRed = function(squares) {
+      removeSquareHighlightsRed()
+
       for(var i in squares) {
         highlightRed(squares[i])
+      }
+    }
+
+    widget.promotion = function(square, piece) {
+      if(piece.charAt(1).toLowerCase() !== 'p') return null
+
+      var tile = square.charAt(0)
+      var row = square.charAt(1)
+      var squares = null
+      if(row === '1') {
+        squares = [tile + '1', tile + '2', tile + '3', tile + '4']
+      } else if(row === '8') {
+        squares = [tile + '8', tile + '7', tile + '6', tile + '5']
+      } else {
+        return null
+      }
+
+      var color = piece.charAt(0)
+      var pieces = [color + 'Q', color + 'R', color + 'N', color + 'B']
+      
+      for(var i in squares) {
+        var p = pieces[i]
+
+        var html = '<div class="' + CSS.promotion_square + '"' + 
+                  'style="width:' + squareSize + 'px;height:' + squareSize + 'px;"></div>'
+        html += '<img src="' + buildPieceImgSrc(p) + '"' +
+                'style="width:' + squareSize + 'px;height:' + squareSize + 'px;"></img>'
+        var $promotionSquare = $(html)
+        $('body').append($promotionSquare)
+
+        var sq = squares[i]
+        var promotioSquareOffset = $('#' + squareElsIds[sq]).offset()
+        $promotionSquare.offset(promotioSquareOffset)
       }
     }
 
@@ -2037,7 +2069,6 @@
           mousedownSquare(evt)
         // right click
         } else if(evt.which === 3) {
-          evt.preventDefault()
           config.onRightClick(evt)
         }
       }

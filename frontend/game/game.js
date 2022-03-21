@@ -195,7 +195,6 @@ function highlightPremoveSquares() {
     squares.push(i)
   }
 
-  board.clearPremoveHighlights()
   board.highlightSquaresRed(squares)
 }
 
@@ -496,11 +495,16 @@ function onDragStart (source, piece, position, orientation) {
 }
 
 function onDrop (source, target, draggedPiece, newPosition, oldPosition, currentOrientation) {
+
+  // get promotion piece
+  var promotion = null
+  if(source !== 'offboard') {
+    promotion = board.promotion(target, draggedPiece)
+  }
   // create move
-  var promotion = source === 'offboard' ? false : 'q'
   var m = {from: source,
            to: target,
-           promotion: promotion, // NOTE: always promote to a queen for example simplicity
+           promotion: promotion,
            piece: draggedPiece.charAt(1).toLowerCase()
           }
 
