@@ -600,6 +600,10 @@
       config.onRightClick = () => {}
     }
 
+    if(typeof config.onPiecePromotion === 'undefined') {
+      config.onPiecePromotion = () => {}
+    }
+
     // animation speeds
     if (!validAnimationSpeed(config.appearSpeed)) config.appearSpeed = DEFAULT_APPEAR_SPEED
     if (!validAnimationSpeed(config.moveSpeed)) config.moveSpeed = DEFAULT_MOVE_SPEED
@@ -1419,6 +1423,73 @@
       isDragging = false
     }
 
+    function promoteDraggedPiece(square) {
+      removeSquareHighlights()
+      // hide dragged piece
+      $draggedPiece.css('display', 'none')
+
+      // display promotion pieces
+      var tile = square.charAt(0)
+      var row = square.charAt(1)
+      if(row === '1') {
+        var squares = [tile + '1', tile + '2', tile + '3', tile + '4']
+      } else if(row === '8') {
+        var squares = [tile + '8', tile + '7', tile + '6', tile + '5']
+      }
+
+      var color = draggedPiece.charAt(0)
+      var pieces = [color + 'Q', color + 'R', color + 'N', color + 'B']
+      
+      for(var i in squares) {
+        var p = pieces[i]
+
+        var html = '<div class="' + CSS.promotion_square + '"' +
+                  'square="' + square + '" piece="' + p + '"' +
+                  'style="width:' + squareSize + 'px;height:' + squareSize + 'px;">'
+        html += '<img src="' + buildPieceImgSrc(p) + '"' +
+                'style="width:' + squareSize + 'px;height:' + squareSize + 'px;"></img>'
+        html += '</div>'
+        var $promotionSquare = $(html)
+        $promotionSquare.on('mousedown', pickedPromotionPiece) //TODO: should be a left click only
+        $('body').append($promotionSquare)
+
+        var sq = squares[i]
+        var promotioSquareOffset = $('#' + squareElsIds[sq]).offset()
+        $promotionSquare.offset(promotioSquareOffset)
+      }
+
+      disableClicks()
+
+      // set state
+      isDragging = false
+    }
+
+    // TODO: where to place this?
+    function pickedPromotionPiece(evt) {
+      var $promotion_square = $(evt.currentTarget)
+      var target = $promotion_square.attr('square')
+      var piece = $promotion_square.attr('piece')
+      var color = piece.charAt(0)
+      var promotionPiece = piece.charAt(1).toLowerCase()
+      config.onPiecePromotion(draggedPieceSource, target, color, draggedPiece, promotionPiece)
+      clearPromotionSquares()
+      enableClicks()
+    }
+
+    function disableClicks() {
+      clicksEnabled = false
+      $container.off('mousedown', mousedownSparePiece)
+    }
+
+    function enableClicks() {
+      clicksEnabled = true
+      $container.on('mousedown', mousedownSparePiece)
+    }
+
+    function clearPromotionSquares() {
+      $('body').find('.' + CSS.promotion_square).remove()
+    }
+
     function beginDraggingPiece (source, piece, x, y) {
       // run their custom onDragStart function
       // their custom onDragStart function can cancel drag start
@@ -1554,7 +1625,7 @@
           currentOrientation
         )
 
-        if (result === 'snapback' || result === 'trash' || result === 'premove') {
+        if (['snapback', 'trash', 'premove', 'promotion'].includes(result)) {
           action = result
         }
       }
@@ -1570,6 +1641,8 @@
       } else if(action === 'premove') {
         //basically, just do it, so that you are no longer dragging that piece
         dropDraggedPieceOnSquare(location)
+      } else if(action === 'promotion') {
+        promoteDraggedPiece(location)
       }
     }
 
@@ -1641,8 +1714,6 @@
 
         var tmp = move.split('-')
         moves[tmp[0]] = tmp[1]
-
-        move_count++
       }
 
       // calculate position from moves
@@ -1678,6 +1749,8 @@
     widget.clearPremoves = function() {
       premoves = []
       removeSquareHighlightsRed()
+      clearPromotionSquares()
+      enableClicks()
     }
 
     widget.highlightSquaresRed = function(squares) {
@@ -1685,39 +1758,6 @@
 
       for(var i in squares) {
         highlightRed(squares[i])
-      }
-    }
-
-    widget.promotion = function(square, piece) {
-      if(piece.charAt(1).toLowerCase() !== 'p') return null
-
-      var tile = square.charAt(0)
-      var row = square.charAt(1)
-      var squares = null
-      if(row === '1') {
-        squares = [tile + '1', tile + '2', tile + '3', tile + '4']
-      } else if(row === '8') {
-        squares = [tile + '8', tile + '7', tile + '6', tile + '5']
-      } else {
-        return null
-      }
-
-      var color = piece.charAt(0)
-      var pieces = [color + 'Q', color + 'R', color + 'N', color + 'B']
-      
-      for(var i in squares) {
-        var p = pieces[i]
-
-        var html = '<div class="' + CSS.promotion_square + '"' + 
-                  'style="width:' + squareSize + 'px;height:' + squareSize + 'px;"></div>'
-        html += '<img src="' + buildPieceImgSrc(p) + '"' +
-                'style="width:' + squareSize + 'px;height:' + squareSize + 'px;"></img>'
-        var $promotionSquare = $(html)
-        $('body').append($promotionSquare)
-
-        var sq = squares[i]
-        var promotioSquareOffset = $('#' + squareElsIds[sq]).offset()
-        $promotionSquare.offset(promotioSquareOffset)
       }
     }
 
@@ -2058,20 +2098,24 @@
     // Initialization
     // -------------------------------------------------------------------------
 
+    // TODO: move this
+    var clicksEnabled = true
+    function delegate_click(evt) {
+      // left click
+      if(evt.which === 1 && clicksEnabled) {
+        // mouse drag pieces
+        mousedownSquare(evt)
+      // right click
+      } else if(evt.which === 3) {
+        config.onRightClick(evt)
+      }
+    }
+
     function addEvents () {
       // prevent "image drag"
       $('body').on('mousedown mousemove', '.' + CSS.piece, stopDefault)
 
-      var delegate_click = (evt) => {
-        // left click
-        if(evt.which === 1) {
-          // mouse drag pieces
-          mousedownSquare(evt)
-        // right click
-        } else if(evt.which === 3) {
-          config.onRightClick(evt)
-        }
-      }
+      
       $board
           .on('contextmenu', stopDefault, false)
           .on('mousedown', '.' + CSS.square, delegate_click)

@@ -40,6 +40,7 @@ var config = {
   onDrop: onDrop,
   onSnapEnd: onSnapEnd,
   onRightClick: onRightClick,
+  onPiecePromotion: onPiecePromotion,
   sparePieces: deepCopy(sparePieces),
 }
 var board = Chessboard('myBoard', config)
@@ -495,27 +496,45 @@ function onDragStart (source, piece, position, orientation) {
 }
 
 function onDrop (source, target, draggedPiece, newPosition, oldPosition, currentOrientation) {
-
-  // get promotion piece
-  var promotion = null
-  if(source !== 'offboard') {
-    promotion = board.promotion(target, draggedPiece)
+  // promotion move
+  if(source !== 'offboard' &&
+      draggedPiece.charAt(1).toLowerCase() === 'p' &&
+      (target.charAt(1) === '1' || target.charAt(1) === '8')) {
+    return 'promotion'
   }
+
+  // regular move
   // create move
   var m = {from: source,
            to: target,
-           promotion: promotion,
+           color: draggedPiece.charAt(0),
            piece: draggedPiece.charAt(1).toLowerCase()
           }
+  // do it
+  return executeMove(m)
+}
 
+function onPiecePromotion(source, target, color, piece, promotionPiece) {
+  // create move
+  var move = {from: source,
+              to: target,
+              color: color,
+              promotion: promotionPiece,
+              piece: piece
+            }
+  // do it
+  executeMove(move)
+}
+
+function executeMove(move) {
   // if it's not our turn, then premove
-  if ((game.turn() === 'w' && draggedPiece.search(/^b/) !== -1) ||
-      (game.turn() === 'b' && draggedPiece.search(/^w/) !== -1)) {
-        if(source === target) {
+  if ((game.turn() === 'w' && move.color === 'b') ||
+      (game.turn() === 'b' && move.color === 'w')) {
+        if(move.to === move.from) {
           return 'snapback'
         }
 
-        board.addPremove(m)
+        board.addPremove(move)
         var state = game.premove_state(board.getPremoves())
         if(state === null || !state.allExecuted) {
           board.popPremove()
@@ -529,20 +548,22 @@ function onDrop (source, target, draggedPiece, newPosition, oldPosition, current
   }
 
   // make a move
-  var move = game.move(m)
+  var m = game.move(move)
   // illegal move
-  if (move === null) return 'snapback'
+  if (m === null) return 'snapback'
 
   // update timers
   var elapsedTime = updateTimers()
 
   // send move to server
-  server.emit('move', move, elapsedTime)
+  server.emit('move', m, elapsedTime)
 
   updateStatus()
   // sanity check
   setTimeout(() => {console.log(game.ascii() + '\n')}, 200)
   setTimeout(() => {console.log(board.ascii() + '\n\n')}, 300)
+
+  return 'drop'
 }
 
 function updateTimers() {
