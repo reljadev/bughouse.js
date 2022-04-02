@@ -14,8 +14,14 @@ let start_fen = data.state.start_fen
 let start_spares = data.state.start_spares
 let pgn = data.state.pgn
 
-
 //////////////// initialization ///////////////////////
+
+//// session id func ////
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
 
 //// chess ////
 if(stage === 'pre-game') { //TODO: deepCopy IN COSTRUCTOR NOT HERE!!!
@@ -260,10 +266,13 @@ function gameIsOver() {
 }
 
 //////////////// socket io ///////////////////////
+console.log(getCookie('user_id'))
 
 // connect to server
 // NOTE: io is imported in game.ejs
-const server = io('/',  { query: "gameId=" + game_id + "&username=" + myUsername})
+const server = io('/',  { query: "gameId=" + game_id + 
+                                  "&user_id=" + getCookie('user_id') + //TODO: is this vulnerable to attacks?
+                                  "&username=" + myUsername })
 
 // opponent moved
 server.on('move', (move, whiteClock, blackClock) => {
@@ -394,7 +403,6 @@ server.on('reset_game', (fen, sparePieces) => {
 })
 
 // some player disconnected
-// TODO: but what if he is playing??
 server.on('disconnected', (username) => {
   sidebar.removePlayer(username)
 })

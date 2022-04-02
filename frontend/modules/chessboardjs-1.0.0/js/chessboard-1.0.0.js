@@ -1477,12 +1477,12 @@
     }
 
     function disableClicks() {
-      clicksEnabled = false
+      canPickupPieces = false
       $container.off('mousedown', mousedownSparePiece)
     }
 
     function enableClicks() {
-      clicksEnabled = true
+      canPickupPieces = true
       $container.on('mousedown', mousedownSparePiece)
     }
 
@@ -1986,7 +1986,8 @@
     }
 
     function mousedownSparePiece (evt) {
-      var piece = $(this).attr('data-piece')
+      var piece = $(evt.currentTarget).attr('data-piece')
+      if(typeof piece === 'undefined') return
 
       beginDraggingPiece('offboard', piece, evt.pageX, evt.pageY)
     }
@@ -2099,10 +2100,10 @@
     // -------------------------------------------------------------------------
 
     // TODO: move this
-    var clicksEnabled = true
+    var canPickupPieces = true
     function delegate_click(evt) {
       // left click
-      if(evt.which === 1 && clicksEnabled) {
+      if(evt.which === 1 && canPickupPieces) {
         // mouse drag pieces
         mousedownSquare(evt)
       // right click

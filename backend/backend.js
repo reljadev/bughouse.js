@@ -18,23 +18,63 @@ const server = http.createServer(function (request, response) {
     var fileName = parsed_url.fileName
     var filePath = parsed_url.filePath
     var params = parsed_url.params
-    var currentGame = {}
+    // parse cookies
+    var cookies = utils.parse_cookies(request)
+    var user_id = cookies.user_id
 
-    //TODO: first session id should be checked
-    // join existing game
+    // if user wants game.ejs or landing page
+    if(fileName === '' || fileName === 'landing_page.html' || fileName === 'game.ejs') {
+        // & user id is valid
+        if(isValidId(user_id)) {
+            // & user already playing in game
+            var g = getGameByUserId(user_id)
+            if(g && g.info.id !== params.gameId) {
+                // redirect user to that game
+                var username = null
+                for(var i in g.players) {
+                    if(g.players[i].user_id === user_id) {
+                        username = g.players[i].username
+                    }
+                }
+                
+                response.writeHead(301, {
+                        Location: `/game.ejs?gameId=${g.info.id}&username=${username}`
+                    }).end();
+                return
+            }
+
+        // generate new id for user
+        } else {
+            user_id = uuid(16)
+        }
+    }
+    
+    var currentGame = null
+
     if(fileName === 'game.ejs') {
+        // join existing game
         if(params.hasOwnProperty('gameId') && 
            games.hasOwnProperty(params['gameId'])) {
-            // TODO: retrieve game information
             // this info should be vetted because it's coming form client side (fen & sparePieces)
             // and user can temper with it, i.e. insert executable code
             currentGame = games[params['gameId']]
+
+            //TODO ID: if currentGame doesn't have player with this id, add it
+            if(!gameHasPlayer(currentGame, user_id)) {
+                currentGame.players.unshift({user_id: user_id,
+                                                username: null,
+                                                socket: null})
+            }
             
         // start new game
         } else {
             // set current game
             var admin = params.username
             currentGame = start_new_game(admin)
+            //TODO ID: add player with this id
+            currentGame.players.unshift({user_id: user_id,
+                                            username: null,
+                                            socket: null})
         }
     }
 
@@ -59,10 +99,12 @@ const server = http.createServer(function (request, response) {
             }
         }
         else {
-            response.writeHead(200, { 'Content-Type': contentType });
+            response.writeHead(200, { 'Content-Type': contentType,
+                                      'Set-Cookie': 'user_id=' +  user_id});
             // renderize page
             if(fileName === 'game.ejs') {
-                var renderizedPage = ejs.render(content, {username: params.username, data: currentGame.info,
+                var renderizedPage = ejs.render(content, {username: params.username, 
+                                                          data: currentGame.info,
                                                           white_time: currentGame.white_timer.time(),
                                                           black_time: currentGame.black_timer.time()});
                 response.end(renderizedPage, 'utf-8'); // nor here
@@ -78,15 +120,20 @@ const server = http.createServer(function (request, response) {
 ///////////////// GAME LOGIC ///////////////////////
 var games = {}
 
-function uuid () {
-    return 'xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx-xxxx'.replace(/x/g, function (c) {
+function uuid (length) {
+    return ('xxxx-'.repeat(length / 4 - 1).concat('xxxx')).replace(/x/g, function (c) {
       var r = (Math.random() * 16) | 0
       return r.toString(16)
     })
 }
 
+function isValidId(id) {
+    return typeof id === 'string' &&
+                    id.match(/^[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}$/)
+}
+
 function start_new_game(admin) {
-    var game_id = uuid()
+    var game_id = uuid(8)
     //TODO: fen, sparePieces and time should be set up by game creator
     var fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
     var sparePieces = {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
@@ -119,6 +166,31 @@ function start_new_game(admin) {
     games[game_id] = new_game
 
     return new_game
+}
+
+function gameHasPlayer(game, id) {
+    for(var i in game.players) {
+        if(game.players[i].user_id === id) {
+            return true
+        }
+    }
+
+    return false
+}
+
+function getGameByUserId(user_id) {
+    if(typeof user_id === 'undefined') return false
+
+    for(var i in games) {
+        var g = games[i]
+        for(var j in g.players) {
+            if(g.players[j].user_id === user_id) {
+                return g
+            }
+        }
+    }
+    
+    return false
 }
 
 function deepCopy(obj) { //TODO: replace this or move it somewhere
@@ -159,7 +231,7 @@ function gameOver(game, username) {
                                     game.info.white_player, game.info.black_player,
                                     username)
     for(var i in game.players) {
-        var player = game.players[i]
+        var player = game.players[i].socket
         // white player
         if(player.data.username === game.info.white_player) {
             player.emit('game_is_over', messages.white)
@@ -248,15 +320,26 @@ io.on('connection', (client) => {
 
     // join game
     var game_id = client.request._query['gameId']
+    var user_id = client.request._query['user_id'] //TODO: is this safe?
     var username = client.request._query['username']
     if((typeof game_id !== 'undefined' && games.hasOwnProperty(game_id)) &&
        (typeof username !== 'undefined')) {
         client.join(game_id)
         client.data.game_id = game_id
-        games[game_id].players.unshift(client)
-
+        client.data.user_id = user_id
         client.data.username = username
         games[game_id].info.usernames.unshift(username)
+
+        // update player username & socket
+        for(var i in games[game_id].players) {
+            var p = games[game_id].players[i]
+            if(p.user_id === user_id) {
+                p.username = username
+                p.socket = client
+                break
+            }
+        }
+
         client.broadcast.to(game_id).emit('joined', username)
     } else {
         //TODO: user should be redirected to landing page
@@ -280,7 +363,6 @@ io.on('connection', (client) => {
         }
     })
 
-    // TODO: i don;t think you need username
     // player removed from chessboard
     client.on('playerRemoved', (color) => {
         client.broadcast.to(client.data.game_id).emit('playerRemoved', color)
@@ -348,12 +430,27 @@ io.on('connection', (client) => {
     // on player disconnect
     client.on('disconnect', () => {
         console.log('A user has disconnected.');
+
         var game_id = client.data.game_id
         var username = client.data.username
-        if(typeof games[game_id] !== 'undefined') {
+
+        var g = games[game_id]
+        if(typeof g !== 'undefined') {
             client.broadcast.to(game_id).emit('disconnected', username)
-            utils.remove_item(games[game_id].players, client)
-            utils.remove_item(games[game_id].info.usernames, username)
+
+            // TODO ID: if user is not playing remove him
+            if(g.info.white_player !== username &&
+                g.info.black_player !== username) {
+                    for(var i in g.players) {
+                        var p = g.players[i]
+                        if(p.username === username) {
+                            g.players.splice(i, 1)
+                            break
+                        }
+                    }
+                    // remove username from usernames
+                utils.remove_item(games[game_id].info.usernames, username)
+            }
         }
     })
 });

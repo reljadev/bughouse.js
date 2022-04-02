@@ -37,6 +37,23 @@ function ext_to_type(filePath) {
     return ext_to_type[extname]
 }
 
+function parse_cookies (request) {
+    const list = {};
+    const cookieHeader = request.headers?.cookie;
+    if (!cookieHeader) return list;
+
+    cookieHeader.split(`;`).forEach(function(cookie) {
+        let [ name, ...rest] = cookie.split(`=`);
+        name = name?.trim();
+        if (!name) return;
+        const value = rest.join(`=`).trim();
+        if (!value) return;
+        list[name] = decodeURIComponent(value);
+    });
+
+    return list;
+}
+
 function remove_item(arr, value) {
     var index = arr.indexOf(value);
     if (index > -1) {
@@ -48,4 +65,5 @@ function remove_item(arr, value) {
 // export all functions
 module.exports = {parse_url: parse_url, 
                   ext_to_type: ext_to_type,
+                  parse_cookies: parse_cookies,
                   remove_item: remove_item,}
