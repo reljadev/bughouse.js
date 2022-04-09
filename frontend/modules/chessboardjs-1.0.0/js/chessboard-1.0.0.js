@@ -304,6 +304,39 @@
     console.assert(!validPositionObject(START_FEN))
   }
 
+  function validSpares(spares) {
+    let keys = Object.keys(spares);
+    let pieces = ['P', 'B', 'N', 'R', 'Q']
+
+    if(keys.length !== 2) return false
+    if(!keys.includes('white') ||
+        !keys.includes('black')) { 
+          return false 
+    }
+    
+    if(Object.keys(spares[keys[0]]).length !== 5 ||
+        Object.keys(spares[keys[1]]).length !== 5) {
+          return false
+    }
+
+    for(let i in keys) {
+      let k = keys[i]
+      let color = k === 'white' ? 'w' : 'b'
+      
+      for(let j in pieces) {
+        let p = pieces[j]
+        if(!spares[k].hasOwnProperty(color + p)) {
+          return false
+        }
+        if(typeof spares[k][color + p] !== 'number') {
+          return false
+        }
+      }
+    }
+    
+    return true
+  }
+
   function isTouchDevice () {
     return 'ontouchstart' in document.documentElement
   }
@@ -586,7 +619,11 @@
     if(!config.sparePieces) {
       config.sparePieces = deepCopy(DEFAULT_SPARE_PIECES)
     } else {
-      config.sparePieces = deepCopy(config.sparePieces)
+      if(validSpares(config.sparePieces)) {
+        config.sparePieces = deepCopy(config.sparePieces)
+      } else {
+        throw 'sparePieces argument has incorrect form'
+      }
     }
 
     // default for dropOffBoard is 'snapback'
@@ -1904,7 +1941,11 @@
         return deepCopy(config.sparePieces)
       }
       // else update spare pieces
-      config.sparePieces = deepCopy(pieces)
+      if(validSpares(pieces)) {
+        config.sparePieces = deepCopy(pieces)
+      } else {
+        throw 'sparePieces argument has incorrect form'
+      }
     }
 
     widget.getTopUsername = function() {

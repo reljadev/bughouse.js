@@ -455,6 +455,39 @@ var Chess = function (fen, sparePieces) {
     }
   }
 
+  function validSpares(spares) {
+    let keys = Object.keys(spares);
+    let pieces = ['P', 'B', 'N', 'R', 'Q']
+
+    if(keys.length !== 2) return false
+    if(!keys.includes('white') ||
+        !keys.includes('black')) { 
+          return false 
+    }
+    
+    if(Object.keys(spares[keys[0]]).length !== 5 ||
+        Object.keys(spares[keys[1]]).length !== 5) {
+          return false
+    }
+
+    for(let i in keys) {
+      let k = keys[i]
+      let color = k === 'white' ? 'w' : 'b'
+      
+      for(let j in pieces) {
+        let p = pieces[j]
+        if(!spares[k].hasOwnProperty(color + p)) {
+          return false
+        }
+        if(typeof spares[k][color + p] !== 'number') {
+          return false
+        }
+      }
+    }
+    
+    return true
+  }
+
   function get(square) {
     var piece = board[SQUARES[square]]
     return piece ? { type: piece.type, color: piece.color } : null
@@ -1512,7 +1545,11 @@ var Chess = function (fen, sparePieces) {
     },
 
     loadSpares: function(spares) {
-      sparePieces = spares
+      if(validSpares(spares)) {
+        sparePieces = spares
+      } else {
+        throw 'sparePieces argument has incorrect form'
+      }
     },
 
     reset: function () {

@@ -29,7 +29,7 @@ const server = http.createServer(function (request, response) {
             var g = get_game_containing_user(user_id);
             if(g && g.get_id() !== params.gameId) {
                 // redirect user to that game
-                response.writeHead(302, { //TODO: change this to absolute path, because it causes problems
+                response.writeHead(302, {
                         Location: `/game.ejs?gameId=${g.get_id()}&username=${g.get_player(user_id).get_username()}`
                     }).end();
                 return
@@ -99,10 +99,10 @@ const server = http.createServer(function (request, response) {
 
 })
 
-///////////////// GAME LOGIC ///////////////////////
+///////////////// GAME FUNCTIONS ///////////////////////
 var games = {};
 
-function start_new_game(admin) { //TODO: remove this function
+function start_new_game(admin) {
     //TODO: fen, sparePieces and time should be set up by game admin
     var fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
     var sparePieces = {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
