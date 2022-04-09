@@ -7,7 +7,7 @@
         <title>Bughouse</title>
 
         <!-- Define host path -->
-        <script> let HOST_PATH = window.location.protocol + '//' + window.location.host + '/'; </script> <!-- Do i need this? -->
+        <script>let HOST_PATH = window.location.protocol + '//' + window.location.host + '/';</script>
 
         <!-- Import style -->
         <link rel="stylesheet" href="./game.css">
@@ -19,7 +19,10 @@
         <link rel="stylesheet" href="../modules/chessboardjs-1.0.0/css/chessboard-1.0.0.css"> <!-- TODO: Change this to min later -->
         <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
         <script src="../modules/chessboardjs-1.0.0/js/chessboard-1.0.0.js"></script> <!-- TODO: Change this to min later -->
-        
+
+        <!-- Import sport class -->
+        <script src="./sport.js"></script>
+
         <script src="./sidebar.js"></script>
         <script src="./stopwatch.js"></script>
 
@@ -41,13 +44,16 @@
             <label>PGN:</label>
             <div id="pgn"></div>
 
-            <button id="resign_game">resign</button>
+            <!-- admin buttons -->
+            <button id="start_game">start</button>
+            <button id="reset_game">reset</button>
 
+            <button id="resign_game">resign</button>
             <button id="backward_button">backward</button>
             <button id="forward_button">forward</button>
 
-            <div id="white_timer">white timer: </div>
-            <div id="black_timer">black timer: </div>
+            <div id="white_clock">white timer: </div>
+            <div id="black_clock">black timer: </div>
         </div>
 
         <!-- get data from server -->
@@ -58,10 +64,11 @@
             let time_white = '<%-white_time%>'
             let time_black = '<%-black_time%>'
         </script>
+
         <!-- import socket lib -->
         <script src="/socket.io/socket.io.js"></script>
         <!-- import game logic -->
-        <script src="game.js"></script>
+        <script src="./game.js"></script>
     </body>
 
 </html>

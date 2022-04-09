@@ -14,10 +14,8 @@ function parse_url(request) {
         var filePath = DIRPATH + DEFAULT_PAGE
     } else if(folder_name === '/game' || folder_name === '/landing_page') {
         var filePath = DIRPATH + folder_name + parser.pathname
-    } else if(folder_name === '/stopwatch') {
+    } else if(folder_name === '/stopwatch' || folder_name === '/sidebar' || folder_name === '/sport') {
         var filePath = DIRPATH + '/game' + parser.pathname
-    } else if(folder_name === '/sidebar') {
-        var filePath = DIRPATH + '/game/sidebar.js'
     } else {
         var filePath = DIRPATH + parser.pathname
     }
@@ -62,8 +60,37 @@ function remove_item(arr, value) {
     return arr;
 }
 
+function deepCopy(obj) {
+    var copy = {}
+
+    for (var property in obj) {
+      if (typeof obj[property] === 'object') {
+        copy[property] = deepCopy(obj[property])
+      } else {
+        copy[property] = obj[property]
+      }
+    }
+
+    return copy
+}
+
+function uuid (length) {
+    return ('xxxx-'.repeat(length / 4 - 1).concat('xxxx')).replace(/x/g, function (c) {
+      var r = (Math.random() * 16) | 0
+      return r.toString(16)
+    })
+}
+
+function isValidId(id) {
+    return typeof id === 'string' &&
+                    id.match(/^[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}$/)
+}
+
 // export all functions
 module.exports = {parse_url: parse_url, 
                   ext_to_type: ext_to_type,
                   parse_cookies: parse_cookies,
-                  remove_item: remove_item,}
+                  remove_item: remove_item,
+                  deepCopy,
+                  uuid,
+                  isValidId,}

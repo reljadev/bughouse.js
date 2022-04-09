@@ -162,6 +162,8 @@ var Chess = function (fen, sparePieces) {
   var half_moves = 0
   var move_number = 1
   var history = []
+  var start_fen = null
+  var start_spares = null
   var header = {}
   var comments = {}
 
@@ -170,8 +172,10 @@ var Chess = function (fen, sparePieces) {
    */
   if (typeof fen === 'undefined') {
     load(DEFAULT_POSITION)
+    start_fen = DEFAULT_POSITION
   } else {
     load(fen)
+    start_fen = fen
   }
 
   //load spare pieces
@@ -179,6 +183,7 @@ var Chess = function (fen, sparePieces) {
     var sparePieces = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
                        'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}}
   }
+  start_spares = clone(sparePieces)
 
   function clear(keep_headers) {
     if (typeof keep_headers === 'undefined') {
@@ -1594,6 +1599,14 @@ var Chess = function (fen, sparePieces) {
 
     sparePieces: function() {
       return sparePieces
+    },
+
+    start_fen: function() {
+      return start_fen
+    },
+
+    start_spares: function() {
+      return start_spares
     },
 
     board: function () {

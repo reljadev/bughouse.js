@@ -1,118 +1,138 @@
-var Stopwatch = function (elem, options) {
+class Stopwatch {
+    /***********************************************************/
+    /*                    INITIALIZATION                       */
+    /***********************************************************/
 
-    var timer = createTimer(),
-        offset,
-        clock,
-        interval,
-        startTime;
+    #element;
+    #options;
 
-    var showingFractions = false
-    let formatterOptions = {
-            minute: 'numeric',
-            second: 'numeric',
-        }
-    let formatter = new Intl.DateTimeFormat([], formatterOptions);
+    #timer;
+    #offset;
+    #clock;
+    #interval;
+    #startTime;
 
-    // default options
-    options = options || {};
-    options.clock = options.clock || 5 * 1000 * 60; // 5 minutes
-    options.delay = options.delay || 1; // 1 ms
+    #showingFractions;
+    #formatterOptions;
+    #formatter;
 
-    // append elements     
-    elem.appendChild(timer);
+    constructor(element, options) {
+        this.#parse_arguments(element, options);
+        this.#initialize_formatter();
+        this.#initialize_timer();
 
-    // initialize
-    reset();
+        // initialize
+        this.reset();
+    }
 
-    // functions
-    function createTimer() {
+    #parse_arguments(element, options) {
+        this.#element = element;
+
+        options = options ?? {};
+        options.clock = options.clock ?? 5 * 1000 * 60; // 5 minutes
+        options.delay = options.delay ?? 1; // 1 ms
+
+        this.#options = options;
+    }
+
+    #initialize_formatter() {
+        this.#showingFractions = false;
+        this.#formatterOptions = {
+                minute: 'numeric',
+                second: 'numeric',
+            }
+        this.#formatter = new Intl.DateTimeFormat([], this.#formatterOptions);
+    }
+
+    #initialize_timer() {
+        this.#timer = this.#createTimer();     
+        this.#element.appendChild(this.#timer);
+    }
+
+    #createTimer() {
         return document.createElement("span");
     }
 
-    function start() {
-        if (!interval) {
-            offset = performance.now()
-            interval = setInterval(update, options.delay);
-            startTime = clock;
+    /***********************************************************/
+    /*                    PRIVATE FUNCTIONS                    */
+    /***********************************************************/
+
+    #render() {
+        if(this.#clock < 1000 * 60 && !this.#showingFractions) {
+            delete this.#formatterOptions.minute;
+            this.#formatterOptions.fractionalSecondDigits = 1;
+            this.#formatter = new Intl.DateTimeFormat([], this.#formatterOptions);
+            this.#showingFractions = true;
         }
+        this.#timer.innerHTML = this.#formatter.format(this.#clock);
     }
 
-    function stop() {
-        if (interval) {
-            clearInterval(interval);
-            interval = null;
+    #update() {
+        this.#clock -= this.#delta();
+        if(this.#clock <= 0) {
+            this.#clock = 0;
+            this.stop();
         }
+        this.#render();
     }
 
-    function elapsedTime() {
-        if(!interval && startTime) {
-            return startTime - clock
-        }
-    }
+    #delta() {
+        let now = performance.now();
+        let d = now - this.#offset;
 
-    function add(t) {
-        clock += t;
-        render();
-    }
-
-    function reset() {
-        clock = options.clock;
-        render();
-    }
-
-    function update() {
-        clock -= delta();
-        if(clock <= 0) {
-            clock = 0
-            stop()
-            if(typeof options.onTimesUp !== 'undefined') { 
-                options.onTimesUp()
-            }
-        }
-        render();
-    }
-
-    function render() {
-        if(clock < 1000 * 60 && !showingFractions) {
-            delete formatterOptions.minute
-            formatterOptions.fractionalSecondDigits = 1
-            formatter = new Intl.DateTimeFormat([], formatterOptions);
-            showingFractions = true
-        }
-        timer.innerHTML = formatter.format(clock);
-    }
-
-    function delta() {
-        var now = performance.now()
-        d = now - offset;
-
-        offset = now;
+        this.#offset = now;
         return d;
     }
 
-    function time(t) {
-        if(t) {
-            clock = t
-            render()
+    /***********************************************************/
+    /*                       PUBLIC API                        */
+    /***********************************************************/
+
+    start() {
+        if (!this.#interval) {
+            this.#offset = performance.now();
+            this.#interval = setInterval(this.#update.bind(this), this.#options.delay);
+            this.#startTime = this.#clock;
         }
-        return clock
     }
 
-    function show() {
-        elem.style.display = ''
+    stop() {
+        if (this.#interval) {
+            clearInterval(this.#interval);
+            this.#interval = null;
+        }
     }
 
-    function hide() {
-        elem.style.display = 'none'
+    elapsedTime() {
+        if(!this.#interval && this.#startTime) {
+            return this.#startTime - this.#clock;
+        }
     }
 
-    // public API
-    this.start = start;
-    this.stop = stop;
-    this.elapsedTime = elapsedTime;
-    this.add = add;
-    this.reset = reset;
-    this.time = time;
-    this.show = show;
-    this.hide = hide;
+    reset() {
+        this.#clock = this.#options.clock;
+        this.#render();
+    }
+
+    add(t) {
+        this.#clock += t;
+        this.#render();
+    }
+
+    time(t) {
+        if(t) {
+            this.#clock = t;
+            this.#render();
+        }
+        return this.#clock;
+    }
+
+    show() {
+        this.#element.style.display = '';
+    }
+
+    hide() {
+        this.#element.style.display = 'none';
+    }
+
 };

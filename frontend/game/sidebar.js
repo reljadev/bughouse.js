@@ -1,240 +1,245 @@
-;(function () {
+class Sidebar {
+    /***********************************************************/
+    /*                    INITIALIZATION                       */
+    /***********************************************************/
 
-    //TODO: this should def be changed! no passing updateUsername
-    function constructor (element,
-                            admin, myUsername,
-                            $username_top, $username_bottom,
-                            playerJoined, playerRemoved,
-                            isPlaying) {
+    #$sidebar;
+    #options;
+    #players;
+    #$draggedPlayer;
+    #dragging;
 
-        ///////////////////// INITIALIZATION /////////////////////
+    constructor(options) {
+        this.#parse_arguments(options);
+        this.#initialize_sidebar();
 
-        var $sidebar = $('#' + element)
-        var players = {}
+        this.#players = {};
 
-        ///////////////////// MOVING PLAYERS /////////////////////
-        
-        if(myUsername === admin) {
-            // create hidden element
-            $('body').append('<div class="player" id="draggingPlayer" style="display: none;"></div>')
-            var $draggedPlayer = $('#draggingPlayer')
-
-            // add event listeners
-            $sidebar.on('mousedown', '.player', mouseDown)
-
-            // player drag
-            $(window).on('mousemove', mousemoveWindow) //TODO: can you even call two functions on mouse move?
-                    .on('mouseup', mouseUp)
-
-            // remove opponent by clicking x
-            $username_top.on('click', removeTopPlayer)
-            $username_bottom.on('click', removeBottomPlayer)
+        if(this.#options.myUsername === this.#options.admin) {
+            this.#initialize_players_controller();   
         }
 
-        var dragging = false
-        function mouseDown(evt) {
-            // updates are not possible midgame
-            if(isPlaying()) {
-                return
-            }
-            
-            var $player = $(this)
-            // hide player
-            $player.css('display', 'none')
+        this.#dragging = false;
+    }
 
-            // create draggable player
-            $draggedPlayer.text($player.text())
-            $draggedPlayer.css({
+    #parse_arguments(options) {
+        options = options ?? {};
+
+        options.admin = options.admin ?? null;
+        options.myUsername = options.myUsername ?? null;
+
+        if(!options.$username_top) {
+            throw '$username_top must be specified as argument';
+        }
+        if(!options.$username_bottom) {
+            throw '$username_bottom must be specified as argument';
+        }
+
+        options.player_added_to_board = options.player_added_to_board ?? function() {};
+        options.player_removed_from_board = options.player_removed_from_board ?? function() {};
+
+        options.is_playing = options.is_playing ?? function() {};
+
+        this.#options = options;
+    }
+
+    #initialize_sidebar() {
+        this.#$sidebar = $('#' + this.#options.element);
+        if(this.#$sidebar.length !== 1) {
+            throw 'element argument to Sidebar() must be the ID of a DOM node';
+        }
+    }
+    
+    #initialize_players_controller() {
+        // create hidden element
+        $('body').append('<div class="player" id="draggingPlayer" style="display: none;"></div>');
+        this.#$draggedPlayer = $('#draggingPlayer');
+
+        // add event listeners
+        this.#$sidebar.on('mousedown', '.player', this.#mousedown.bind(this));
+
+        // player drag
+        $(window).on('mousemove', this.#mousemove_window.bind(this))
+                 .on('mouseup', this.#mouse_up.bind(this));
+
+        // remove opponent by clicking x
+        this.#options.$username_top.on('click', this.#removeTopPlayer.bind(this));
+        this.#options.$username_bottom.on('click', this.#removeBottomPlayer.bind(this));
+    }
+
+    /***********************************************************/
+    /*                     EVENT HANDLERS                      */
+    /***********************************************************/
+   
+    #mousedown(evt) {
+        // updates are not possible midgame
+        if(this.#options.is_playing()) {
+            return;
+        }
+        
+        let $player = $(evt.currentTarget);
+        // hide player
+        $player.css('display', 'none');
+
+        // create draggable player
+        this.#$draggedPlayer.text($player.text());
+        this.#$draggedPlayer.css({
                 display: '',
                 position: 'absolute',
                 left: evt.pageX,
                 top: evt.pageY
-              })
+                });
 
-            // update dragging state
-            dragging = true
-        }
-
-        function mousemoveWindow(evt) {
-            // updates are not possible midgame
-            if(isPlaying()) {
-                return
-            }
-            if (dragging) {
-                $draggedPlayer.css({
-                    left: evt.pageX,
-                    top: evt.pageY
-                  })
-            }
-        }
-
-        function mouseUp(evt) {
-            // updates are not possible midgame
-            if(isPlaying()) { 
-                return
-            }
-            if(dragging) {
-                var username = $draggedPlayer.text()
-                var $player = players[username]
-                // hide dragged player
-                $draggedPlayer.css('display', 'none')
-
-                if(updateTopPlayer(evt.pageX, evt.pageY, username)) {
-                    $player.remove()
-                    playerJoined('top', username)
-                } else if(updateBottomPlayer(evt.pageX, evt.pageY, username)) {
-                    $player.remove()
-                    playerJoined('bottom', username)
-                } else {
-                    $player.css('display', '')
-                }
-                dragging = false
-            }
-        }
-
-        function updateTopPlayer(x, y, username) {
-            return updatePlayer($username_top, x, y, username)
-        }
-
-        function updateBottomPlayer(x, y, username) {
-            return updatePlayer($username_bottom, x, y, username)
-        }
-
-        function updatePlayer($player, x, y, username) {
-            var user_left = $player.offset().left
-            var user_width = $player.width()
-            var user_top = $player.offset().top
-      
-            if((x >= user_left && x <= user_left + user_width) && 
-                y <= user_top && y >= user_top - 40) { //TODO: shouldn't be hardcoded
-                    if($player.text() === '') {
-                        $player.text(username)
-                        return true
-                    }
-            }
-            return false
-        }
-
-        function removeTopPlayer(evt) {
-            removePlayer($username_top, 'top', playerRemoved)
-        } 
-
-        function removeBottomPlayer(evt) {
-            removePlayer($username_bottom, 'bottom', playerRemoved)
-        }
-
-        function removePlayer($username, position, playerRemoved) {
-            // TODO: x shouldn't even be present there
-            // updates are not possible midgame
-            if(isPlaying()) {
-                return
-            }
-
-            var username = $username.text()
-            if(username !== '') {
-                addPlayer(username)
-                $username.text('')
-                playerRemoved(position)
-            }
-        }
-
-        // throttle mouse movement
-        // const DRAG_THROTTLE_RATE = 20
-        // var throttledMousemoveWindow = throttle(mousemoveWindow, DRAG_THROTTLE_RATE)
-
-        // function throttle (f, interval, scope) {
-        //     console.log('throttle')
-        //     var timeout = 0
-        //     var shouldFire = false
-        //     var args = []
-        
-        //     var handleTimeout = function () {
-        //         console.log('handleTimeout')
-        //         timeout = 0
-        //         if (shouldFire) {
-        //             shouldFire = false
-        //             fire()
-        //         }
-        //     }
-        
-        //     var fire = function () {
-        //         console.log('fire')
-        //         timeout = window.setTimeout(handleTimeout, interval)
-        //         f.apply(scope, args)
-        //     }
-        
-        //     return function (_args) {
-        //       args = arguments
-        //       if (!timeout) {
-        //         fire()
-        //       } else {
-        //         shouldFire = true
-        //       }
-        //     }
-        // }
-
-        ///////////////////// MISC UTIL /////////////////////
-        function addPlayer(username) {
-            var $new_player = $('<div class="player">' + username + '</div>')
-            if(username === myUsername) {
-                $new_player.css('background-color', 'black')
-            }
-            players[username] = $new_player //TODO: keeping all of these references might be two expensive
-            $sidebar.append($new_player)
-        }
-
-        ///////////////////// PUBLIC API /////////////////////
-        var widget = {}
-
-        widget.addPlayer = function(arg) {
-            if(Array.isArray(arg)) {
-                for(var i in arg) {
-                  addPlayer(arg[i])
-                }
-              } else {
-                addPlayer(arg)
-              }
-        }
-
-        widget.removePlayer = function(username) {
-            var $player = players[username]
-            if(typeof $player !== 'undefined') {
-                $player.remove()
-            }
-        }
-
-        widget.addPlayerToBoard = function(position, username) {
-            var $username = position === 'top' ? $username_top : $username_bottom
-            var $player = players[username]
-            if(typeof $player !== 'undefined') {
-                $username.text(username)
-                $player.remove()
-            }
-        }
-
-        widget.removePlayerFromBoard = function(position) {
-            var $username = position === 'top' ? $username_top : $username_bottom
-            var username = $username.text()
-            if(username !== '') {
-                addPlayer(username)
-                $username.text('')
-            }
-        }
-
-        widget.swapUsernamesAtBoard = function() {
-            var tmp = $username_bottom.text()
-            $username_bottom.text($username_top.text())
-            $username_top.text(tmp)
-        }
-
-        widget.clearBoardUsernames = function() {
-            widget.removePlayerFromBoard('top')
-            widget.removePlayerFromBoard('bottom')
-        }
-
-        return widget
+        // update dragging state
+        this.#dragging = true;
     }
 
-    window['Sidebar'] = constructor
+    #mousemove_window(evt) {
+        // updates are not possible midgame
+        if(this.#options.is_playing()) {
+            return;
+        }
+        if (this.#dragging) {
+            this.#$draggedPlayer.css({
+                    left: evt.pageX,
+                    top: evt.pageY
+                    });
+        }
+    }
 
-})(); // end anonymous wrapper
+    #mouse_up(evt) {
+        // updates are not possible midgame
+        if(this.#options.is_playing()) { 
+            return;
+        }
+        if(this.#dragging) {
+            let username = this.#$draggedPlayer.text();
+            let $player = this.#players[username];
+            // hide dragged player
+            this.#$draggedPlayer.css('display', 'none');
+
+            if(this.#updateTopPlayer(evt.pageX, evt.pageY, username)) {
+                $player.remove();
+                this.#options.player_added_to_board('top', username);
+            } else if(this.#updateBottomPlayer(evt.pageX, evt.pageY, username)) {
+                $player.remove();
+                this.#options.player_added_to_board('bottom', username);
+            } else {
+                $player.css('display', '');
+            }
+            this.#dragging = false;
+        }
+    }
+
+    /***********************************************************/
+    /*                       CONTROLLERS                       */
+    /***********************************************************/
+
+    #updateTopPlayer(x, y, username) {
+        return this.#updatePlayer(this.#options.$username_top, x, y, username);
+    }
+
+    #updateBottomPlayer(x, y, username) {
+        return this.#updatePlayer(this.#options.$username_bottom, x, y, username);
+    }
+
+    #updatePlayer($player, x, y, username) {
+        let user_left = $player.offset().left;
+        let user_width = $player.width();
+        let user_top = $player.offset().top;
+    
+        if((x >= user_left && x <= user_left + user_width) && 
+            y <= user_top && y >= user_top - 40) { //TODO: shouldn't be hardcoded
+                if($player.text() === '') {
+                    $player.text(username);
+                    return true;
+                }
+        }
+        return false;
+    }
+
+    #removeTopPlayer(evt) {
+        this.#remove_player(this.#options.$username_top, 'top');
+    } 
+
+    #removeBottomPlayer(evt) {
+        this.#remove_player(this.#options.$username_bottom, 'bottom');
+    }
+
+    #remove_player($username, position) {
+        // TODO: x shouldn't even be present there
+        // updates are not possible midgame
+        if(this.#options.is_playing()) {
+            return;
+        }
+
+        let username = $username.text();
+        if(username !== '') {
+            this.#add_player(username);
+            $username.text('');
+            this.#options.player_removed_from_board(position);
+        }
+    }
+
+    #add_player(username) {
+        let $new_player = $('<div class="player">' + username + '</div>');
+        if(username === this.#options.myUsername) {
+            $new_player.css('background-color', 'black');
+        }
+        this.#players[username] = $new_player;
+        this.#$sidebar.append($new_player);
+    }
+
+    /***********************************************************/
+    /*                       PUBLIC API                        */
+    /***********************************************************/
+
+    add_player(arg) {
+        if(Array.isArray(arg)) {
+            for(let i in arg) {
+                this.#add_player(arg[i]);
+            }
+        } else {
+            this.#add_player(arg);
+        }
+    }
+
+    remove_player(username) {
+        let $player = this.#players[username];
+        if(typeof $player !== 'undefined') {
+            $player.remove();
+        }
+    }
+
+    add_player_to_board(position, username) {
+        let $username = position === 'top' ? this.#options.$username_top : 
+                                             this.#options.$username_bottom;
+        let $player = this.#players[username];
+        if(typeof $player !== 'undefined') {
+            $username.text(username)
+            $player.remove()
+        }
+    }
+
+    remove_player_from_board(position) {
+        let $username = position === 'top' ? this.#options.$username_top : 
+                                             this.#options.$username_bottom;
+        let username = $username.text()
+        if(username !== '') {
+            this.#add_player(username)
+            $username.text('')
+        }
+    }
+
+    swap_usernames_at_board() {
+        let tmp = this.#options.$username_bottom.text()
+        this.#options.$username_bottom.text(this.#options.$username_top.text())
+        this.#options.$username_top.text(tmp)
+    }
+
+    clear_board_usernames() {
+        this.remove_player_from_board('top')
+        this.remove_player_from_board('bottom')
+    }
+
+}

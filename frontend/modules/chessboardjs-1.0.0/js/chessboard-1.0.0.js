@@ -584,7 +584,9 @@
 
     // by default there are no spare pieces
     if(!config.sparePieces) {
-      config.sparePieces = DEFAULT_SPARE_PIECES
+      config.sparePieces = deepCopy(DEFAULT_SPARE_PIECES)
+    } else {
+      config.sparePieces = deepCopy(config.sparePieces)
     }
 
     // default for dropOffBoard is 'snapback'

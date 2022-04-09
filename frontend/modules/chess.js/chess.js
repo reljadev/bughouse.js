@@ -183,7 +183,8 @@ var Chess = function (fen, sparePieces) {
     var sparePieces = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
                        'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}}
   }
-  start_spares = deepCopy(sparePieces)
+  loadSpares(sparePieces)
+  start_spares = clone(sparePieces)
 
   function clear(keep_headers) {
     if (typeof keep_headers === 'undefined') {
@@ -222,9 +223,11 @@ var Chess = function (fen, sparePieces) {
     comments = current_comments
   }
 
-  function reset() {
-    load(start_fen)
-    loadSpares(start_spares)
+  function reset(fen, spares) {
+    fen = fen ?? start_fen
+    spares = spares ?? start_spares
+    load(fen)
+    loadSpares(spares)
   }
 
   function load(fen, keep_headers) {
@@ -282,7 +285,7 @@ var Chess = function (fen, sparePieces) {
   }
 
   function loadSpares(spares) {
-    sparePieces = deepCopy(spares)
+    sparePieces = clone(spares)
   }
 
   /* TODO: this function is pretty much crap - it validates structure but
@@ -1643,7 +1646,7 @@ var Chess = function (fen, sparePieces) {
     },
 
     sparePieces: function() {
-      return sparePieces //TODO: deep copy
+      return clone(sparePieces)
     },
 
     board: function () {
@@ -2134,7 +2137,7 @@ var Chess = function (fen, sparePieces) {
 
       // get state
       var fen = generate_fen()
-      var spares = deepCopy(sparePieces)
+      var spares = clone(sparePieces)
 
       // redo moves
       while(moves.length !== 0) {

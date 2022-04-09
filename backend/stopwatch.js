@@ -1,88 +1,81 @@
-var Stopwatch = function (options) {
+const utils = require("./utils")
 
-    var offset,
-        clock,
-        interval,
-        startTime;
+class Stopwatch {
+    // declare private variables
+    #offset;
+    #clock;
+    #interval;
+    #start_time;
+    #options;
 
-    var showingFractions = false
-    let formatterOptions = {
-            minute: 'numeric',
-            second: 'numeric',
-        }
-    let formatter = new Intl.DateTimeFormat([], formatterOptions);
+    constructor(options) {
+        // default options
+        options = options ?? {};
+        options.clock = options.clock ?? 5 * 1000 * 60; // 5 minutes
+        options.delay = options.delay ?? 1; // 1 ms
+        this.#options = utils.deepCopy(options);
 
-    // default options
-    options = options || {};
-    options.clock = options.clock || 5 * 1000 * 60; // 5 minutes
-    options.delay = options.delay || 1; // 1 ms
-
-    // initialize
-    reset();
-
-    // functions
-    function start() {
-        if (!interval) {
-            offset = performance.now()
-            interval = setInterval(update, options.delay);
-            startTime = clock;
-        }
+        // initialize
+        this.reset();
     }
 
-    function stop() {
-        if (interval) {
-            clearInterval(interval);
-            interval = null;
-        }
-    }
-
-    function elapsedTime() {
-        if(!interval && startTime) {
-            return startTime - clock
-        }
-    }
-
-    function add(t) {
-        clock += t;
-    }
-
-    function reset() {
-        clock = options.clock;
-    }
-
-    function update() {
-        clock -= delta();
-        if(clock <= 0) {
-            clock = 0
-            stop()
-            if(typeof options.onTimesUp !== 'undefined') { 
-                options.onTimesUp()
+    #update() {
+        this.#clock -= this.#delta();
+        if(this.#clock <= 0) {
+            this.#clock = 0;
+            this.stop();
+            if(typeof this.#options.onTimesUp !== 'undefined') { 
+                this.#options.onTimesUp();
             }
         }
     }
 
-    function delta() {
-        var now = performance.now()
-        d = now - offset;
+    #delta() {
+        let now = performance.now();
+        let d = now - this.#offset;
 
-        offset = now;
+        this.#offset = now;
         return d;
     }
 
-    function time(t) {
-        if(t) {
-            clock = t
+    /////////////// PUBLIC API ///////////////
+
+    start() {
+        if (!this.#interval) {
+            this.#offset = performance.now();
+            this.#interval = setInterval(this.#update.bind(this), this.#options.delay);
+            this.#start_time = this.#clock;
         }
-        return clock
     }
 
-    // public API
-    this.start = start;
-    this.stop = stop;
-    this.elapsedTime = elapsedTime;
-    this.add = add;
-    this.reset = reset;
-    this.time = time;
-};
+    stop() {
+        if (this.#interval) {
+            clearInterval(this.#interval);
+            this.#interval = null;
+        }
+    }
 
-if(module) module.exports = Stopwatch
+    elapsed_time() {
+        if(!this.#interval && this.#start_time) {
+            return this.#start_time - this.#clock;
+        }
+    }
+
+    add(t) {
+        this.#clock += t;
+    }
+
+    reset() {
+        this.#clock = this.#options.clock;
+    }
+
+    time(t) {
+        if(t) {
+            this.#clock = t;
+        }
+        return this.#clock;
+    }
+
+}
+
+module.exports = Stopwatch;
