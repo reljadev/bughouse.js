@@ -1,5 +1,5 @@
 const Chess = require("./modules/chess.js/chess")
-const Stopwatch = require("./stopwatch") //TODO: why is stopwatch different color?
+const Stopwatch = require("./stopwatch")
 const utils = require("./utils")
 
 // STAGE ENUM
@@ -41,7 +41,7 @@ class Game {
                                         onTimesUp: this.#game_over.bind(this) });
     }
 
-    #game_over(username) { //TODO: you don't need this username
+    #game_over(username) {
         this.#stage = POST_GAME;
         this.#white_timer.stop();
         this.#black_timer.stop();
@@ -124,7 +124,7 @@ class Game {
     info() {
         return {id: this.#id,
                 stage: this.#stage.description,
-                state: {fen: this.#game.fen(), //TODO: do i need all of this?
+                state: {fen: this.#game.fen(),
                         sparePieces: this.#game.sparePieces(),
                         start_fen: this.#game.start_fen(),
                         start_spares: this.#game.start_spares(),

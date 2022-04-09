@@ -328,7 +328,8 @@
         if(!spares[k].hasOwnProperty(color + p)) {
           return false
         }
-        if(typeof spares[k][color + p] !== 'number') {
+        if(!Number.isInteger(spares[k][color + p]) ||
+            spares[k][color + p] < 0) {
           return false
         }
       }

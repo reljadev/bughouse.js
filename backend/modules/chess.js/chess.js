@@ -183,7 +183,11 @@ var Chess = function (fen, sparePieces) {
     var sparePieces = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
                        'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}}
   }
-  start_spares = clone(sparePieces)
+  if(!validSpares(sparePieces)) {
+    start_spares = clone(sparePieces)
+  } else {
+    throw 'sparePieces argument has incorrect form'
+  }
 
   function clear(keep_headers) {
     if (typeof keep_headers === 'undefined') {
@@ -479,7 +483,8 @@ var Chess = function (fen, sparePieces) {
         if(!spares[k].hasOwnProperty(color + p)) {
           return false
         }
-        if(typeof spares[k][color + p] !== 'number') {
+        if(Number.isInteger(spares[k][color + p]) ||
+            spares[k][color + p] < 0) {
           return false
         }
       }
