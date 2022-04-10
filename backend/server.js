@@ -3,7 +3,35 @@ const http = require('http')
 const socket = require('socket.io')
 const fs = require('fs')
 const utils = require('./utils')
+const sanitize = require('sanitize-html')
 const Game = require('./game')
+
+// games functions
+let games = {};
+
+function start_new_game(admin) {
+    //TODO: fen, sparePieces and time should be set up by game admin
+    let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    let sparePieces = {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
+                       'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}};
+    
+    let g = new Game({ admin: admin, fen: fen, spares: sparePieces });
+    games[g.get_id()] = g;
+
+    return g;
+}
+
+function get_game_containing_user(user_id) {
+    if(typeof user_id === 'undefined') return false;
+
+    for(let i in games) {
+        if(games[i].has_player(user_id)) {
+            return games[i];
+        }
+    }
+    
+    return false;
+}
 
 // CONSTANTS
 const PORT = process.env.PORT || 3000;
@@ -13,20 +41,22 @@ const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
 
     // parse url
-    var parsed_url = utils.parse_url(request);
-    var fileName = parsed_url.fileName;
-    var filePath = parsed_url.filePath;
-    var params = parsed_url.params;
+    let parsed_url = utils.parse_url(request);
+    let fileName = parsed_url.fileName;
+    let filePath = parsed_url.filePath;
+    let params = parsed_url.params;
     // parse cookies
-    var cookies = utils.parse_cookies(request);
-    var user_id = cookies.user_id;
+    let cookies = utils.parse_cookies(request);
+    let user_id = cookies.user_id;
+    // sanitize client suplied data
+    params.username = sanitize(params.username);
 
     // if user wants game.ejs or landing page
     if(fileName === '' || fileName === 'landing_page.html' || fileName === 'game.ejs') {
         // & user id is valid
         if(utils.isValidId(user_id)) {
             // & user already playing in game
-            var g = get_game_containing_user(user_id);
+            let g = get_game_containing_user(user_id);
             if(g && g.get_id() !== params.gameId) {
                 // redirect user to that game
                 response.writeHead(302, {
@@ -37,7 +67,7 @@ const server = http.createServer(function (request, response) {
         }
     }
     
-    var currentGame = null;
+    let currentGame = null;
 
     if(fileName === 'game.ejs') {
         // join existing game
@@ -61,9 +91,9 @@ const server = http.createServer(function (request, response) {
     }
 
     // infer correct content type 
-    var contentType = utils.ext_to_type(filePath);
+    let contentType = utils.ext_to_type(filePath);
     //NOTE: undefined is actually variable window.undefined which can be defined, in that case, this would break!
-    var encoding = contentType === 'image/png' ? undefined : 'utf-8';
+    let encoding = contentType === 'image/png' ? undefined : 'utf-8';
 
     // read file & send it to client
     fs.readFile(filePath, encoding, function(error, content) { // TODO: you can use ejs.renderFile
@@ -102,102 +132,93 @@ const server = http.createServer(function (request, response) {
 
 })
 
-///////////////// GAME FUNCTIONS ///////////////////////
-var games = {};
-
-function start_new_game(admin) {
-    //TODO: fen, sparePieces and time should be set up by game admin
-    var fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-    var sparePieces = {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
-                       'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}};
-    
-    let g = new Game({ admin: admin, fen: fen, spares: sparePieces });
-    games[g.get_id()] = g;
-
-    return g;
-}
-
-function get_game_containing_user(user_id) {
-    if(typeof user_id === 'undefined') return false;
-
-    for(var i in games) {
-        if(games[i].has_player(user_id)) {
-            return games[i];
-        }
-    }
-    
-    return false;
-}
-
-//////////////// set up websocket /////////////////////
-
+// set up websocket
 let io = socket(server);
 
 io.on('connection', (client) => {
     console.log('A user just connected.');
 
-    var game_id = client.request._query['gameId'];
-    var user_id = client.request._query['user_id'];
-    var username = client.request._query['username'];
+    let game_id = client.request._query['gameId'];
+    let user_id = client.request._query['user_id'];
+    let username = sanitize(client.request._query['username']);
     if((typeof game_id !== 'undefined' && games.hasOwnProperty(game_id)) &&
        (typeof username !== 'undefined')) { //TODO: username should be checked on page serving
-
-        client.join(game_id);
-        client.data.game_id = game_id;
-        client.data.user_id = user_id;
-
         // update player username & socket
         let p = games[game_id].get_player(user_id);
-        p.set_username(username);
-        p.set_socket(client);
+        if(p) {
+            client.join(game_id);
+            client.data.game_id = game_id;
+            client.data.user_id = user_id;
 
-        client.broadcast.to(game_id).emit('joined', username);
+            p.set_username(username);
+            p.set_socket(client);
+
+            client.broadcast.to(game_id).emit('joined', username);
+        }
     }
 
     // player set at chessboard
     client.on('playerJoined', (color, username) => {
-        client.broadcast.to(client.data.game_id).emit('playerJoined', color, username);
+        // sanitize client suplied data
+        color = sanitize(color);
+        username = sanitize(username);
 
         let g = games[client.data.game_id];
-        g.set_player_at_board(color, username);
+        if(g) {
+            let player_set = g.set_player_at_board(color, username);
 
-        if(g.board_is_set()) {
-            client.emit('can_start_game');
+            if(player_set) {
+                client.broadcast.to(client.data.game_id).emit('playerJoined', color, username);
+                if(g.board_is_set()) {
+                    client.emit('can_start_game');
+                }
+            }
         }
     })
 
     // player removed from chessboard
     client.on('playerRemoved', (color) => {
-        client.broadcast.to(client.data.game_id).emit('playerRemoved', color);
+        // sanitize client suplied data
+        color = sanitize(color);
 
-        var g = games[client.data.game_id];
-        g.remove_player_from_board(color);
+        let g = games[client.data.game_id];
+        if(g) {
+            let player_removed = g.remove_player_from_board(color);
 
-        // this informs admin that it can't start a game
-        client.emit('cant_start_game');
+            if(player_removed) {
+                client.broadcast.to(client.data.game_id).emit('playerRemoved', color);
+                client.emit('cant_start_game');
+            }
+        }
     })
 
     // admin has initiated the game
     client.on('game_has_started', () => {
-        var g = games[client.data.game_id];
-        g.start();
+        let g = games[client.data.game_id];
+        if(g) {
+            let game_started = g.start();
         
-        client.broadcast.to(client.data.game_id).emit('game_has_started');
+            if(game_started) {
+                client.broadcast.to(client.data.game_id).emit('game_has_started');
+            }
+        }
     })
 
     // on player move
     client.on('move', (move, elapsedTime) => {
         let g = games[client.data.game_id];
-        var updated = g.move(move);
-        if(updated) {
-            g.update_timers(elapsedTime);
-            // broadcast move & updated timers
-            client.broadcast.to(g.get_id()).emit('move', move,
-                                                        g.get_white_time(),
-                                                        g.get_black_time());
-        } else {
-            // NOTE: this should never happen
-            client.emit('invalid_move', move);
+        if(g) {
+            let updated = g.move(move);
+            if(updated) {
+                g.update_timers(elapsedTime);
+                // broadcast move & updated timers
+                client.broadcast.to(g.get_id()).emit('move', move,
+                                                            g.get_white_time(),
+                                                            g.get_black_time());
+            } else {
+                // NOTE: this should never happen
+                client.emit('invalid_move', move);
+            }
         }
     })
 
@@ -208,11 +229,15 @@ io.on('connection', (client) => {
     })
 
     client.on('reset_game', (fen, sparePieces) => {
-        var g = games[client.data.game_id];
-        g.set_position(fen, sparePieces);
-        g.reset();
-        
-        client.broadcast.to(game_id).emit('reset_game', fen, sparePieces);
+        let g = games[client.data.game_id];
+        if(g) {
+            let position_set = g.set_position(fen, sparePieces);
+            if(position_set) {
+                g.reset();
+            
+                client.broadcast.to(game_id).emit('reset_game', fen, sparePieces);
+            }
+        }
     })
 
     // player has disconnected
@@ -220,7 +245,7 @@ io.on('connection', (client) => {
         console.log('A user has disconnected.');
 
         let g = games[client.data.game_id];
-        if(typeof g !== 'undefined') {
+        if(g) {
             client.broadcast.to(g.get_id()).emit('disconnected', 
                                                     g.get_player(client.data.user_id).get_username());
             g.remove_player(client.data.user_id);

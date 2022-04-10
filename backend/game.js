@@ -178,10 +178,20 @@ class Game {
 
     set_player_at_board(color, username) {
         if(color === 'white') {
-            this.#white_player = username;
+            if(this.#white_player === null) {
+                this.#white_player = username;
+            } else {
+                return false;
+            }
         } else {
-            this.#black_player = username;
+            if(this.#black_player === null) {
+                this.#black_player = username;
+            } else {
+                return false;
+            }
         }
+
+        return true;
     }
 
     remove_player_from_board(color) {
@@ -190,6 +200,8 @@ class Game {
         } else {
             this.#black_player = null;
         }
+        // TODO: should be return true, false
+        return true;
     }
 
     board_is_set() {
@@ -197,10 +209,16 @@ class Game {
     }
 
     start() {
-        this.#stage = PLAYING;
-        this.#white_timer.reset();
-        this.#black_timer.reset();
-        this.#white_timer.start();
+        if(this.board_is_set()) {
+            this.#stage = PLAYING;
+            this.#white_timer.reset();
+            this.#black_timer.reset();
+            this.#white_timer.start();
+
+            return true;
+        }
+
+        return false;
     }
 
     game_over(username) {
@@ -208,8 +226,15 @@ class Game {
     }
 
     set_position(fen, spares) {
-        this.#game.load(fen);
-        this.#game.loadSpares(spares);
+        let loaded_fen = this.#game.load(fen);
+        if(loaded_fen) {
+            let loaded_spares = this.#game.loadSpares(spares);
+            if(loaded_spares) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     reset() {
