@@ -54,7 +54,7 @@ const server = http.createServer(function (request, response) {
         // start new game
         } else {
             // set current game
-            var admin = params.username;
+            let admin = params.username;
             currentGame = start_new_game(admin);
             user_id = currentGame.add_new_player();
         }
@@ -67,30 +67,33 @@ const server = http.createServer(function (request, response) {
 
     // read file & send it to client
     fs.readFile(filePath, encoding, function(error, content) { // TODO: you can use ejs.renderFile
+        // content security policy
+        //TODO: missing style-src 'self'
+        response.setHeader('Content-Security-Policy', "script-src 'self' https://code.jquery.com/jquery-1.12.4.min.js;");
+
         if (error) {
             if(error.code == 'ENOENT') { //TODO: why didn't this throw error, no such file?
                 fs.readFile('./404.html', function(error, content) {
                     response.writeHead(200, { 'Content-Type': contentType });
                     response.end(content, 'utf-8');
                 });
-            }
-            else {
+            } else {
                 response.writeHead(500);
                 response.end('Sorry, check with the site admin for error: ' + error.code + ' ..\n');
                 response.end(); 
             }
-        }
-        else {
+        } else {
             response.writeHead(200, { 'Content-Type': contentType,
                                       'Set-Cookie': 'user_id=' +  user_id});
             // renderize page
             if(fileName === 'game.ejs') {
-                var renderizedPage = ejs.render(content, {username: params.username, 
+                let renderizedPage = ejs.render(content, {username: params.username, 
                                                           data: currentGame.info(),
                                                           white_time: currentGame.get_white_time(),
                                                           black_time: currentGame.get_black_time()});
                 response.end(renderizedPage, 'utf-8'); // nor here
-            // plain html, js or css
+
+            // html, js or css file
             } else {
                 response.end(content, 'utf-8'); //TODO: probably encoding not needed here
             }

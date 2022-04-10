@@ -7,7 +7,7 @@
         <title>Bughouse</title>
 
         <!-- Define host path -->
-        <script>let HOST_PATH = window.location.protocol + '//' + window.location.host + '/';</script>
+        <script src="path.js"></script>
 
         <!-- Import style -->
         <link rel="stylesheet" href="./game.css">
@@ -36,7 +36,7 @@
 
         <div class="main" id="main_page">
             <!-- define chessboard element -->
-            <div id="myBoard" style="width: 400px"></div>
+            <div id="myBoard" class="board"></div>
             <label>Status:</label>
             <div id="status"></div>
             <label>FEN:</label>
@@ -56,14 +56,11 @@
             <div id="black_clock">black timer: </div>
         </div>
 
-        <!-- get data from server -->
-        <script type="text/javascript">
-            let myUsername = '<%-username%>'
-            let data = '<%-JSON.stringify(data)%>'
-            data = JSON.parse(data)
-            let time_white = '<%-white_time%>'
-            let time_black = '<%-black_time%>'
-        </script>
+        <!-- insert hidden data elements, so js file can retrieve it -->
+        <div id="data_username" class="data" data-value='<%-username%>'></div>
+        <div id="data_data" class="data" data-value='<%-JSON.stringify(data)%>'></div>
+        <div id="data_white_time" class="data" data-value='<%-white_time%>'></div>
+        <div id="data_black_time" class="data" data-value='<%-black_time%>'></div>
 
         <!-- import socket lib -->
         <script src="/socket.io/socket.io.js"></script>

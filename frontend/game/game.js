@@ -3,8 +3,12 @@
 /***********************************************************/
 
 ///////////////////// RETREIVE DATA //////////////////////
-
 // NOTE: data variable is included at renderization time (runtime)
+let myUsername = $('#data_username').attr('data-value');
+let data = JSON.parse($('#data_data').attr('data-value'));
+let time_white = $('#data_white_time').attr('data-value');
+let time_black = $('#data_black_time').attr('data-value');
+
 let game_id = data.id
 console.log(game_id) //TODO: this should be displayed on page
 let admin = data.admin

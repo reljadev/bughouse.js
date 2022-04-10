@@ -14,7 +14,7 @@ function parse_url(request) {
         var filePath = DIRPATH + DEFAULT_PAGE
     } else if(folder_name === '/game' || folder_name === '/landing_page') {
         var filePath = DIRPATH + folder_name + parser.pathname
-    } else if(folder_name === '/stopwatch' || folder_name === '/sidebar' || folder_name === '/sport') {
+    } else if(['/data', '/path', '/stopwatch', '/sidebar', '/sport'].includes(folder_name)) {
         var filePath = DIRPATH + '/game' + parser.pathname
     } else {
         var filePath = DIRPATH + parser.pathname
