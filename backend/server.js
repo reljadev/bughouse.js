@@ -6,6 +6,8 @@ const utils = require('./utils')
 const sanitize = require('sanitize-html')
 const Game = require('./game')
 
+// TODO: testing
+
 // games functions
 let games = {};
 
@@ -39,6 +41,14 @@ const PORT = process.env.PORT || 3000;
 // create server
 const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
+
+    // redirect to https
+    // if(!request.secure) { //TODO: change this check
+    //     response.writeHead(301, {
+    //         Location: 'https://' + request.headers.host + request.url
+    //     }).end();
+    //     return
+    // }
 
     // parse url
     let parsed_url = utils.parse_url(request);

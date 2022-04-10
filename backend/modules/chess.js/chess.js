@@ -480,10 +480,10 @@ var Chess = function (fen, sparePieces) {
       
       for(let j in pieces) {
         let p = pieces[j]
+        
         if(!spares[k].hasOwnProperty(color + p)) {
           return false
         }
-        console.log('its here')
         if(!Number.isInteger(spares[k][color + p]) ||
             spares[k][color + p] < 0) {
           return false
