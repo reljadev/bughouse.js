@@ -1,11 +1,12 @@
-const ejs = require('ejs')
-const http = require('http')
-const helmet = require('helmet')
-const socket = require('socket.io')
-const fs = require('fs')
-const utils = require('./utils')
-const sanitize = require('sanitize-html')
-const Game = require('./game')
+const http = require('http');
+const ejs = require('ejs');
+const fs = require('fs');
+const utils = require('./utils');
+const sanitize = require('sanitize-html');
+const helmet = require('helmet');
+const cors = require('cors');
+const socket = require('socket.io');
+const Game = require('./game');
 
 // TODO: testing
 
@@ -146,6 +147,11 @@ const server = http.createServer(function (request, response) {
                     }
                 // file read succesfully
                 } else {
+                    response.setHeader('Access-Control-Allow-Origin', 'https://code.jquery.com/jquery-1.12.4.min.js');
+                    response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+                    response.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); // If needed
+                    response.setHeader('Access-Control-Allow-Credentials', true); // If needed
+                    
                     response.writeHead(200, { 'Content-Type': contentType,
                                               'Set-Cookie': 'user_id=' +  user_id });
                     // renderize ejs page
