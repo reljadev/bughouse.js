@@ -1,5 +1,6 @@
 const ejs = require('ejs')
 const http = require('http')
+const helmet = require('helmet')
 const socket = require('socket.io')
 const fs = require('fs')
 const utils = require('./utils')
@@ -37,6 +38,15 @@ function get_game_containing_user(user_id) {
 
 // CONSTANTS
 const PORT = process.env.PORT || 3000;
+
+// initialize helmet
+//TODO: delete style-src 'unsafe-inline'
+//TODO: missing require-sri-for script
+const run_helmet = helmet({ contentSecurityPolicy: { 
+            directives: {"script-src": ["'self'", "https://code.jquery.com/jquery-1.12.4.min.js"], 
+                        "style-src": ["'self'", "'unsafe-inline'"], 
+                        "frame-ancestors": ["'none'"],} },
+            });
 
 // create server
 const server = http.createServer(function (request, response) {
@@ -108,40 +118,50 @@ const server = http.createServer(function (request, response) {
     let encoding = contentType === 'image/png' ? undefined : 'utf-8';
 
     // read file & send it to client
-    fs.readFile(filePath, encoding, function(error, content) { // TODO: you can use ejs.renderFile
-        // content security policy
-        //TODO: missing style-src 'self'
-        //TODO: missing require-sri-for script
-        response.setHeader('Content-Security-Policy', "script-src 'self' https://code.jquery.com/jquery-1.12.4.min.js;");
+    fs.readFile(filePath, encoding, function(fs_error, content) { // TODO: you can use ejs.renderFile
 
-        if (error) {
-            if(error.code == 'ENOENT') { //TODO: why didn't this throw error, no such file?
-                fs.readFile('./404.html', function(error, content) {
-                    response.writeHead(200, { 'Content-Type': contentType });
-                    response.end(content, 'utf-8');
-                });
-            } else {
-                response.writeHead(500);
-                response.end('Sorry, check with the site admin for error: ' + error.code + ' ..\n');
-                response.end(); 
-            }
-        } else {
-            response.writeHead(200, { 'Content-Type': contentType,
-                                      'X-Content-Type-Options': 'no-sniff',
-                                      'Set-Cookie': 'user_id=' +  user_id });
-            // renderize page
-            if(fileName === 'game.ejs') {
-                let renderizedPage = ejs.render(content, {username: params.username, 
-                                                          data: currentGame.info(),
-                                                          white_time: currentGame.get_white_time(),
-                                                          black_time: currentGame.get_black_time()});
-                response.end(renderizedPage, 'utf-8'); // nor here
+        run_helmet(request, response, (h_error) => {
+            // helmet error
+            if (h_error) {
+              response.writeHead(500);
+              response.end(
+                "Helmet failed for some unexpected reason. Was it configured correctly?"
+              );
 
-            // html, js or css file
+            // helmet set up
             } else {
-                response.end(content, 'utf-8'); //TODO: probably encoding not needed here
+                // error while reading the file
+                if (fs_error) {
+                    if(fs_error.code == 'ENOENT') { //TODO: why didn't this throw error, no such file?
+                        fs.readFile('./404.html', function(fs_error, content) {
+                            response.writeHead(200, { 'Content-Type': 'text/html' });
+                            response.end(content, 'utf-8');
+                        });
+                    } else {
+                        response.writeHead(500);
+                        response.end('Sorry, check with the site admin for error: ' + fs_error.code + ' ..\n');
+                        response.end(); 
+                    }
+                // file read succesfully
+                } else {
+                    response.writeHead(200, { 'Content-Type': contentType,
+                                              'Set-Cookie': 'user_id=' +  user_id });
+                    // renderize ejs page
+                    if(fileName === 'game.ejs') {
+                        let renderizedPage = ejs.render(content, {username: params.username, 
+                                                                  data: currentGame.info(),
+                                                                  white_time: currentGame.get_white_time(),
+                                                                  black_time: currentGame.get_black_time()});
+                        response.end(renderizedPage, 'utf-8');
+        
+                    // html, js or css file
+                    } else {
+                        response.end(content, 'utf-8');
+                    }
+                }
             }
-        }
+        });
+        
     });
 
 })
