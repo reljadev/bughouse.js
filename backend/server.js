@@ -127,7 +127,8 @@ const server = http.createServer(function (request, response) {
             }
         } else {
             response.writeHead(200, { 'Content-Type': contentType,
-                                      'Set-Cookie': 'user_id=' +  user_id});
+                                      'X-Content-Type-Options': 'no-sniff',
+                                      'Set-Cookie': 'user_id=' +  user_id });
             // renderize page
             if(fileName === 'game.ejs') {
                 let renderizedPage = ejs.render(content, {username: params.username, 
