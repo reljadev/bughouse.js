@@ -43,10 +43,12 @@ const PORT = process.env.PORT || 3000;
 //TODO: delete style-src 'unsafe-inline'
 //TODO: missing require-sri-for script
 const run_helmet = helmet({ contentSecurityPolicy: { 
-            directives: {"script-src": ["'self'", "https://code.jquery.com/jquery-1.12.4.min.js"], 
-                        "style-src": ["'self'", "'unsafe-inline'"], 
-                        "frame-ancestors": ["'none'"],} },
-            });
+                                directives: {"script-src": ["'self'", "https://code.jquery.com/jquery-1.12.4.min.js"], 
+                                            "style-src": ["'self'", "'unsafe-inline'"], 
+                                            "frame-ancestors": ["'none'"],} },
+                            frameguard: {action: "deny"},
+                            crossOriginResourcePolicy: { policy: "cross-origin" },
+                        });
 
 // create server
 const server = http.createServer(function (request, response) {
