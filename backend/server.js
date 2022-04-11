@@ -147,7 +147,8 @@ const server = http.createServer(function (request, response) {
                     }
                 // file read succesfully
                 } else {
-                    response.setHeader('Access-Control-Allow-Origin', 'https://code.jquery.com/jquery-1.12.4.min.js');
+                    // https://code.jquery.com/jquery-1.12.4.min.js
+                    response.setHeader('Access-Control-Allow-Origin', '*');
                     response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
                     response.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); // If needed
                     response.setHeader('Access-Control-Allow-Credentials', true); // If needed
