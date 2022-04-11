@@ -42,16 +42,9 @@ const PORT = process.env.PORT || 3000;
 const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
 
-    // redirect to https
-    // if(!request.secure) { //TODO: change this check
-    //     response.writeHead(301, {
-    //         Location: 'https://' + request.headers.host + request.url
-    //     }).end();
-    //     return
-    // }
-
     // parse url
     let parsed_url = utils.parse_url(request);
+    let protocol = parsed_url.protocol;
     let fileName = parsed_url.fileName;
     let filePath = parsed_url.filePath;
     let params = parsed_url.params;
@@ -60,6 +53,15 @@ const server = http.createServer(function (request, response) {
     let user_id = cookies.user_id;
     // sanitize client suplied data
     params.username = sanitize(params.username);
+
+    // NOTE: can't set up SSL certificate with heroku free tier
+    // redirect to https
+    // if(protocol !== 'https') {
+    //     response.writeHead(301, {
+    //         Location: 'https://' + request.headers.host + request.url
+    //     }).end();
+    //     return
+    // }
 
     // if user wants game.ejs or landing page
     if(fileName === '' || fileName === 'landing_page.html' || fileName === 'game.ejs') {
@@ -109,6 +111,7 @@ const server = http.createServer(function (request, response) {
     fs.readFile(filePath, encoding, function(error, content) { // TODO: you can use ejs.renderFile
         // content security policy
         //TODO: missing style-src 'self'
+        //TODO: missing require-sri-for script
         response.setHeader('Content-Security-Policy', "script-src 'self' https://code.jquery.com/jquery-1.12.4.min.js;");
 
         if (error) {

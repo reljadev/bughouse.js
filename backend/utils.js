@@ -5,29 +5,34 @@ const DEFAULT_PAGE = '/landing_page/landing_page.html'
 
 function parse_url(request) {
     // form URL
-    var baseURL = 'http://' + request.headers.host + '/';
-    var parser = new URL(request.url, baseURL);
+    let baseURL = 'http://' + request.headers.host + '/';
+    let parser = new URL(request.url, baseURL);
+
+    // get protocol
+    let protocol = parser.protocol.split(':')[0];
 
     // convert request url to file path
-    var folder_name = parser.pathname.substring(0, parser.pathname.indexOf('.'))
+    let filePath = null;
+    let folder_name = parser.pathname.substring(0, parser.pathname.indexOf('.'))
     if(folder_name === '') {
-        var filePath = DIRPATH + DEFAULT_PAGE
+        filePath = DIRPATH + DEFAULT_PAGE
     } else if(folder_name === '/game' || folder_name === '/landing_page') {
-        var filePath = DIRPATH + folder_name + parser.pathname
+        filePath = DIRPATH + folder_name + parser.pathname
     } else if(['/path', '/stopwatch', '/sidebar', '/sport'].includes(folder_name)) {
-        var filePath = DIRPATH + '/game' + parser.pathname
+        filePath = DIRPATH + '/game' + parser.pathname
     } else {
-        var filePath = DIRPATH + parser.pathname
+        filePath = DIRPATH + parser.pathname
     }
+    let fileName = parser.pathname.substring(1);
     
     // get request parameters
-    var params = Object.fromEntries(parser.searchParams)
+    let params = Object.fromEntries(parser.searchParams)
 
-    return {fileName: parser.pathname.substring(1), filePath: filePath, params: params}
+    return {protocol, fileName, filePath, params}
 }
 
 function ext_to_type(filePath) {
-    var extname = path.extname(filePath);
+    let extname = path.extname(filePath);
     const ext_to_type = {'.html': 'text/html', '.js': 'text/javascript',
                          '.css': 'text/css', '.json': 'application/json',
                          '.png': 'image/png', '.jpg': 'image/jpg',
@@ -53,7 +58,7 @@ function parse_cookies (request) {
 }
 
 function remove_item(arr, value) {
-    var index = arr.indexOf(value);
+    let index = arr.indexOf(value);
     if (index > -1) {
       arr.splice(index, 1);
     }
@@ -61,9 +66,9 @@ function remove_item(arr, value) {
 }
 
 function deepCopy(obj) {
-    var copy = {}
+    let copy = {}
 
-    for (var property in obj) {
+    for (let property in obj) {
       if (typeof obj[property] === 'object') {
         copy[property] = deepCopy(obj[property])
       } else {
@@ -76,7 +81,7 @@ function deepCopy(obj) {
 
 function uuid (length) {
     return ('xxxx-'.repeat(length / 4 - 1).concat('xxxx')).replace(/x/g, function (c) {
-      var r = (Math.random() * 16) | 0
+      let r = (Math.random() * 16) | 0
       return r.toString(16)
     })
 }
