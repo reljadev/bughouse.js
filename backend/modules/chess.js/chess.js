@@ -226,8 +226,11 @@ var Chess = function (fen, sparePieces) {
     comments = current_comments
   }
 
-  function reset() {
-    load(DEFAULT_POSITION)
+  function reset(fen, spares) {
+    fen = fen ?? start_fen
+    spares = spares ?? start_spares
+    load(fen)
+    loadSpares(spares)
   }
 
   function load(fen, keep_headers) {

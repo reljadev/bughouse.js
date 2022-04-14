@@ -63,8 +63,10 @@ class Sidebar {
                  .on('mouseup', this.#mouse_up.bind(this));
 
         // remove opponent by clicking x
-        this.#options.$username_top.on('click', this.#removeTopPlayer.bind(this));
-        this.#options.$username_bottom.on('click', this.#removeBottomPlayer.bind(this));
+        this.#options.$username_top.on('click', 
+                                        (evt) => { this.#remove_player.call(this, 'top'); });
+        this.#options.$username_bottom.on('click', 
+                                        (evt) => { this.#remove_player.call(this, 'bottom'); });
     }
 
     /***********************************************************/
@@ -114,18 +116,21 @@ class Sidebar {
         }
         if(this.#dragging) {
             let username = this.#$draggedPlayer.text();
-            let $player = this.#players[username];
+            let player = this.#players[username];
+
             // hide dragged player
             this.#$draggedPlayer.css('display', 'none');
 
             if(this.#updateTopPlayer(evt.pageX, evt.pageY, username)) {
-                $player.remove();
+                player.get_element().remove();
+                player.set_element(this.#options.$username_top);
                 this.#options.player_added_to_board('top', username);
             } else if(this.#updateBottomPlayer(evt.pageX, evt.pageY, username)) {
-                $player.remove();
+                player.get_element().remove();
+                player.set_element(this.#options.$username_bottom);
                 this.#options.player_added_to_board('bottom', username);
             } else {
-                $player.css('display', '');
+                player.get_element().css('display', '');
             }
             this.#dragging = false;
         }
@@ -158,66 +163,79 @@ class Sidebar {
         return false;
     }
 
-    #removeTopPlayer(evt) {
-        this.#remove_player(this.#options.$username_top, 'top');
-    } 
-
-    #removeBottomPlayer(evt) {
-        this.#remove_player(this.#options.$username_bottom, 'bottom');
-    }
-
-    #remove_player($username, position) {
+    #remove_player(position) {
         // TODO: x shouldn't even be present there
         // updates are not possible midgame
+        // once this is handled, delete this function
         if(this.#options.is_playing()) {
             return;
         }
 
-        let username = $username.text();
-        if(username !== '') {
-            this.#add_player(username);
-            $username.text('');
+        let removed = this.remove_player_from_board(position);
+        if(removed) {
             this.#options.player_removed_from_board(position);
         }
-    }
-
-    #add_player(username) {
-        let $new_player = $('<div class="player">' + username + '</div>');
-        if(username === this.#options.myUsername) {
-            $new_player.css('background-color', 'black');
-        }
-        this.#players[username] = $new_player;
-        this.#$sidebar.append($new_player);
     }
 
     /***********************************************************/
     /*                       PUBLIC API                        */
     /***********************************************************/
 
-    add_player(arg) {
-        if(Array.isArray(arg)) {
-            for(let i in arg) {
-                this.#add_player(arg[i]);
+    add_player(username, connected) {
+        let $new_player = $('<div class="player">' + username + '</div>');
+        if(username === this.#options.myUsername) {
+            $new_player.css('background-color', 'black');
+        }
+
+        let p = this.#players[username];
+        // player already exists, update it's element
+        if(p) {
+            if(p.is_connected()) {
+                p.set_element($new_player);
+                this.#$sidebar.append($new_player);
+            } else {
+                p.set_connected(true);
             }
+        // create new player
         } else {
-            this.#add_player(arg);
+            this.#players[username] = new Sidebar.Player(username, connected, $new_player);
+            this.#$sidebar.append($new_player);
         }
     }
 
     remove_player(username) {
-        let $player = this.#players[username];
-        if(typeof $player !== 'undefined') {
-            $player.remove();
+        let p = this.#players[username];
+        let $element = p.get_element();
+
+        if($element) {
+            // removing player at board
+            if(p.get_username() === this.#options.$username_top.text() ||
+                p.get_username() === this.#options.$username_bottom.text()) {
+                    // while playing
+                    if(this.#options.is_playing()) {
+                        // not allowed, just gray him out
+                        p.set_connected(false);
+                        return;
+                    }
+                }
+
+            $element.remove();
+            delete this.#players[username];
         }
     }
 
     add_player_to_board(position, username) {
         let $username = position === 'top' ? this.#options.$username_top : 
                                              this.#options.$username_bottom;
-        let $player = this.#players[username];
-        if(typeof $player !== 'undefined') {
-            $username.text(username)
-            $player.remove()
+        let p = this.#players[username];
+        
+        if(p) {
+            let $player = p.get_element();
+            if($player) {
+                $username.text(username)
+                $player.remove()
+                p.set_element($username);
+            }
         }
     }
 
@@ -226,15 +244,34 @@ class Sidebar {
                                              this.#options.$username_bottom;
         let username = $username.text()
         if(username !== '') {
-            this.#add_player(username)
-            $username.text('')
+            let p = this.#players[username];
+            if(p) {
+                if(p.is_connected()) {
+                    this.add_player(username, true)
+                } else {
+                    delete this.#players[username];
+                }
+                $username.text('')
+                return true;
+            }
         }
+
+        return false;
     }
 
     swap_usernames_at_board() {
-        let tmp = this.#options.$username_bottom.text()
-        this.#options.$username_bottom.text(this.#options.$username_top.text())
-        this.#options.$username_top.text(tmp)
+        let p_top = this.#players[this.#options.$username_top.text()]
+        let p_bottom = this.#players[this.#options.$username_bottom.text()]
+
+        if(p_top && p_bottom) {
+            // swap usernames
+            p_bottom.get_element().text(p_top.get_username())
+            p_top.get_element().text(p_bottom.get_username())
+            
+            // swap element references
+            p_top.set_element(this.#options.$username_bottom)
+            p_bottom.set_element(this.#options.$username_top)
+        }
     }
 
     clear_board_usernames() {
@@ -242,4 +279,44 @@ class Sidebar {
         this.remove_player_from_board('bottom')
     }
 
+}
+
+Sidebar.Player = class Player {
+    #username;
+    #connected;
+    #$element;
+
+    constructor(username, connected, $element) {
+        if(!username) {
+            throw 'username argument needs to be specified in Player()';
+        }
+        this.#username = username;            
+
+        if(!connected) {
+            throw 'connected argument needs to be specified in Player()';
+        }
+        this.#connected = connected;
+
+        this.#$element = $element ?? null;
+    }
+
+    get_username() {
+        return this.#username;
+    }
+
+    is_connected() {
+        return this.#connected;
+    }
+
+    set_connected(connected) {
+        this.#connected = connected;
+    }
+
+    get_element() {
+        return this.#$element;
+    }
+
+    set_element($element) {
+        this.#$element = $element;
+    }
 }

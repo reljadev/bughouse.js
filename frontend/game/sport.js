@@ -129,8 +129,16 @@ class Sport {
                                         is_playing: this.#is_playing.bind(this) });
 
         // add players
-        this.#sidebar.add_player(this.#options.myUsername);
-        this.#sidebar.add_player(this.#options.usernames.map(p => p[0])); //TODO: take into account who is connected and who isn't
+        let added_myself = false;
+        this.#options.usernames.forEach((arr) => {
+            this.#sidebar.add_player(arr[0], arr[1]);
+            if(arr[0] === this.#options.myUsername) {
+                added_myself = true;
+            }
+        });
+        if(!added_myself) {
+            this.#sidebar.add_player(this.#options.myUsername, true);
+        }
         if(this.#options.white_player !== null) {
             let position = this.#color_to_board_position('white');
             this.#sidebar.add_player_to_board(position, this.#options.white_player);
@@ -435,7 +443,7 @@ class Sport {
     }
 
     add_player(username) {
-        this.#sidebar.add_player(username);
+        this.#sidebar.add_player(username, true);
     }
 
     remove_player(username) {

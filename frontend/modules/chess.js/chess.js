@@ -1596,8 +1596,8 @@ var Chess = function (fen, sparePieces) {
       loadSpares(spares)
     },
 
-    reset: function () {
-      return reset()
+    reset: function (fen, spares) {
+      return reset(fen, spares)
     },
 
     moves: function (options) {

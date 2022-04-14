@@ -9,7 +9,7 @@ const POST_GAME = Symbol('post-game');
 
 class Game {
     // declare private variables
-    #id = utils.uuid(8);
+    #id;
     #game;
     #stage;
     #players;
@@ -49,15 +49,20 @@ class Game {
 
         for(let i in this.#players) {
             let p = this.#players[i];
-            // white player
-            if(p.get_username() === this.#white_player) {
-                p.get_socket().emit('game_is_over', messages.white);
-            // black player
-            } else if(p.get_username() === this.#black_player) {
-                p.get_socket().emit('game_is_over', messages.black);
-            // watcher    
-            } else {
-                p.get_socket().emit('game_is_over', messages.watcher);
+            if(p) {
+                let socket = p.get_socket();
+                if(socket) {
+                    // white player
+                    if(p.get_username() === this.#white_player) {
+                        socket.emit('game_is_over', messages.white);
+                    // black player
+                    } else if(p.get_username() === this.#black_player) {
+                        socket.emit('game_is_over', messages.black);
+                    // watcher    
+                    } else {
+                        socket.emit('game_is_over', messages.watcher);
+                    }
+                }
             }
         }
     }

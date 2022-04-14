@@ -4,7 +4,6 @@ const fs = require('fs');
 const utils = require('./utils');
 const sanitize = require('sanitize-html');
 const helmet = require('helmet');
-const cors = require('cors');
 const socket = require('socket.io');
 const Game = require('./game');
 
@@ -43,13 +42,12 @@ const PORT = process.env.PORT || 3000;
 // initialize helmet
 //TODO: delete style-src 'unsafe-inline'
 //TODO: missing require-sri-for script
-const run_helmet = helmet({ contentSecurityPolicy: { 
-                                directives: {"script-src": ["'self'", "https://code.jquery.com/jquery-1.12.4.min.js"], 
-                                            "style-src": ["'self'", "'unsafe-inline'"], 
-                                            "frame-ancestors": ["'none'"],} },
-                            frameguard: {action: "deny"},
-                            crossOriginResourcePolicy: { policy: "cross-origin" },
-                        });
+// const run_helmet = helmet({ contentSecurityPolicy: { 
+//                                 directives: {"script-src": ["'self'", "https://code.jquery.com/jquery-1.12.4.min.js"], 
+//                                             "style-src": ["'self'", "'unsafe-inline'"], 
+//                                             "frame-ancestors": ["'none'"],} },
+//                             frameguard: {action: "deny"},
+//                         });
 
 // create server
 const server = http.createServer(function (request, response) {
@@ -76,6 +74,8 @@ const server = http.createServer(function (request, response) {
     //     return
     // }
 
+    //TODO: username should be checked on page serving
+
     // if user wants game.ejs or landing page
     if(fileName === '' || fileName === 'landing_page.html' || fileName === 'game.ejs') {
         // & user id is valid
@@ -98,8 +98,6 @@ const server = http.createServer(function (request, response) {
         // join existing game
         if(params.hasOwnProperty('gameId') && 
            games.hasOwnProperty(params['gameId'])) {
-            // TODO: this info should be vetted because it's coming from client side (fen & sparePieces)
-            // and user can temper with it, i.e. insert executable code
             currentGame = games[params['gameId']];
 
             if(!currentGame.has_player(user_id)) {
@@ -121,55 +119,58 @@ const server = http.createServer(function (request, response) {
     let encoding = contentType === 'image/png' ? undefined : 'utf-8';
 
     // read file & send it to client
-    fs.readFile(filePath, encoding, function(fs_error, content) { // TODO: you can use ejs.renderFile
+    fs.readFile(filePath, encoding, function(fs_error, content) {
 
-        run_helmet(request, response, (h_error) => {
-            // helmet error
-            if (h_error) {
-              response.writeHead(500);
-              response.end(
-                "Helmet failed for some unexpected reason. Was it configured correctly?"
-              );
+        // run_helmet(request, response, (h_error) => {
+        //     // helmet error
+        //     if (h_error) {
+        //       response.writeHead(500);
+        //       response.end(
+        //         "Helmet failed for some unexpected reason. Was it configured correctly?"
+        //       );
 
-            // helmet set up
+        //     // helmet set up
+        //     } else {
+                
+        //     }
+        // });
+
+        // error while reading the file
+        if (fs_error) {
+            if(fs_error.code == 'ENOENT') { //TODO: why didn't this throw error, no such file?
+                fs.readFile('./404.html', function(fs_error, content) {
+                    response.writeHead(200, { 'Content-Type': 'text/html' });
+                    response.end(content, 'utf-8');
+                });
             } else {
-                // error while reading the file
-                if (fs_error) {
-                    if(fs_error.code == 'ENOENT') { //TODO: why didn't this throw error, no such file?
-                        fs.readFile('./404.html', function(fs_error, content) {
-                            response.writeHead(200, { 'Content-Type': 'text/html' });
-                            response.end(content, 'utf-8');
-                        });
-                    } else {
-                        response.writeHead(500);
-                        response.end('Sorry, check with the site admin for error: ' + fs_error.code + ' ..\n');
-                        response.end(); 
-                    }
-                // file read succesfully
-                } else {
-                    // https://code.jquery.com/jquery-1.12.4.min.js
-                    response.setHeader('Access-Control-Allow-Origin', '*');
-                    response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
-                    response.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); // If needed
-                    response.setHeader('Access-Control-Allow-Credentials', true); // If needed
-                    
-                    response.writeHead(200, { 'Content-Type': contentType,
-                                              'Set-Cookie': 'user_id=' +  user_id });
-                    // renderize ejs page
-                    if(fileName === 'game.ejs') {
-                        let renderizedPage = ejs.render(content, {username: params.username, 
-                                                                  data: currentGame.info(),
-                                                                  white_time: currentGame.get_white_time(),
-                                                                  black_time: currentGame.get_black_time()});
-                        response.end(renderizedPage, 'utf-8');
-        
-                    // html, js or css file
-                    } else {
-                        response.end(content, 'utf-8');
-                    }
-                }
+                response.writeHead(500);
+                response.end('Sorry, check with the site admin for error: ' + fs_error.code + ' ..\n');
+                response.end(); 
             }
-        });
+        // file read succesfully
+        } else {
+            // TODO: fix the cors error
+            // https://code.jquery.com/jquery-1.12.4.min.js
+            // response.setHeader('Access-Control-Allow-Origin', '*');
+            // response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
+            // response.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); // If needed
+            // response.setHeader('Access-Control-Allow-Credentials', true); // If needed
+            
+            response.writeHead(200, { 'Content-Type': contentType,
+                                    'Set-Cookie': 'user_id=' +  user_id });
+            // renderize ejs page
+            if(fileName === 'game.ejs') {
+                let renderizedPage = ejs.render(content, {username: params.username, 
+                                                        data: currentGame.info(),
+                                                        white_time: currentGame.get_white_time(),
+                                                        black_time: currentGame.get_black_time()});
+                response.end(renderizedPage, 'utf-8');
+
+            // html, js or css file
+            } else {
+                response.end(content, 'utf-8');
+            }
+        }
         
     });
 
@@ -185,7 +186,7 @@ io.on('connection', (client) => {
     let user_id = client.request._query['user_id'];
     let username = sanitize(client.request._query['username']);
     if((typeof game_id !== 'undefined' && games.hasOwnProperty(game_id)) &&
-       (typeof username !== 'undefined')) { //TODO: username should be checked on page serving
+       (typeof username !== 'undefined')) {
         // update player username & socket
         let p = games[game_id].get_player(user_id);
         if(p) {
@@ -200,7 +201,7 @@ io.on('connection', (client) => {
         }
     }
 
-    // player set at chessboard
+    // player set at board
     client.on('playerJoined', (color, username) => {
         // sanitize client suplied data
         color = sanitize(color);
@@ -209,7 +210,6 @@ io.on('connection', (client) => {
         let g = games[client.data.game_id];
         if(g) {
             let player_set = g.set_player_at_board(color, username);
-
             if(player_set) {
                 client.broadcast.to(client.data.game_id).emit('playerJoined', color, username);
                 if(g.board_is_set()) {
@@ -217,9 +217,9 @@ io.on('connection', (client) => {
                 }
             }
         }
-    })
+    });
 
-    // player removed from chessboard
+    // player removed from board
     client.on('playerRemoved', (color) => {
         // sanitize client suplied data
         color = sanitize(color);
@@ -227,13 +227,12 @@ io.on('connection', (client) => {
         let g = games[client.data.game_id];
         if(g) {
             let player_removed = g.remove_player_from_board(color);
-
             if(player_removed) {
                 client.broadcast.to(client.data.game_id).emit('playerRemoved', color);
                 client.emit('cant_start_game');
             }
         }
-    })
+    });
 
     // admin has initiated the game
     client.on('game_has_started', () => {
@@ -245,7 +244,7 @@ io.on('connection', (client) => {
                 client.broadcast.to(client.data.game_id).emit('game_has_started');
             }
         }
-    })
+    });
 
     // on player move
     client.on('move', (move, elapsedTime) => {
@@ -263,25 +262,29 @@ io.on('connection', (client) => {
                 client.emit('invalid_move', move);
             }
         }
-    })
+    });
 
     client.on('game_is_over', () => {
-        games[client.data.game_id].game_over(games[client.data.game_id]
-                                                .get_player(client.data.user_id)
-                                                .get_username());
-    })
+        let g = games[client.data.game_id];
+        if(g) {
+            let p = g.get_player(client.data.user_id);
+            if(p) {
+                games[client.data.game_id].game_over(p.get_username());
+            }
+        }
+    });
 
     client.on('reset_game', (fen, sparePieces) => {
         let g = games[client.data.game_id];
         if(g) {
             let position_set = g.set_position(fen, sparePieces);
             if(position_set) {
-                g.reset();
+                g.reset(fen, sparePieces);
             
                 client.broadcast.to(game_id).emit('reset_game', fen, sparePieces);
             }
         }
-    })
+    });
 
     // player has disconnected
     client.on('disconnect', () => {
@@ -289,11 +292,14 @@ io.on('connection', (client) => {
 
         let g = games[client.data.game_id];
         if(g) {
-            client.broadcast.to(g.get_id()).emit('disconnected', 
-                                                    g.get_player(client.data.user_id).get_username());
-            g.remove_player(client.data.user_id);
+            let p = g.get_player(client.data.user_id);
+            if(p) {
+                client.broadcast.to(g.get_id()).emit('disconnected', 
+                                                    p.get_username());
+                g.remove_player(client.data.user_id);
+            }
         }
-    })
+    });
 });
 
 // listen for upcomming connection
@@ -303,4 +309,4 @@ server.listen(PORT, function(error) {
     } else {
         console.log('Server is listening on port ' + PORT);
     }
-})
+});
