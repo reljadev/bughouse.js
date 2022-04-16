@@ -1678,7 +1678,6 @@ var Chess = function (fen, sparePieces) {
       return generate_fen()
     },
 
-    // TODO: do i need this
     move_count: function() {
       return history.length
     },

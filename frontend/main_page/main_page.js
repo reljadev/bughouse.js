@@ -26,14 +26,14 @@ let $status = $('#status');
 let $fen = $('#fen');
 let $pgn = $('#pgn');
 
-//// INITIALIZE SPORT ////
+//// INITIALIZE GAME ////
 data.myUsername = myUsername;
 data.move_executed = move_executed;
 data.player_joined_board = player_joined_board;
 data.player_left_board = player_left_board;
 let game = new Game(data);
 
-///////////////////// SPORT FUNCTIONS ////////////////////
+///////////////////// GAME FUNCTIONS ////////////////////
 
 function move_executed(move, elapsed_time) {
   // send move to server
@@ -49,7 +49,6 @@ function player_left_board(color) {
   server.emit('playerRemoved', color);
 }
 
-// TODO: where should this be?
 // when player joins midgame, update status immedietely
 if(game.is_playing) {
   updateStatus();
@@ -196,7 +195,7 @@ $pgn.html('')
 // connect to server
 // NOTE: io is imported in game.ejs
 const server = io('/',  { query: "gameId=" + game_id + 
-                                  "&user_id=" + get_cookie('user_id') + //TODO: is this vulnerable to attacks?
+                                  "&user_id=" + get_cookie('user_id') + 
                                   "&username=" + myUsername })
 
 // opponent moved

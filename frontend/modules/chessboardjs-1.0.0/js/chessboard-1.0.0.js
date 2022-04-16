@@ -590,7 +590,7 @@
   // Config
   // ---------------------------------------------------------------------------
 
-  function expandConfigArgumentShorthand (config) { //TODO: shouldn't this be config.position instead of config?
+  function expandConfigArgumentShorthand (config) {
     if (config === 'start') {
       config = {position: deepCopy(START_POSITION)}
     } else if (validFen(config)) {
@@ -1201,7 +1201,6 @@
     }
 
     ///////////////////////////////////////////////////////////
-    //    TODO: this really should be placed somewhere else
 
     // given a position and a set of moves, return a new position
     // with the moves executed
@@ -1523,7 +1522,6 @@
       isDragging = false
     }
 
-    // TODO: where to place this?
     function pickedPromotionPiece(evt) {
       var $promotion_square = $(evt.currentTarget)
       var target = $promotion_square.attr('square')
@@ -1843,7 +1841,6 @@
       error(5482, 'Invalid value passed to the orientation method.', arg)
     }
 
-    //TODO: remove this
     widget.ascii = function () {
       var s = ''
 
@@ -1982,7 +1979,6 @@
       // set board width
       $board.css('width', squareSize * 8 + 'px')
 
-      // TODO: uncomment this
       // usernames width
       // $username_top.css('width', squareSize * 2 + 'px')
       // $username_bottom.css('width', squareSize * 2 + 'px')
@@ -2161,23 +2157,21 @@
     // Initialization
     // -------------------------------------------------------------------------
 
-    // TODO: move this
-    var canPickupPieces = true
-    function delegate_click(evt) {
-      // left click
-      if(evt.which === 1 && canPickupPieces) {
-        // mouse drag pieces
-        mousedownSquare(evt)
-      // right click
-      } else if(evt.which === 3) {
-        config.onRightClick(evt)
-      }
-    }
-
     function addEvents () {
       // prevent "image drag"
       $('body').on('mousedown mousemove', '.' + CSS.piece, stopDefault)
 
+      var canPickupPieces = true
+      function delegate_click(evt) {
+        // left click
+        if(evt.which === 1 && canPickupPieces) {
+          // mouse drag pieces
+          mousedownSquare(evt)
+        // right click
+        } else if(evt.which === 3) {
+          config.onRightClick(evt)
+        }
+      }
       
       $board
           .on('contextmenu', stopDefault, false)
