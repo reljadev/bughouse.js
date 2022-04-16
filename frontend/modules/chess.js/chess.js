@@ -2149,13 +2149,13 @@ var Chess = function (fen, sparePieces) {
 
       // save state after premoves
       var fen = generate_fen()
-      var spares = sparePieces
+      var spares = clone(sparePieces)
 
       // restore game
       reset()
       this.load_pgn(original_state)
 
-      return {fen: fen, spares: spares, 
+      return {fen: fen, sparePieces: spares, 
               move_count: history.length, allExecuted: allExecuted}
     },
 
@@ -2182,7 +2182,7 @@ var Chess = function (fen, sparePieces) {
         make_move(moves.pop())
       }
 
-      return {fen: fen, spares: spares, move_count: currMoveNum}
+      return {fen: fen, sparePieces: spares, move_count: currMoveNum}
     },
 
     clear: function () {

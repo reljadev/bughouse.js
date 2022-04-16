@@ -1095,7 +1095,7 @@
         if (numFinished !== animations.length) return
 
         drawPositionInstant()
-        drawSparePieces()
+        drawSpares()
 
         // run their onMoveEnd function
         if (isFunction(config.onMoveEnd)) {
@@ -1272,7 +1272,7 @@
       buildSparePiecesHTML('white')
     }
 
-    function updateSparePieceDisplay(piece, counter) { //TODO: move this somewhere
+    function updateSparePieceDisplay(piece, counter) {
       var color = piece.charAt(0) === 'w' ? 'white' : 'black'
       var i = sparePiecesToSquares[piece.charAt(1)]
 
@@ -1369,7 +1369,7 @@
       // animation complete
       function complete () {
         drawPositionInstant()
-        drawSparePieces()
+        drawSpares()
         $draggedPiece.css('display', 'none')
 
         // run their onSnapbackEnd function
@@ -1413,7 +1413,7 @@
 
       // redraw the position
       drawPositionInstant()
-      drawSparePieces()
+      drawSpares()
 
       // hide the dragged piece
       $draggedPiece.fadeOut(config.trashSpeed)
@@ -1437,7 +1437,7 @@
       // animation complete
       function onAnimationComplete () {
         drawPositionInstant()
-        drawSparePieces()
+        drawSpares()
         $draggedPiece.css('display', 'none')
 
         // execute their onSnapEnd function
@@ -1457,6 +1457,25 @@
       if(draggedPieceSource === 'offboard') {
         var color = draggedPiece.charAt(0) === 'w' ? 'white' : 'black'
         config.sparePieces[color][draggedPiece] -= 1
+      }
+
+      // set state
+      isDragging = false
+
+      // update move count
+      move_count++
+    }
+
+    function premoveDraggedPieceOnSquare(square) {
+      removeSquareHighlights()
+
+      drawPositionInstant()
+      drawSpares();
+      $draggedPiece.css('display', 'none')
+
+      // execute their onSnapEnd function
+      if (isFunction(config.onSnapEnd)) {
+        config.onSnapEnd(draggedPieceSource, square, draggedPiece)
       }
 
       // set state
@@ -1572,7 +1591,6 @@
       // spare piece
       } else {
         var color = piece.charAt(0) === 'w' ? 'white' : 'black'
-        var i = sparePiecesToSquares[piece.charAt(1)]
         var displayCounter = config.sparePieces[color][piece]
         updateSparePieceDisplay(draggedPiece, displayCounter - 1)
       }
@@ -1677,10 +1695,9 @@
         trashDraggedPiece()
       } else if (action === 'drop') {
         dropDraggedPieceOnSquare(location)
-        move_count++
       } else if(action === 'premove') {
-        //basically, just do it, so that you are no longer dragging that piece
-        dropDraggedPieceOnSquare(location)
+        premoveDraggedPieceOnSquare(location)
+        console.log(config.sparePieces)
       } else if(action === 'promotion') {
         promoteDraggedPiece(location)
       }
@@ -1932,7 +1949,7 @@
         // instant update
         setCurrentPosition(position)
         drawPositionInstant()
-        drawSparePieces()
+        drawSpares()
       }
     }
 
@@ -1944,6 +1961,7 @@
       // else update spare pieces
       if(validSpares(pieces)) {
         config.sparePieces = deepCopy(pieces)
+        drawSpares()
       } else {
         throw 'sparePieces argument has incorrect form'
       }

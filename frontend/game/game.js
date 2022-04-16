@@ -38,9 +38,7 @@ let sport = new Sport(data);
 function move_executed(move, elapsed_time) {
   // send move to server
   server.emit('move', move, elapsed_time);
-  if(!sport.is_viewing_history()) {
-    updateStatus();
-  }
+  updateStatus();
 }
 
 function player_joined_board(color, username) {

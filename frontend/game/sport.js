@@ -165,7 +165,7 @@ class Sport {
         // do not pick up pieces if the game hasn't started or is over
         if(this.#stage !== PLAYING) return false;
         // do not pick up pieces if the game is over
-        if (this.#game.game_over()) return false;
+        if(this.#game.game_over()) return false;
         // do not pick up pieces if user is checking history
         if(this.#viewingHistory()) return false;
         
@@ -224,6 +224,7 @@ class Sport {
                 } else {
                     this.#update_board_to_state(state, false);
                     this.#highlight_premove_squares();
+                    console.log(this.#board.sparePieces())
 
                     return 'premove';
                 }
@@ -515,6 +516,10 @@ class Sport {
         // hide clocks
         this.#white_clock.hide();
         this.#black_clock.hide();
+
+        // reset console
+        console.clear();
+        this.#sanity_check();
     }
 
     move(move) {
