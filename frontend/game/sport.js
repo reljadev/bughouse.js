@@ -117,6 +117,8 @@ class Sport {
                 onPiecePromotion: this.#onPiecePromotion.bind(this),
             }
         this.#board = Chessboard('myBoard', board_config);
+
+        this.#board.move_count(this.#game.move_count());
     }
 
     #initialize_sidebar() {
