@@ -27,7 +27,7 @@ function getRandomInt(min, max) {
 
 function startGame() {
     username = $username.val() === '' ? username : $username.val()
-    var url = window.location.href + 'game.ejs?'
+    var url = window.location.href + 'main_page.ejs?'
     url += 'username=' + username
     window.location.replace(url)
 }
@@ -43,7 +43,7 @@ function joinGame() {
 function goGame() {
     username = $username.val() === '' ? username : $username.val()
     var game_id = $('#gameId_input').val()
-    var url = window.location.href + 'game.ejs?'
+    var url = window.location.href + 'main_page.ejs?'
     url += 'username=' + username
     url += '&'
     url += 'gameId=' + game_id

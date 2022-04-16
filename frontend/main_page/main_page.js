@@ -31,7 +31,7 @@ data.myUsername = myUsername;
 data.move_executed = move_executed;
 data.player_joined_board = player_joined_board;
 data.player_left_board = player_left_board;
-let sport = new Sport(data);
+let game = new Game(data);
 
 ///////////////////// SPORT FUNCTIONS ////////////////////
 
@@ -51,7 +51,7 @@ function player_left_board(color) {
 
 // TODO: where should this be?
 // when player joins midgame, update status immedietely
-if(sport.is_playing) {
+if(game.is_playing) {
   updateStatus();
 }
 
@@ -59,11 +59,11 @@ if(sport.is_playing) {
 
 // forward and backward buttons
 let $backward_button = $('#backward_button');
-$backward_button.on('click', sport.backward_move.bind(sport));
+$backward_button.on('click', game.backward_move.bind(game));
 let $forward_button = $('#forward_button');
-$forward_button.on('click', sport.forward_move.bind(sport));
+$forward_button.on('click', game.forward_move.bind(game));
 // hide buttons if not playing
-if(sport.is_pre_game()) {
+if(game.is_pre_game()) {
   $backward_button.css('display', 'none');
   $forward_button.css('display', 'none');
 } 
@@ -109,10 +109,10 @@ if(myUsername !== admin) {
 ///////////////////////// EVENTS /////////////////////////
 
 function start_game() {
-  sport.start();
+  game.start();
   
   // show resign button to players
-  if(sport.am_i_at_board()) {
+  if(game.am_i_at_board()) {
     $resign_button.css('display', '');
   }
   // show forward, backward buttons
@@ -130,7 +130,7 @@ function resign_game(evt) {
 }
 
 function reset_game(fen, sparePieces) {
-  sport.reset(fen, sparePieces);
+  game.reset(fen, sparePieces);
 
   // hide forward & backward buttons
   $forward_button.css('display', 'none');
@@ -153,18 +153,18 @@ function updateStatus () {
 let status = ''
 
 let moveColor = 'White'
-if (sport.turn() === 'b') {
+if (game.turn() === 'b') {
   moveColor = 'Black'
 }
 
 // checkmate?
-if (sport.in_checkmate()) {
+if (game.in_checkmate()) {
   status = 'Game over, ' + moveColor + ' is in checkmate.'
   gameIsOver('checkmate')
 }
 
 // draw?
-else if (sport.in_draw()) {
+else if (game.in_draw()) {
   status = 'Game over, drawn position'
 }
 
@@ -173,14 +173,14 @@ else {
   status = moveColor + ' to move'
   
   // check?
-  if (sport.in_check()) {
+  if (game.in_check()) {
     status += ', ' + moveColor + ' is in check'
   }
 }
 
 $status.html(status)
-$fen.html(sport.fen())
-$pgn.html(sport.pgn())
+$fen.html(game.fen())
+$pgn.html(game.pgn())
 }
 
 function resetStatus() {
@@ -201,25 +201,25 @@ const server = io('/',  { query: "gameId=" + game_id +
 
 // opponent moved
 server.on('move', (move, whiteClock, blackClock) => {
-  sport.move(move);
-  sport.set_clocks(whiteClock, blackClock);
+  game.move(move);
+  game.set_clocks(whiteClock, blackClock);
 
   updateStatus();
 })
 
 // some player joined
 server.on('joined', (username) => {
-  sport.add_player(username);
+  game.add_player(username);
 })
 
 // player added to chessboard
 server.on('playerJoined', (color, username) => {
-  sport.add_player_to_board(color, username);
+  game.add_player_to_board(color, username);
 })
 
 // removed player from chessboard
 server.on('playerRemoved', (color) => {
-  sport.remove_player_from_board(color);
+  game.remove_player_from_board(color);
 })
 
 // admin can start a game
@@ -240,7 +240,7 @@ server.on('game_has_started', () => {
 })
 
 server.on('game_is_over', (message) => {
-  sport.game_over(); 
+  game.game_over(); 
   
   // show reset button
   if(myUsername === admin) {
@@ -260,5 +260,5 @@ server.on('reset_game', (fen, sparePieces) => {
 
 // some player disconnected
 server.on('disconnected', (username) => {
-  sport.remove_player(username);
+  game.remove_player(username);
 })

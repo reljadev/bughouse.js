@@ -76,8 +76,8 @@ const server = http.createServer(function (request, response) {
 
     //TODO: username should be checked on page serving
 
-    // if user wants game.ejs or landing page
-    if(fileName === '' || fileName === 'landing_page.html' || fileName === 'game.ejs') {
+    // if user wants main_page.ejs or landing page
+    if(fileName === '' || fileName === 'landing_page.html' || fileName === 'main_page.ejs') {
         // & user id is valid
         if(utils.isValidId(user_id)) {
             // & user already playing in game
@@ -85,7 +85,7 @@ const server = http.createServer(function (request, response) {
             if(g && g.get_id() !== params.gameId) {
                 // redirect user to that game
                 response.writeHead(302, {
-                        Location: `/game.ejs?gameId=${g.get_id()}&username=${g.get_player(user_id).get_username()}`
+                        Location: `/main_page.ejs?gameId=${g.get_id()}&username=${g.get_player(user_id).get_username()}`
                     }).end();
                 return
             }         
@@ -94,7 +94,7 @@ const server = http.createServer(function (request, response) {
     
     let currentGame = null;
 
-    if(fileName === 'game.ejs') {
+    if(fileName === 'main_page.ejs') {
         // join existing game
         if(params.hasOwnProperty('gameId') && 
            games.hasOwnProperty(params['gameId'])) {
@@ -159,7 +159,7 @@ const server = http.createServer(function (request, response) {
             response.writeHead(200, { 'Content-Type': contentType,
                                     'Set-Cookie': 'user_id=' +  user_id });
             // renderize ejs page
-            if(fileName === 'game.ejs') {
+            if(fileName === 'main_page.ejs') {
                 let renderizedPage = ejs.render(content, {username: params.username, 
                                                         data: currentGame.info(),
                                                         white_time: currentGame.get_white_time(),

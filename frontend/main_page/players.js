@@ -1,4 +1,4 @@
-class Sidebar {
+class Players {
     /***********************************************************/
     /*                    INITIALIZATION                       */
     /***********************************************************/
@@ -198,7 +198,7 @@ class Sidebar {
             }
         // create new player
         } else {
-            this.#players[username] = new Sidebar.Player(username, connected, $new_player);
+            this.#players[username] = new Players.Player(username, connected, $new_player);
             this.#$sidebar.append($new_player);
         }
     }
@@ -281,7 +281,7 @@ class Sidebar {
 
 }
 
-Sidebar.Player = class Player {
+Players.Player = class Player {
     #username;
     #connected;
     #$element;
