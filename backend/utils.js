@@ -16,8 +16,8 @@ function parse_url(request) {
     let folder_name = parser.pathname.substring(0, parser.pathname.indexOf('.'))
     if(folder_name === '') {
         filePath = DIRPATH + DEFAULT_PAGE
-    } else if(folder_name === '/landing_page') { //TODO: change this
-        filePath = DIRPATH + folder_name + parser.pathname
+    } else if(folder_name === '/landing_page') {
+        filePath = DIRPATH + '/landing_page' + parser.pathname
     } else if(['/path', '/stopwatch', '/players', '/game', '/main_page'].includes(folder_name)) {
         filePath = DIRPATH + '/main_page' + parser.pathname
     } else {

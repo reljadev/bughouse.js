@@ -37,7 +37,8 @@ function joinGame() {
     $go_button = $('#go_button')
     $go_button.css('display', 'block')
     // go game
-    $go_button.click(() => {goGame()}) //TODO: needs to be changed
+    $go_button.click(() => {goGame()})
+    $('#join_button').css('display', 'none')
 }
 
 function goGame() {
