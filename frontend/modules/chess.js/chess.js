@@ -1717,8 +1717,6 @@ var Chess = function (fen, sparePieces) {
         }
 
         if(board[i] != null) {
-          console.log(board)
-          console.log(board[i])
           var piece = board[i].color + board[i].type.toUpperCase()
           pos[algebraic(i)] = piece
         }
