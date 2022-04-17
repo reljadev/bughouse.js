@@ -2153,15 +2153,7 @@
       config.onMouseoutSquare(square, piece, deepCopy(currentPosition), currentOrientation)
     }
 
-    // -------------------------------------------------------------------------
-    // Initialization
-    // -------------------------------------------------------------------------
-
-    function addEvents () {
-      // prevent "image drag"
-      $('body').on('mousedown mousemove', '.' + CSS.piece, stopDefault)
-
-      var canPickupPieces = true
+    var canPickupPieces = true
       function delegate_click(evt) {
         // left click
         if(evt.which === 1 && canPickupPieces) {
@@ -2172,6 +2164,14 @@
           config.onRightClick(evt)
         }
       }
+
+    // -------------------------------------------------------------------------
+    // Initialization
+    // -------------------------------------------------------------------------
+
+    function addEvents () {
+      // prevent "image drag"
+      $('body').on('mousedown mousemove', '.' + CSS.piece, stopDefault)
       
       $board
           .on('contextmenu', stopDefault, false)

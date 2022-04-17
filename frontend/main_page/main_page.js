@@ -9,6 +9,9 @@ let data = JSON.parse($('#data_data').attr('data-value'));
 let time_white = $('#data_white_time').attr('data-value');
 let time_black = $('#data_black_time').attr('data-value');
 
+// TODO: after right click, piece eaten shouldn't be animated
+// TODO: landing_page should be in history
+
 let game_id = data.id
 console.log(game_id) //TODO: this should be displayed on page
 let admin = data.admin
@@ -69,7 +72,9 @@ if(game.is_pre_game()) {
 
 // resign button
 let $resign_button = $('#resign_game');
-$resign_button.css('display', 'none');
+if(!(game.am_i_at_board() && game.is_playing())) {
+  $resign_button.css('display', 'none');
+}
 $resign_button.on('click', resign_game);
 
 // start button
@@ -77,7 +82,7 @@ let $start_button = $('#start_game');
 // reset button
 let $reset_button = $('#reset_game');
 
-if(myUsername !== admin) {
+if(myUsername !== admin || !game.is_pre_game()) {
   $start_button.css('display', 'none'); //TODO: should be hidden by default
   $reset_button.css('display', 'none');
 

@@ -209,11 +209,14 @@ io.on('connection', (client) => {
 
         let g = games[client.data.game_id];
         if(g) {
-            let player_set = g.set_player_at_board(color, username);
-            if(player_set) {
-                client.broadcast.to(client.data.game_id).emit('playerJoined', color, username);
-                if(g.board_is_set()) {
-                    client.emit('can_start_game');
+            let p = g.get_player(client.data.user_id);
+            if(p && g.is_admin(p)) {
+                let player_set = g.set_player_at_board(color, username);
+                if(player_set) {
+                    client.broadcast.to(client.data.game_id).emit('playerJoined', color, username);
+                    if(g.board_is_set()) {
+                        client.emit('can_start_game');
+                    }
                 }
             }
         }
@@ -226,10 +229,13 @@ io.on('connection', (client) => {
 
         let g = games[client.data.game_id];
         if(g) {
-            let player_removed = g.remove_player_from_board(color);
-            if(player_removed) {
-                client.broadcast.to(client.data.game_id).emit('playerRemoved', color);
-                client.emit('cant_start_game');
+            let p = g.get_player(client.data.user_id);
+            if(p && g.is_admin(p)) {
+                let player_removed = g.remove_player_from_board(color);
+                if(player_removed) {
+                    client.broadcast.to(client.data.game_id).emit('playerRemoved', color);
+                    client.emit('cant_start_game');
+                }
             }
         }
     });
@@ -238,10 +244,13 @@ io.on('connection', (client) => {
     client.on('game_has_started', () => {
         let g = games[client.data.game_id];
         if(g) {
-            let game_started = g.start();
+            let p = g.get_player(client.data.user_id);
+            if(p && g.is_admin(p)) {
+                let game_started = g.start();
         
-            if(game_started) {
-                client.broadcast.to(client.data.game_id).emit('game_has_started');
+                if(game_started) {
+                    client.broadcast.to(client.data.game_id).emit('game_has_started');
+                }
             }
         }
     });
@@ -250,16 +259,16 @@ io.on('connection', (client) => {
     client.on('move', (move, elapsedTime) => {
         let g = games[client.data.game_id];
         if(g) {
-            let updated = g.move(move);
-            if(updated) {
-                g.update_timers(elapsedTime);
-                // broadcast move & updated timers
-                client.broadcast.to(g.get_id()).emit('move', move,
-                                                            g.get_white_time(),
-                                                            g.get_black_time());
-            } else {
-                // NOTE: this should never happen
-                client.emit('invalid_move', move);
+            let p = g.get_player(client.data.user_id);
+            if(p) {
+                let updated = g.move(p, move);
+                if(updated) {
+                    g.update_timers(elapsedTime);
+                    // broadcast move & updated timers
+                    client.broadcast.to(g.get_id()).emit('move', move,
+                                                                g.get_white_time(),
+                                                                g.get_black_time());
+                }
             }
         }
     });
@@ -269,7 +278,7 @@ io.on('connection', (client) => {
         if(g) {
             let p = g.get_player(client.data.user_id);
             if(p) {
-                games[client.data.game_id].game_over(p.get_username());
+                games[client.data.game_id].game_over(p);
             }
         }
     });
@@ -277,11 +286,14 @@ io.on('connection', (client) => {
     client.on('reset_game', (fen, sparePieces) => {
         let g = games[client.data.game_id];
         if(g) {
-            let position_set = g.set_position(fen, sparePieces);
-            if(position_set) {
-                g.reset(fen, sparePieces);
-            
-                client.broadcast.to(game_id).emit('reset_game', fen, sparePieces);
+            let p = g.get_player(client.data.user_id);
+            if(p && g.is_admin(p)) {
+                let position_set = g.set_position(fen, sparePieces);
+                if(position_set) {
+                    g.reset(fen, sparePieces);
+                
+                    client.broadcast.to(game_id).emit('reset_game', fen, sparePieces);
+                }
             }
         }
     });

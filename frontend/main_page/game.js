@@ -170,6 +170,11 @@ class Game {
         if(this.#chess.game_over()) return false;
         // do not pick up pieces if user is checking history
         if(this.#viewingHistory()) return false;
+        // do not pick up pieces, if user is not a player
+        if(this.#options.myUsername !== this.#options.white_player &&
+            this.#options.myUsername !== this.#options.black_player) {
+                return false;
+            }
         
         // only pick up your pieces
         if((piece.search(/^b/) !== -1 && this.#options.white_player === this.#options.myUsername) ||

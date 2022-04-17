@@ -155,8 +155,17 @@ class Game {
         return users;
     }
 
-    has_player(user_id) {
+    has_player(user_id) { //TODO: rename this
         return this.#players.hasOwnProperty(user_id);
+    }
+
+    is_player(player) {
+        return player.get_username() === this.#white_player ||
+                player.get_username() === this.#black_player;
+    }
+
+    is_admin(player) {
+        return player.get_username() === this.#admin;
     }
 
     get_player(user_id) {
@@ -226,8 +235,10 @@ class Game {
         return false;
     }
 
-    game_over(username) {
-        this.#game_over(username);
+    game_over(player) {
+        if(this.is_player(player)) {
+            this.#game_over(player.get_username());
+        }
     }
 
     set_position(fen, spares) {
@@ -255,9 +266,13 @@ class Game {
         this.#black_player = null;
     }
 
-    move(move) {
-        let m = this.#game.move(move);
-        return m !== null ? true : false;
+    move(player, move) {
+        if((this.#game.turn() === 'w' && player.get_username() === this.#white_player) ||
+            (this.#game.turn() === 'b' && player.get_username() === this.#black_player)) {
+                let m = this.#game.move(move);
+                return m !== null ? true : false;
+            }
+        return false;
     }
 
     get_white_time() {
