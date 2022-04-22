@@ -231,7 +231,6 @@ class Game {
                 } else {
                     this.#update_board_to_state(state, false);
                     this.#highlight_premove_squares();
-                    console.log(this.#board.sparePieces())
 
                     return 'premove';
                 }

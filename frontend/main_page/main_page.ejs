@@ -42,25 +42,31 @@
         </div>
 
         <div class="main" id="main_page">
-            <!-- define chessboard element -->
-            <div id="myBoard" class="board"></div>
-            <label>Status:</label>
-            <div id="status"></div>
-            <label>FEN:</label>
-            <div id="fen"></div>
-            <label>PGN:</label>
-            <div id="pgn"></div>
+            <div id="first_container" class="container">
+                <!-- define chessboard element -->
+                <div id="myBoard" class="board"></div>
+                <label>Status:</label>
+                <div id="status"></div>
+                <label>FEN:</label>
+                <div id="fen"></div>
+                <label>PGN:</label>
+                <div id="pgn"></div>
 
-            <!-- admin buttons -->
-            <button id="start_game">start</button>
-            <button id="reset_game">reset</button>
+                <!-- admin buttons -->
+                <button id="start_game">start</button>
+                <button id="reset_game">reset</button>
 
-            <button id="resign_game">resign</button>
-            <button id="backward_button">backward</button>
-            <button id="forward_button">forward</button>
+                <button id="resign_game">resign</button>
+                <button id="backward_button">backward</button>
+                <button id="forward_button">forward</button>
 
-            <div id="white_clock">white timer: </div>
-            <div id="black_clock">black timer: </div>
+                <div id="white_clock">white timer: </div>
+                <div id="black_clock">black timer: </div>
+            </div>
+            
+            <div id="second_container" class="container">
+
+            </div>
         </div>
 
         <!-- insert hidden data elements, so js file can retrieve it -->

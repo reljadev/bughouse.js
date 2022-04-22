@@ -1695,7 +1695,6 @@
         dropDraggedPieceOnSquare(location)
       } else if(action === 'premove') {
         premoveDraggedPieceOnSquare(location)
-        console.log(config.sparePieces)
       } else if(action === 'promotion') {
         promoteDraggedPiece(location)
       }
