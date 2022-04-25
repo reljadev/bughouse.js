@@ -160,10 +160,8 @@ const server = http.createServer(function (request, response) {
                                     'Set-Cookie': 'user_id=' +  user_id });
             // renderize ejs page
             if(fileName === 'main_page.ejs') {
-                let renderizedPage = ejs.render(content, {username: params.username, 
-                                                        data: currentGame.info(),
-                                                        white_time: currentGame.get_white_time(),
-                                                        black_time: currentGame.get_black_time()});
+                let renderizedPage = ejs.render(content, { username: params.username, 
+                                                            data: currentGame.info() });
                 response.end(renderizedPage, 'utf-8');
 
             // html, js or css file
@@ -202,8 +200,9 @@ io.on('connection', (client) => {
     }
 
     // player set at board
-    client.on('playerJoined', (color, username) => {
+    client.on('playerJoined', (board, color, username) => {
         // sanitize client suplied data
+        board = sanitize(board);
         color = sanitize(color);
         username = sanitize(username);
 
@@ -211,10 +210,10 @@ io.on('connection', (client) => {
         if(g) {
             let p = g.get_player(client.data.user_id);
             if(p && g.is_admin(p)) {
-                let player_set = g.set_player_at_board(color, username);
+                let player_set = g.set_player_at_board(board, color, username);
                 if(player_set) {
-                    client.broadcast.to(client.data.game_id).emit('playerJoined', color, username);
-                    if(g.board_is_set()) {
+                    client.broadcast.to(client.data.game_id).emit('playerJoined', board, color, username);
+                    if(g.boards_are_set()) {
                         client.emit('can_start_game');
                     }
                 }
@@ -223,17 +222,18 @@ io.on('connection', (client) => {
     });
 
     // player removed from board
-    client.on('playerRemoved', (color) => {
+    client.on('playerRemoved', (board, color) => {
         // sanitize client suplied data
+        board = sanitize(board);
         color = sanitize(color);
 
         let g = games[client.data.game_id];
         if(g) {
             let p = g.get_player(client.data.user_id);
             if(p && g.is_admin(p)) {
-                let player_removed = g.remove_player_from_board(color);
+                let player_removed = g.remove_player_from_board(board, color);
                 if(player_removed) {
-                    client.broadcast.to(client.data.game_id).emit('playerRemoved', color);
+                    client.broadcast.to(client.data.game_id).emit('playerRemoved', board, color);
                     client.emit('cant_start_game');
                 }
             }
@@ -256,29 +256,30 @@ io.on('connection', (client) => {
     });
 
     // on player move
-    client.on('move', (move, elapsedTime) => {
+    client.on('move', (board, move, elapsedTime) => {
         let g = games[client.data.game_id];
         if(g) {
             let p = g.get_player(client.data.user_id);
             if(p) {
-                let updated = g.move(p, move);
+                let updated = g.move(board, p, move);
                 if(updated) {
-                    g.update_timers(elapsedTime);
+                    g.update_timers(board, elapsedTime);
                     // broadcast move & updated timers
-                    client.broadcast.to(g.get_id()).emit('move', move,
-                                                                g.get_white_time(),
-                                                                g.get_black_time());
+                    client.broadcast.to(g.get_id()).emit('move', board, move,
+                                                                g.get_white_time(board),
+                                                                g.get_black_time(board));
+                    g.check_status();
                 }
             }
         }
     });
 
-    client.on('game_is_over', () => {
+    client.on('resigned', () => {
         let g = games[client.data.game_id];
         if(g) {
             let p = g.get_player(client.data.user_id);
             if(p) {
-                games[client.data.game_id].game_over(p);
+                games[client.data.game_id].resigned(p);
             }
         }
     });
@@ -290,7 +291,7 @@ io.on('connection', (client) => {
             if(p && g.is_admin(p)) {
                 let position_set = g.set_position(fen, sparePieces);
                 if(position_set) {
-                    g.reset(fen, sparePieces);
+                    g.reset();
                 
                     client.broadcast.to(game_id).emit('reset_game', fen, sparePieces);
                 }

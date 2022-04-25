@@ -37,43 +37,54 @@
 
     <body>
         <!-- Side navigation -->
-        <div class="sidebar" id="mySidebar">
+        <div id="mySidebar" class="sidebar">
             <h4>players</h4>
         </div>
 
-        <div class="main" id="main_page">
+        <div id="main_page" class="main">
             <div id="first_container" class="container">
                 <!-- define chessboard element -->
-                <div id="myBoard" class="board"></div>
+                <div id="myBoard_1" class="board"></div>
                 <label>Status:</label>
-                <div id="status"></div>
-                <label>FEN:</label>
-                <div id="fen"></div>
+                <div id="status_1"></div>
                 <label>PGN:</label>
-                <div id="pgn"></div>
+                <div id="pgn_1"></div>
 
-                <!-- admin buttons -->
+                <button id="resign_game1">resign</button>
+                <button id="backward_button_1">backward</button>
+                <button id="forward_button_1">forward</button>
+
+                <div id="white_clock_1">white timer: </div>
+                <div id="black_clock_1">black timer: </div>
+            </div>
+
+            <div id="second_container" class="container">
+                <!-- define chessboard element -->
+                <div id="myBoard_2" class="board"></div>
+                <label>Status:</label>
+                <div id="status_2"></div>
+                <label>PGN:</label>
+                <div id="pgn_2"></div>
+
+                <button id="resign_game2">resign</button>
+                <button id="backward_button_2">backward</button>
+                <button id="forward_button_2">forward</button>
+
+                <div id="white_clock_2">white timer: </div>
+                <div id="black_clock_2">black timer: </div>
+            </div>
+
+            <!-- admin buttons -->
+            <div class="buttons">
                 <button id="start_game">start</button>
                 <button id="reset_game">reset</button>
-
-                <button id="resign_game">resign</button>
-                <button id="backward_button">backward</button>
-                <button id="forward_button">forward</button>
-
-                <div id="white_clock">white timer: </div>
-                <div id="black_clock">black timer: </div>
             </div>
-            
-            <div id="second_container" class="container">
 
-            </div>
         </div>
 
         <!-- insert hidden data elements, so js file can retrieve it -->
         <div id="data_username" class="data" data-value='<%-username%>'></div>
         <div id="data_data" class="data" data-value='<%-JSON.stringify(data)%>'></div>
-        <div id="data_white_time" class="data" data-value='<%-white_time%>'></div>
-        <div id="data_black_time" class="data" data-value='<%-black_time%>'></div>
 
         <!-- import socket lib -->
         <script src="/socket.io/socket.io.js"></script>

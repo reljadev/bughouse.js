@@ -16,20 +16,42 @@ class Game {
     // declare private variables
     #options;
     #stage;
-    #chess;
-    #white_clock;
-    #black_clock;
-    #board;
+    #chess1;
+    #chess2;
+    #white_clock1;
+    #black_clock1;
+    #white_clock2;
+    #black_clock2;
+    #board1;
+    #board2;
     #players;
 
     constructor(options) {
         this.#parse_arguments(options);
 
         this.#initialize_stage();
-        this.#initialize_chess();
-        this.#initialize_clocks();
-        this.#initialize_board();
+
+        // first board
+        this.#chess1 = this.#initialize_chess(this.#options.first_board);
+        this.#initialize_first_clocks();
+        this.#board1 = this.#initialize_board('myBoard_1', this.#chess1, 
+                            this.#options.first_board, 'first',
+                            this.#options.white_player1, this.#options.black_player1);
+        this.#board1.move_count(this.#chess1.move_count());
+
+        // second board
+        this.#chess2 = this.#initialize_chess(this.#options.second_board);
+        this.#initialize_second_clocks();
+        this.#board2 = this.#initialize_board('myBoard_2', this.#chess2, 
+                            this.#options.second_board, 'second',
+                            this.#options.white_player2, this.#options.black_player2);
+        this.#board2.move_count(this.#chess2.move_count());
+
         this.#initialize_players();
+
+        if(this.#stage === PLAYING) {
+            this.#start_clocks();
+        }
 
         this.#sanity_check();
     }
@@ -49,11 +71,11 @@ class Game {
             return JSON.parse(JSON.stringify(obj));
         }
 
-        this.#options.state.fen = clone(options.state.fen);
-        this.#options.state.sparePieces = clone(options.state.sparePieces);
-        this.#options.state.start_fen = clone(options.state.start_fen);
-        this.#options.state.start_spares = clone(options.state.start_spares);
-        this.#options.state.pgn = clone(options.state.pgn);
+        this.#options.first_board.fen = clone(options.first_board.fen);
+        this.#options.first_board.sparePieces = clone(options.first_board.sparePieces);
+        this.#options.first_board.start_fen = clone(options.first_board.start_fen);
+        this.#options.first_board.start_spares = clone(options.first_board.start_spares);
+        this.#options.first_board.pgn = clone(options.first_board.pgn);
     }
 
     #initialize_stage() {
@@ -70,62 +92,91 @@ class Game {
         }
     }
 
-    #initialize_chess() {
+    #initialize_chess(chess_info) {
+        let chess = null;
         // player joins while game is being set up
         if(this.#stage === PRE_GAME) {
-            this.#chess = new Chess(this.#options.state.fen, this.#options.state.sparePieces);
+            chess = new Chess(chess_info.fen, chess_info.sparePieces);
         // player joins midgame or post-game
         } else {
-            this.#chess = new Chess(this.#options.state.start_fen, this.#options.state.start_spares);
-            this.#chess.load_pgn(this.#options.state.pgn);
+            chess = new Chess(chess_info.start_fen, chess_info.start_spares);
+            chess.load_pgn(chess_info.pgn);
         }
+        return chess;
     }
 
-    #initialize_clocks() {
-        this.#white_clock = new Stopwatch($('#white_clock').get(0), {
-                                                clock: time_white, // injected in game.ejs
-                                                delay: 100,
-                                            });
-        this.#black_clock = new Stopwatch($('#black_clock').get(0), {
-                                                clock: time_black, // injected in game.ejs
-                                                delay: 100,
-                                            });
+    #initialize_first_clocks() {
+        let clocks = this.#initialize_clocks('white_clock_1', 'black_clock_1',
+                                            this.#options.first_board.white_time,
+                                            this.#options.first_board.black_time);
+        this.#white_clock1 = clocks[0];
+        this.#black_clock1 = clocks[1];
+    }
+
+    #initialize_second_clocks() {
+        let clocks = this.#initialize_clocks('white_clock_2', 'black_clock_2',
+                                            this.#options.first_board.white_time,
+                                            this.#options.first_board.black_time);
+        this.#white_clock2 = clocks[0];
+        this.#black_clock2 = clocks[1];
+    }
+
+    #initialize_clocks(element_white, element_black, time_white, time_black) {
+        let w_clock = new Stopwatch($('#' + element_white).get(0), {
+                                        clock: time_white, 
+                                        delay: 100,
+                                    });
+        let b_clock = new Stopwatch($('#' + element_black).get(0), {
+                                        clock: time_black, 
+                                        delay: 100,
+                                    });
 
         // player joins while game is being set up
         if(this.#stage === PRE_GAME) {
-            this.#white_clock.hide()
-            this.#black_clock.hide()
-        // player joins midgame
-        } else if(this.#stage === PLAYING) {
-            if(this.#chess.turn() === WHITE) {
-                this.#white_clock.start()
-            } else {
-                this.#black_clock.start()
-            }
+            w_clock.hide();
+            b_clock.hide();
+        } 
+
+        return [w_clock, b_clock];
+    }
+
+    #start_clocks() {
+        // start clock on first board
+        if(this.#chess1.turn() === WHITE) {
+            this.#white_clock1.start()
+        } else {
+            this.#black_clock1.start()
+        }
+
+        // start clock on second board
+        if(this.#chess2.turn() === WHITE) {
+            this.#white_clock2.start()
+        } else {
+            this.#black_clock2.start()
         }
     }
 
-    #initialize_board() {
+    #initialize_board(element, chess, chess_info, board) {
         let board_config = {
                 draggable: true,
-                position: this.#options.state.fen,
-                sparePieces: this.#options.state.sparePieces,
-                onDragStart: this.#onDragStart.bind(this),
-                onDrop: this.#onDrop.bind(this),
-                onSnapEnd: this.#onSnapEnd.bind(this),
-                onRightClick: this.#onRightClick.bind(this),
-                onPiecePromotion: this.#onPiecePromotion.bind(this),
+                position: chess_info.fen,
+                sparePieces: chess_info.sparePieces,
+                onDragStart: this.#onDragStart.bind(this, chess, board),
+                onDrop: this.#onDrop.bind(this, chess, board),
+                onSnapEnd: this.#onSnapEnd.bind(this, chess, board),
+                onRightClick: this.#onRightClick.bind(this, chess, board),
+                onPiecePromotion: this.#onPiecePromotion.bind(this, chess, board),
             }
-        this.#board = Chessboard('myBoard', board_config);
-
-        this.#board.move_count(this.#chess.move_count());
+        return Chessboard(element, board_config);
     }
 
     #initialize_players() {
         this.#players = new Players({ element: 'mySidebar',
                                         admin: this.#options.admin, myUsername: this.#options.myUsername,
-                                        $username_top: this.#board.getTopUsername(),
-                                        $username_bottom: this.#board.getBottomUsername(),
+                                        $username_top1: this.#board1.getTopUsername(),
+                                        $username_bottom1: this.#board1.getBottomUsername(),
+                                        $username_top2: this.#board2.getTopUsername(),
+                                        $username_bottom2: this.#board2.getBottomUsername(),
                                         player_added_to_board: this.#player_added_to_board.bind(this),
                                         player_removed_from_board: this.#player_removed_from_board.bind(this),
                                         is_playing: this.#is_playing.bind(this) });
@@ -141,49 +192,67 @@ class Game {
         if(!added_myself) {
             this.#players.add_player(this.#options.myUsername, true);
         }
-        if(this.#options.white_player !== null) {
-            let position = this.#color_to_board_position('white');
-            this.#players.add_player_to_board(position, this.#options.white_player);
+        if(this.#options.white_player1 !== null) {
+            let position = this.#color_to_board_position('first', 'white');
+            this.#players.add_player_to_board('first', position, this.#options.white_player1);
         }
-        if(this.#options.black_player !== null) {
-            let position = this.#color_to_board_position('black');
-            this.#players.add_player_to_board(position, this.#options.black_player);
+        if(this.#options.black_player1 !== null) {
+            let position = this.#color_to_board_position('first', 'black');
+            this.#players.add_player_to_board('first', position, this.#options.black_player1);
+        }
+        if(this.#options.white_player2 !== null) {
+            let position = this.#color_to_board_position('second', 'white');
+            this.#players.add_player_to_board('second', position, this.#options.white_player2);
+        }
+        if(this.#options.black_player2 !== null) {
+            let position = this.#color_to_board_position('second', 'black');
+            this.#players.add_player_to_board('second', position, this.#options.black_player2);
         }
     }
 
     //////////////////// CHESSBOARD FUNCTIONS ///////////////////
 
-    #onRightClick() {
+    #onRightClick(chess, board) {
+        let b = board === 'first' ? this.#board1 :
+                                    this.#board2;
         // do nothing if the player is viewing history
         if(this.#viewingHistory()) return;
         
         // remove premoves
-        let state = this.#chess.get_state(this.#chess.move_count());
-        this.#update_board_to_state(state);
-        this.#board.clearPremoves();
+        let state = chess.get_state(chess.move_count());
+        this.#update_board_to_state(b, state);
+        b.clearPremoves();
     }
       
-    #onDragStart(source, piece, position, orientation) {
+    #onDragStart(chess, board,
+         source, piece, position, orientation) {
+        let white_player = board === 'first' ? 
+                        this.#options.white_player1 :
+                        this.#options.white_player2;
+        let black_player = board === 'first' ?
+                        this.#options.black_player1 :
+                        this.#options.black_player2;
         // do not pick up pieces if the game hasn't started or is over
         if(this.#stage !== PLAYING) return false;
         // do not pick up pieces if the game is over
-        if(this.#chess.game_over()) return false;
+        if(chess.game_over()) return false;
         // do not pick up pieces if user is checking history
         if(this.#viewingHistory()) return false;
         // do not pick up pieces, if user is not a player
-        if(this.#options.myUsername !== this.#options.white_player &&
-            this.#options.myUsername !== this.#options.black_player) {
+        if(this.#options.myUsername !== white_player &&
+            this.#options.myUsername !== black_player) {
                 return false;
             }
         
         // only pick up your pieces
-        if((piece.search(/^b/) !== -1 && this.#options.white_player === this.#options.myUsername) ||
-            (piece.search(/^w/) !== -1 && this.#options.black_player === this.#options.myUsername)) {
+        if((piece.search(/^b/) !== -1 && white_player === this.#options.myUsername) ||
+            (piece.search(/^w/) !== -1 && black_player === this.#options.myUsername)) {
             return false;
         }
     }
       
-    #onDrop(source, target, draggedPiece, newPosition, oldPosition, currentOrientation) {
+    #onDrop(chess, board,
+        source, target, draggedPiece, newPosition, oldPosition, currentOrientation) {
         // promotion move
         if(source !== 'offboard' &&
             draggedPiece.charAt(1).toLowerCase() === 'p' &&
@@ -199,10 +268,11 @@ class Game {
                  piece: draggedPiece.charAt(1).toLowerCase()
                 };
         // do it
-        return this.#executeMove(m);
+        return this.#executeMove(chess, board, m);
     }
       
-    #onPiecePromotion(source, target, color, piece, promotionPiece) {
+    #onPiecePromotion(chess, board, 
+            source, target, color, piece, promotionPiece) {
         // create move
         let m = {from: source,
                  to: target,
@@ -211,41 +281,43 @@ class Game {
                  piece: piece
                 };
         // do it
-        this.#executeMove(m);
+        this.#executeMove(m, chess, board);
     }
       
-    #executeMove(move) {
+    #executeMove(chess, board, move) {
+        let b = board === 'first' ? this.#board1 :
+                                    this.#board2;
         // if it's not our turn, then premove
-        if ((this.#chess.turn() === WHITE && move.color === BLACK) ||
-            (this.#chess.turn() === BLACK && move.color === WHITE)) {
+        if ((chess.turn() === WHITE && move.color === BLACK) ||
+            (chess.turn() === BLACK && move.color === WHITE)) {
                 // nothing happend
                 if(move.to === move.from) {
                     return 'snapback';
                 }
 
-                this.#board.addPremove(move);
-                let state = this.#chess.premove_state(this.#board.getPremoves());
+                b.addPremove(move);
+                let state = chess.premove_state(b.getPremoves());
                 if(state === null || !state.allExecuted) {
-                    this.#board.popPremove();
+                    b.popPremove();
                     return 'snapback';
                 } else {
-                    this.#update_board_to_state(state, false);
-                    this.#highlight_premove_squares();
+                    this.#update_board_to_state(b, state, false);
+                    this.#highlight_premove_squares(chess, b);
 
                     return 'premove';
                 }
         }
 
         // make a move
-        let m = this.#chess.move(move);
+        let m = chess.move(move);
         // illegal move
         if (m === null) return 'snapback';
 
         // update clocks
-        let elapsed_time = this.#update_clocks();
+        let elapsed_time = this.#update_clocks(board);
 
         // notify server
-        this.#options.move_executed(m, elapsed_time)
+        this.#options.move_executed(board, m, elapsed_time)
         
         this.#sanity_check();
 
@@ -254,23 +326,25 @@ class Game {
       
     // update the board position after the piece snap
     // for castling, en passant, pawn promotion
-    #onSnapEnd () {
-        if(!this.#board.arePremoves()) {
-            this.#board.position(this.#chess.fen());
+    #onSnapEnd (chess, board) {
+        let b = board === 'first' ? this.#board1 :
+                                    this.#board2;
+        if(!b.arePremoves()) {
+            b.position(chess.fen());
         }
     }
 
     /////////////////// CHESSBOARD CONTROLLERS //////////////////
 
-    #update_board_to_state(state, animation = true) {
-        this.#board.position(state.fen, animation);
-        this.#board.sparePieces(state.sparePieces);
-        this.#board.move_count(state.move_count);
+    #update_board_to_state(board, state, animation = true) {
+        board.position(state.fen, animation);
+        board.sparePieces(state.sparePieces);
+        board.move_count(state.move_count);
     }
 
-    #highlight_premove_squares() {
-        var chess_pos = this.#chess.position();
-        var brd_pos = this.#board.position();
+    #highlight_premove_squares(chess, board) {
+        var chess_pos = chess.position();
+        var brd_pos = board.position();
         // delete sqares that are the same
         for(let i in chess_pos) {
           if(!chess_pos.hasOwnProperty(i)) continue;
@@ -290,36 +364,99 @@ class Game {
           squares.push(i);
         }
       
-        this.#board.highlightSquaresRed(squares);
+        board.highlightSquaresRed(squares);
     }
 
-    #update_board_orientation() {
-        if((this.#board.orientation() === 'white' && this.#options.black_player === this.#options.myUsername) ||
-            (this.#board.orientation() === 'black' && this.#options.white_player === this.#options.myUsername)) {
-              this.#board.flip()
-              this.#players.swap_usernames_at_board()
+    #update_boards_orientation() {
+        // i'm white player at first board
+        if(this.#options.myUsername === this.#options.white_player1) {
+            // my board
+            if(this.#board1.orientation() === 'black') {
+                this.#board1.flip();
+                this.#players.swap_usernames_at_board('first');
+            }
+            //teammate's board
+            if(this.#board2.orientation() === 'white') {
+                this.#board2.flip();
+                this.#players.swap_usernames_at_board('second');
+            }
+        // i'm black player at first board
+        } else if(this.#options.myUsername === this.#options.black_player1) {
+            // my board
+            if(this.#board1.orientation() === 'white') {
+                this.#board1.flip();
+                this.#players.swap_usernames_at_board('first');
+            }
+            //teammate's board
+            if(this.#board2.orientation() === 'black') {
+                this.#board2.flip();
+                this.#players.swap_usernames_at_board('second');
+            }
+        // i'm white player at second board
+        } else if(this.#options.myUsername === this.#options.white_player2) {
+            // my board
+            if(this.#board2.orientation() === 'black') {
+                this.#board2.flip();
+                this.#players.swap_usernames_at_board('second');
+            }
+            //teammate's board
+            if(this.#board1.orientation() === 'white') {
+                this.#board1.flip();
+                this.#players.swap_usernames_at_board('first');
+            }
+        // i'm black player at second board
+        } else if(this.#options.myUsername === this.#options.black_player2) {
+            // my board
+            if(this.#board2.orientation() === 'white') {
+                this.#board2.flip();
+                this.#players.swap_usernames_at_board('second');
+            }
+            //teammate's board
+            if(this.#board1.orientation() === 'black') {
+                this.#board1.flip();
+                this.#players.swap_usernames_at_board('first');
+            }
+        // i'm watcher
+        } else {
+            // first board
+            if(this.#board1.orientation() === 'black') {
+                this.#board1.flip();
+                this.#players.swap_usernames_at_board('first');
+            }
+            // second board
+            if(this.#board2.orientation() === 'white') {
+                this.#board2.flip();
+                this.#players.swap_usernames_at_board('second');
+            }
         }
+
     }
 
-    #reset_board(fen, sparePieces) {
-        this.#board.orientation('white')
-        this.#board.move_count(0)
-        this.#board.position(fen)
-        this.#board.sparePieces(sparePieces)
+    #reset_boards(fen, sparePieces) {
+        this.#board1.orientation('white');
+        this.#board1.move_count(0);
+        this.#board1.position(fen);
+        this.#board1.sparePieces(sparePieces);
+
+        this.#board2.orientation('white');
+        this.#board2.move_count(0);
+        this.#board2.position(fen);
+        this.#board2.sparePieces(sparePieces);
+
     }
 
     ///////////////////// PLAYERS FUNCTIONS /////////////////////
 
-    #player_added_to_board(position, username) {
-        let color = this.#board_position_to_color(position);
-        this.#options.player_joined_board(color, username);
-        this.#update_players('add', color, username);
+    #player_added_to_board(board, position, username) {
+        let color = this.#board_position_to_color(board, position);
+        this.#options.player_joined_board(board, color, username);
+        this.#update_players('add', board, color, username);
     }
   
-    #player_removed_from_board(position) {
-        let color = this.#board_position_to_color(position);
-        this.#options.player_left_board(color);
-        this.#update_players('remove', color);
+    #player_removed_from_board(board, position) {
+        let color = this.#board_position_to_color(board, position);
+        this.#options.player_left_board(board, color);
+        this.#update_players('remove', board, color);
     }
 
     #is_playing() {
@@ -328,18 +465,20 @@ class Game {
 
     /////////////////////// PLAYERS UTIL ////////////////////////
   
-    #board_position_to_color(position) {
-        if((this.#board.orientation() === 'white' &&  position === 'top') ||
-            (this.#board.orientation() === 'black' && position === 'bottom')) {
+    #board_position_to_color(board, position) {
+        let b = board === 'first' ? this.#board1 : this.#board2;
+        if((b.orientation() === 'white' &&  position === 'top') ||
+            (b.orientation() === 'black' && position === 'bottom')) {
             return 'black';
         } else {
             return 'white';
         }
     }
   
-    #color_to_board_position(color) {
-        if((this.#board.orientation() === 'white' && color === 'black') || 
-            (this.#board.orientation() === 'black' && color === 'white')) {
+    #color_to_board_position(board, color) {
+        let b = board === 'first' ? this.#board1 : this.#board2;
+        if((b.orientation() === 'white' && color === 'black') || 
+            (b.orientation() === 'black' && color === 'white')) {
             return 'top';
         } else {
             return 'bottom';
@@ -348,33 +487,56 @@ class Game {
 
     //////////////////// CLOCKS CONTROLLERS /////////////////////
 
-    #update_clocks() {
-        if(this.#chess.turn() === WHITE) {
-            this.#white_clock.start();
-            this.#black_clock.stop();
-            return this.#black_clock.elapsedTime();
+    #update_clocks(board) {
+        let chess = board === 'first' ? this.#chess1 :
+                                        this.#chess2;
+        let w_clock = board === 'first' ? this.#white_clock1 :
+                                            this.#white_clock2;
+        let b_clock = board === 'first' ? this.#black_clock1 :
+                                            this.#black_clock2;
+
+        if(chess.turn() === WHITE) {
+            w_clock.start();
+            b_clock.stop();
+            return b_clock.elapsedTime();
         } else {
-            this.#black_clock.start();
-            this.#white_clock.stop();
-            return this.#white_clock.elapsedTime();
+            b_clock.start();
+            w_clock.stop();
+            return w_clock.elapsedTime();
         }
     }
 
     ///////////////////////// MISC UTIL /////////////////////////
 
     // update white and black player variables
-    #update_players(action, color, username) {
-        if(action === 'add') {
-            if(color === 'white') {
-                this.#options.white_player = username;
+    #update_players(action, board, color, username) {
+        if(board === 'first') {
+            if(action === 'add') {
+                if(color === 'white') {
+                    this.#options.white_player1 = username;
+                } else {
+                    this.#options.black_player1 = username;
+                }
             } else {
-                this.#options.black_player = username;
+                if(color === 'white') {
+                    this.#options.white_player1 = null;
+                } else {
+                    this.#options.black_player1 = null;
+                }
             }
         } else {
-            if(color === 'white') {
-                this.#options.white_player = null;
+            if(action === 'add') {
+                if(color === 'white') {
+                    this.#options.white_player2 = username;
+                } else {
+                    this.#options.black_player2 = username;
+                }
             } else {
-                this.#options.black_player = null;
+                if(color === 'white') {
+                    this.#options.white_player2 = null;
+                } else {
+                    this.#options.black_player2 = null;
+                }
             }
         }
     }
@@ -382,12 +544,12 @@ class Game {
     /////////////////////////// INFO ////////////////////////////
 
     #viewingHistory() {
-        return this.#board.move_count() !== this.#chess.move_count();
+        return this.#board1.move_count() !== this.#chess1.move_count();
     }
 
     #sanity_check() {
-        setTimeout(() => {console.log(this.#chess.ascii() + '\n')}, 50)
-        setTimeout(() => {console.log(this.#board.ascii() + '\n\n')}, 100)
+        setTimeout(() => {console.log(this.#chess1.ascii() + '\n')}, 50)
+        setTimeout(() => {console.log(this.#chess2.ascii() + '\n\n')}, 100)
     }
 
     /***********************************************************/
@@ -397,8 +559,10 @@ class Game {
     ///////////////////// GAME INFORMATION //////////////////////
 
     am_i_at_board() {
-        return this.#options.myUsername === this.#options.white_player || 
-                this.#options.myUsername === this.#options.black_player;
+        return this.#options.myUsername === this.#options.white_player1 || 
+                this.#options.myUsername === this.#options.black_player1 ||
+                this.#options.myUsername === this.#options.white_player2 ||
+                this.#options.myUsername === this.#options.black_player2;
     }
 
     is_viewing_history() {
@@ -417,36 +581,49 @@ class Game {
         return this.#stage === POST_GAME;
     }
 
-    turn() {
-        return this.#chess.turn();
+    turn(board) {
+        return board === 'first' ? this.#chess1.turn() :
+                                    this.#chess2.turn();
     }
 
-    in_checkmate() {
-        return this.#chess.in_checkmate();
+    in_checkmate(board) {
+        return board === 'first' ? this.#chess1.in_checkmate() :
+                                    this.#chess2.in_checkmate();
     }
 
-    in_draw() {
-        return this.#chess.in_draw();
+    in_draw(board) {
+        return board === 'first' ? this.#chess1.in_draw() :
+                                    this.#chess2.in_draw();
     }
 
-    in_check() {
-        return this.#chess.in_check();
+    in_check(board) {
+        return board === 'first' ? this.#chess1.in_check() :
+                                    this.#chess2.in_check();
     }
 
-    fen() {
-        return this.#chess.fen();
+    fen(board) {
+        return board === 'first' ? this.#chess1.fen() :
+                                    this.#chess2.fen();
     }
 
-    pgn() {
-        return this.#chess.pgn();
+    pgn(board) {
+        return board === 'first' ? this.#chess1.pgn() :
+                                    this.#chess2.pgn();
     }
 
     ///////////////////// META CONTROLLERS //////////////////////
     
-    set_clocks(whiteClock, blackClock) {
-        // correct the clocks
-        this.#white_clock.time(whiteClock);
-        this.#black_clock.time(blackClock);
+    set_clocks(board, whiteClock, blackClock) {
+        if(board === 'first') {
+            // correct the clocks on first board
+            this.#white_clock1.time(whiteClock);
+            this.#black_clock1.time(blackClock);
+        } else {
+            // correct the clocks on second board
+            this.#white_clock2.time(whiteClock);
+            this.#black_clock2.time(blackClock);
+        }
+        
     }
 
     add_player(username) {
@@ -457,29 +634,40 @@ class Game {
         this.#players.remove_player(username);
     }
 
-    add_player_to_board(color, username) {
-        this.#update_players('add', color, username);
-        let position = this.#color_to_board_position(color);
-        this.#players.add_player_to_board(position, username);
+    add_player_to_board(board, color, username) {
+        this.#update_players('add', board, color, username);
+        let position = this.#color_to_board_position(board, color);
+        this.#players.add_player_to_board(board, position, username);
     }
 
-    remove_player_from_board(color) {
-        this.#update_players('remove', color);
-        let position = this.#color_to_board_position(color);
-        this.#players.remove_player_from_board(position);
+    remove_player_from_board(board, color) {
+        this.#update_players('remove', board, color);
+        let position = this.#color_to_board_position(board, color);
+        this.#players.remove_player_from_board(board, position);
     }
 
     ///////////////////// GAME CONTROLLERS //////////////////////
 
-    backward_move() {
-        this.#board.clearPremoves();
-        let state = this.#chess.get_state(this.#board.move_count() - 1);
-        this.#update_board_to_state(state);
+    backward_move(board) {
+        if(board === 'first') {
+            this.#board1.clearPremoves();
+            let state = this.#chess1.get_state(this.#board1.move_count() - 1);
+            this.#update_board_to_state(this.#board1, state);
+        } else {
+            this.#board2.clearPremoves();
+            let state = this.#chess2.get_state(this.#board2.move_count() - 1);
+            this.#update_board_to_state(this.#board2, state);
+        }
     }
 
-    forward_move() {
-        let state = this.#chess.get_state(this.#board.move_count() + 1);
-        this.#update_board_to_state(state);
+    forward_move(board) {
+        if(board === 'first') {
+            let state = this.#chess1.get_state(this.#board1.move_count() + 1);
+            this.#update_board_to_state(this.#board1, state);
+        } else {
+            let state = this.#chess2.get_state(this.#board2.move_count() + 1);
+            this.#update_board_to_state(this.#board2, state);
+        }
     }
 
     start() {
@@ -487,16 +675,21 @@ class Game {
         this.#stage = PLAYING;
 
         //update board orientation
-        this.#update_board_orientation();
+        this.#update_boards_orientation();
         
         // reset clocks
-        this.#white_clock.reset();
-        this.#black_clock.reset();
+        this.#white_clock1.reset();
+        this.#black_clock1.reset();
+        this.#white_clock2.reset();
+        this.#black_clock2.reset();
         // show clocks
-        this.#white_clock.show();
-        this.#black_clock.show();
+        this.#white_clock1.show();
+        this.#black_clock1.show();
+        this.#white_clock2.show();
+        this.#black_clock2.show();
         // start clocks
-        this.#white_clock.start();
+        this.#white_clock1.start();
+        this.#white_clock2.start();
     }
 
     game_over() {
@@ -504,58 +697,68 @@ class Game {
             // update playing status
             this.#stage = POST_GAME;
             // stop clocks
-            this.#white_clock.stop();
-            this.#black_clock.stop();
+            this.#white_clock1.stop();
+            this.#black_clock1.stop();
+            this.#white_clock2.stop();
+            this.#black_clock2.stop();
         }
     }
 
     reset(fen, spares) {
         // chess
-        this.#chess.reset(fen, spares);
+        this.#chess1.reset(fen, spares);
+        this.#chess2.reset(fen, spares);
 
         // board
-        this.#reset_board(this.#options.state.fen, this.#options.state.sparePieces);
+        this.#reset_boards(fen, spares);
 
         // reset usernames
         this.#players.clear_board_usernames();
         
         // hide clocks
-        this.#white_clock.hide();
-        this.#black_clock.hide();
+        this.#white_clock1.hide();
+        this.#black_clock1.hide();
+        this.#white_clock2.hide();
+        this.#black_clock2.hide();
 
         // reset console
         console.clear();
         this.#sanity_check();
     }
 
-    move(move) {
-        this.#chess.move(move);
+    move(board, move) {
+        let chess = board === 'first' ? this.#chess1 :
+                                        this.#chess2;
+        let b = board === 'first' ? this.#board1 :
+                                    this.#board2;
+
+        chess.move(move);
 
         // if not vewing history
-        if(this.#board.move_count() === this.#chess.move_count() - 1) {
+        if(b.move_count() === chess.move_count() - 1) {
             // update board to move
-            let state = this.#chess.get_state(this.#chess.move_count());
-            let opponentColor = this.#chess.turn() === WHITE ? BLACK : WHITE;
-            this.#update_board_to_state(state, opponentColor);
+            let state = chess.get_state(chess.move_count());
+            let opponentColor = chess.turn() === WHITE ? BLACK : WHITE;
+            this.#update_board_to_state(b, state, opponentColor);
 
-            let m = this.#board.getPremove();
-            let pm = this.#chess.move(m);
+            let m = b.getPremove();
+            let pm = chess.move(m);
             // execute premove
             if(pm) {
-                this.#board.move(pm, false);
-                state = this.#chess.premove_state(this.#board.getPremoves());
-                this.#update_board_to_state(state, false);
-                this.#highlight_premove_squares();
+                b.move(pm, false);
+                state = chess.premove_state(b.getPremoves());
+                this.#update_board_to_state(b, state, false);
+                this.#highlight_premove_squares(chess, b);
 
-                this.#options.move_executed(pm, 0)
+                this.#options.move_executed(board, pm, 0);
 
             // premove not valid
             } else {
-                this.#board.clearPremoves();
+                b.clearPremoves();
             }
         }
   
-        this.#update_clocks();
+        this.#update_clocks(board);
 
         this.#sanity_check();
     }

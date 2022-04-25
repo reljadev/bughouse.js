@@ -3,6 +3,21 @@ html {
     color: aliceblue;
 }
 
+.container {
+  display: inline-block;
+  width: 500px;
+  max-width: 500px;
+  margin: 1rem;
+  padding: 2rem;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius);
+  background: #494950;
+}
+
+.buttons {
+  margin: 1rem;
+}
+
 .board {
   width: 400px;
 }

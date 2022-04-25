@@ -28,11 +28,17 @@ class Players {
         options.admin = options.admin ?? null;
         options.myUsername = options.myUsername ?? null;
 
-        if(!options.$username_top) {
-            throw '$username_top must be specified as argument';
+        if(!options.$username_top1) {
+            throw '$username_top1 must be specified as argument';
         }
-        if(!options.$username_bottom) {
-            throw '$username_bottom must be specified as argument';
+        if(!options.$username_bottom1) {
+            throw '$username_bottom1 must be specified as argument';
+        }
+        if(!options.$username_top2) {
+            throw '$username_top2 must be specified as argument';
+        }
+        if(!options.$username_bottom2) {
+            throw '$username_bottom2 must be specified as argument';
         }
 
         options.player_added_to_board = options.player_added_to_board ?? function() {};
@@ -63,10 +69,14 @@ class Players {
                  .on('mouseup', this.#mouse_up.bind(this));
 
         // remove opponent by clicking x
-        this.#options.$username_top.on('click', 
-                                        (evt) => { this.#remove_player.call(this, 'top'); });
-        this.#options.$username_bottom.on('click', 
-                                        (evt) => { this.#remove_player.call(this, 'bottom'); });
+        this.#options.$username_top1.on('click', 
+                                (evt) => { this.#remove_player.call(this, 'first', 'top'); });
+        this.#options.$username_bottom1.on('click', 
+                                (evt) => { this.#remove_player.call(this, 'first', 'bottom'); });
+        this.#options.$username_top2.on('click',
+                                (evt) => { this.#remove_player.call(this, 'second', 'top'); });
+        this.#options.$username_bottom2.on('click', 
+                                (evt) => { this.#remove_player.call(this, 'second', 'bottom'); });
     }
 
     /***********************************************************/
@@ -121,14 +131,22 @@ class Players {
             // hide dragged player
             this.#$draggedPlayer.css('display', 'none');
 
-            if(this.#updateTopPlayer(evt.pageX, evt.pageY, username)) {
+            if(this.#updateFirstTopPlayer(evt.pageX, evt.pageY, username)) {
                 player.get_element().remove();
-                player.set_element(this.#options.$username_top);
-                this.#options.player_added_to_board('top', username);
-            } else if(this.#updateBottomPlayer(evt.pageX, evt.pageY, username)) {
+                player.set_element(this.#options.$username_top1);
+                this.#options.player_added_to_board('first', 'top', username);
+            } else if(this.#updateFirstBottomPlayer(evt.pageX, evt.pageY, username)) {
                 player.get_element().remove();
-                player.set_element(this.#options.$username_bottom);
-                this.#options.player_added_to_board('bottom', username);
+                player.set_element(this.#options.$username_bottom1);
+                this.#options.player_added_to_board('first', 'bottom', username);
+            } else if(this.#updateSecondTopPlayer(evt.pageX, evt.pageY, username)) {
+                player.get_element().remove();
+                player.set_element(this.#options.$username_top2);
+                this.#options.player_added_to_board('second', 'top', username);
+            } else if(this.#updateSecondBottomPlayer(evt.pageX, evt.pageY, username)) {
+                player.get_element().remove();
+                player.set_element(this.#options.$username_bottom2);
+                this.#options.player_added_to_board('second', 'bottom', username);
             } else {
                 player.get_element().css('display', '');
             }
@@ -140,30 +158,38 @@ class Players {
     /*                       CONTROLLERS                       */
     /***********************************************************/
 
-    #updateTopPlayer(x, y, username) {
-        return this.#updatePlayer(this.#options.$username_top, x, y, username);
+    #updateFirstTopPlayer(x, y, username) {
+        return this.#updatePlayer(this.#options.$username_top1, x, y, username);
     }
 
-    #updateBottomPlayer(x, y, username) {
-        return this.#updatePlayer(this.#options.$username_bottom, x, y, username);
+    #updateFirstBottomPlayer(x, y, username) {
+        return this.#updatePlayer(this.#options.$username_bottom1, x, y, username);
     }
 
-    #updatePlayer($player, x, y, username) {
-        let user_left = $player.offset().left;
-        let user_width = $player.width();
-        let user_top = $player.offset().top;
+    #updateSecondTopPlayer(x, y, username) {
+        return this.#updatePlayer(this.#options.$username_top2, x, y, username);
+    }
+
+    #updateSecondBottomPlayer(x, y, username) {
+        return this.#updatePlayer(this.#options.$username_bottom2, x, y, username);
+    }
+
+    #updatePlayer($holder, x, y, username) {
+        let user_left = $holder.offset().left;
+        let user_width = $holder.width();
+        let user_top = $holder.offset().top;
     
         if((x >= user_left && x <= user_left + user_width) && 
             y <= user_top && y >= user_top - 40) { //TODO: shouldn't be hardcoded
-                if($player.text() === '') {
-                    $player.text(username);
+                if($holder.text() === '') {
+                    $holder.text(username);
                     return true;
                 }
         }
         return false;
     }
 
-    #remove_player(position) {
+    #remove_player(board, position) {
         // TODO: x shouldn't even be present there
         // updates are not possible midgame
         // once this is handled, delete this function
@@ -171,9 +197,9 @@ class Players {
             return;
         }
 
-        let removed = this.remove_player_from_board(position);
+        let removed = this.remove_player_from_board(board, position);
         if(removed) {
-            this.#options.player_removed_from_board(position);
+            this.#options.player_removed_from_board(board, position);
         }
     }
 
@@ -209,8 +235,8 @@ class Players {
 
         if($element) {
             // removing player at board
-            if(p.get_username() === this.#options.$username_top.text() ||
-                p.get_username() === this.#options.$username_bottom.text()) {
+            if(p.get_username() === this.#options.$username_top1.text() ||
+                p.get_username() === this.#options.$username_bottom1.text()) {
                     // while playing
                     if(this.#options.is_playing()) {
                         // not allowed, just gray him out
@@ -224,9 +250,16 @@ class Players {
         }
     }
 
-    add_player_to_board(position, username) {
-        let $username = position === 'top' ? this.#options.$username_top : 
-                                             this.#options.$username_bottom;
+    add_player_to_board(board, position, username) {
+        let $username = null;
+        if(board === 'first') {
+            $username = position === 'top' ? this.#options.$username_top1 : 
+                                             this.#options.$username_bottom1;
+        } else {
+            $username = position === 'top' ? this.#options.$username_top2 : 
+                                             this.#options.$username_bottom2;
+        }
+        
         let p = this.#players[username];
         
         if(p) {
@@ -239,9 +272,16 @@ class Players {
         }
     }
 
-    remove_player_from_board(position) {
-        let $username = position === 'top' ? this.#options.$username_top : 
-                                             this.#options.$username_bottom;
+    remove_player_from_board(board, position) {
+        let $username = null;
+        if(board === 'first') {
+            $username = position === 'top' ? this.#options.$username_top1 : 
+                                            this.#options.$username_bottom1;
+        } else {
+            $username = position === 'top' ? this.#options.$username_top2 : 
+                                            this.#options.$username_bottom2;
+        }
+        
         let username = $username.text()
         if(username !== '') {
             let p = this.#players[username];
@@ -259,9 +299,15 @@ class Players {
         return false;
     }
 
-    swap_usernames_at_board() {
-        let p_top = this.#players[this.#options.$username_top.text()]
-        let p_bottom = this.#players[this.#options.$username_bottom.text()]
+    swap_usernames_at_board(board) {
+        let u_top = board === 'first' ? 
+                        this.#options.$username_top1.text() :
+                        this.#options.$username_top2.text();
+        let u_bottom = board === 'first' ? 
+                        this.#options.$username_bottom1.text() :
+                        this.#options.$username_bottom2.text();
+        let p_top = this.#players[u_top];
+        let p_bottom = this.#players[u_bottom];
 
         if(p_top && p_bottom) {
             // swap usernames
@@ -269,14 +315,22 @@ class Players {
             p_top.get_element().text(p_bottom.get_username())
             
             // swap element references
-            p_top.set_element(this.#options.$username_bottom)
-            p_bottom.set_element(this.#options.$username_top)
+            if(board === 'first') {
+                p_top.set_element(this.#options.$username_bottom1)
+                p_bottom.set_element(this.#options.$username_top1)
+            } else {
+                p_top.set_element(this.#options.$username_bottom2)
+                p_bottom.set_element(this.#options.$username_top2)
+            }
+            
         }
     }
 
     clear_board_usernames() {
-        this.remove_player_from_board('top')
-        this.remove_player_from_board('bottom')
+        this.remove_player_from_board('first', 'top')
+        this.remove_player_from_board('first', 'bottom')
+        this.remove_player_from_board('second', 'top')
+        this.remove_player_from_board('second', 'bottom')
     }
 
 }
