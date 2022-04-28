@@ -1,8 +1,8 @@
-var $ = window['jQuery']
+let $ = window['jQuery']
 
 // set default username
-var $username = $('#username_input')
-var username = setRandomUsername($username)
+let $username = $('#username_input')
+let username = setRandomUsername($username)
 
 // start new game
 $('#start_button').click(() => {startGame()})
@@ -10,9 +10,9 @@ $('#start_button').click(() => {startGame()})
 $('#join_button').click(() => {joinGame()})
 
 function setRandomUsername($username) {
-    var min = 1000
-    var max = 10000
-    var username = 'guest' + getRandomInt(min, max)
+    let min = 1000
+    let max = 10000
+    let username = 'guest' + getRandomInt(min, max)
     $username.attr("placeholder", username) 
     
     return username
@@ -27,7 +27,7 @@ function getRandomInt(min, max) {
 
 function startGame() {
     username = $username.val() === '' ? username : $username.val()
-    var url = window.location.href + 'main_page.ejs?'
+    let url = window.location.href + 'main_page.ejs?'
     url += 'username=' + username
     window.location.replace(url)
 }
@@ -43,8 +43,8 @@ function joinGame() {
 
 function goGame() {
     username = $username.val() === '' ? username : $username.val()
-    var game_id = $('#gameId_input').val()
-    var url = window.location.href + 'main_page.ejs?'
+    let game_id = $('#gameId_input').val()
+    let url = window.location.href + 'main_page.ejs?'
     url += 'username=' + username
     url += '&'
     url += 'gameId=' + game_id

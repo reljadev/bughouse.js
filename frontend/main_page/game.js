@@ -343,8 +343,8 @@ class Game {
     }
 
     #highlight_premove_squares(chess, board) {
-        var chess_pos = chess.position();
-        var brd_pos = board.position();
+        let chess_pos = chess.position();
+        let brd_pos = board.position();
         // delete sqares that are the same
         for(let i in chess_pos) {
           if(!chess_pos.hasOwnProperty(i)) continue;
