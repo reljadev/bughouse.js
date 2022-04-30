@@ -100,6 +100,7 @@ class Game {
         // player joins midgame or post-game
         } else {
             chess = new Chess(chess_info.start_fen, chess_info.start_spares);
+            chess.set_added_spares(chess_info.addedSpares);
             chess.load_pgn(chess_info.pgn);
         }
         return chess;
@@ -210,7 +211,27 @@ class Game {
         }
     }
 
-    //////////////////// CHESSBOARD FUNCTIONS ///////////////////
+    //////////////////// CHESS FUNCTIONS ////////////////////
+
+    #update_spares_after_move(board, m) {
+        if(m !== null) {
+            if(m.hasOwnProperty('captured')) {
+                let capturedColor = m.color === 'w' ? 'b' : 'w';
+                let piece = capturedColor + m.captured.toUpperCase();
+                if(board === 'first') {
+                    this.#chess2.addSpare(piece);
+                    this.#board2.addSpare(piece);
+                } else {
+                    this.#chess1.addSpare(piece);
+                    this.#board1.addSpare(piece);
+                }
+            } 
+
+            return true;
+        }
+    }
+
+    //////////////////// CHESSBOARD FUNCTIONS ////////////////////
 
     #onRightClick(chess, board) {
         let b = board === 'first' ? this.#board1 :
@@ -312,6 +333,7 @@ class Game {
         let m = chess.move(move);
         // illegal move
         if (m === null) return 'snapback';
+        this.#update_spares_after_move(board, m);
 
         // update clocks
         let elapsed_time = this.#update_clocks(board);
@@ -732,9 +754,10 @@ class Game {
         let b = board === 'first' ? this.#board1 :
                                     this.#board2;
 
-        chess.move(move);
+        let cm = chess.move(move);
+        this.#update_spares_after_move(board, cm);
 
-        // if not vewing history
+        // if not viewing history
         if(b.move_count() === chess.move_count() - 1) {
             // update board to move
             let state = chess.get_state(chess.move_count());
@@ -745,7 +768,9 @@ class Game {
             let pm = chess.move(m);
             // execute premove
             if(pm) {
+                this.#update_spares_after_move(board, pm);
                 b.move(pm, false);
+
                 state = chess.premove_state(b.getPremoves());
                 this.#update_board_to_state(b, state, false);
                 this.#highlight_premove_squares(chess, b);

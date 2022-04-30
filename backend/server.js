@@ -15,8 +15,8 @@ let games = {};
 function start_new_game(admin) {
     //TODO: fen, sparePieces and time should be set up by game admin
     let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-    let sparePieces = {'white': {'wP': 1, 'wN': 2, 'wB': 1, 'wR': 1, 'wQ': 1},
-                       'black': {'bP': 1, 'bN': 1, 'bB': 1, 'bR': 1, 'bQ': 1}};
+    let sparePieces = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
+                       'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}};
     
     let g = new Game({ admin: admin, fen: fen, spares: sparePieces });
     games[g.get_id()] = g;

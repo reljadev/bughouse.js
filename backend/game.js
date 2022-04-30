@@ -228,6 +228,7 @@ class Game {
                 first_board: {
                     fen: this.#chess1.fen(),
                     sparePieces: this.#chess1.sparePieces(),
+                    addedSpares: this.#chess1.addedSpares(),
                     start_fen: this.#chess1.start_fen(),
                     start_spares: this.#chess1.start_spares(),
                     pgn: this.#chess1.pgn(),
@@ -237,6 +238,7 @@ class Game {
                 second_board: {
                     fen: this.#chess2.fen(),
                     sparePieces: this.#chess2.sparePieces(),
+                    addedSpares: this.#chess2.addedSpares(),
                     start_fen: this.#chess2.start_fen(),
                     start_spares: this.#chess2.start_spares(),
                     pgn: this.#chess2.pgn(),
@@ -426,7 +428,19 @@ class Game {
         if((chess.turn() === 'w' && player.get_username() === w_player) ||
             (chess.turn() === 'b' && player.get_username() === b_player)) {
                 let m = chess.move(move);
-                return m !== null ? true : false;
+                if(m !== null) {
+                    if(m.hasOwnProperty('captured')) {
+                        let capturedColor = m.color === 'w' ? 'b' : 'w';
+                        let piece = capturedColor + m.captured.toUpperCase();
+                        if(board === 'first') {
+                            this.#chess2.addSpare(piece);
+                        } else {
+                            this.#chess1.addSpare(piece);
+                        }
+                    } 
+
+                    return true;
+                }
         }
         return false;
     }

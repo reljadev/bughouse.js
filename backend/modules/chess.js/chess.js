@@ -162,6 +162,7 @@ var Chess = function (fen, sparePieces) {
   var half_moves = 0
   var move_number = 1
   var history = []
+  var added_spares_history = {1: []}
   var start_fen = null
   var start_spares = null
   var header = {}
@@ -202,6 +203,7 @@ var Chess = function (fen, sparePieces) {
     half_moves = 0
     move_number = 1
     history = []
+    added_spares_history = {1: []}
     if (!keep_headers) header = {}
     comments = {}
     update_setup(generate_fen())
@@ -1134,6 +1136,9 @@ var Chess = function (fen, sparePieces) {
 
     if (turn === BLACK) {
       move_number++
+      if(!added_spares_history.hasOwnProperty(move_number)) {
+        added_spares_history[move_number] = []
+      }
     }
     turn = swap_color(turn)
   }
@@ -1563,6 +1568,14 @@ var Chess = function (fen, sparePieces) {
       }
     },
 
+    addSpare: function(spare) {
+      var color = spare.charAt(0) === 'w' ? 'white' : 'black'
+      if(sparePieces[color].hasOwnProperty(spare)) {
+        sparePieces[color][spare] += 1
+        added_spares_history[move_number].push(spare)
+      }
+    },
+
     reset: function () {
       return reset()
     },
@@ -1647,6 +1660,10 @@ var Chess = function (fen, sparePieces) {
 
     sparePieces: function() {
       return sparePieces
+    },
+
+    addedSpares: function() {
+      return added_spares_history
     },
 
     start_fen: function() {

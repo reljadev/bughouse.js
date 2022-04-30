@@ -162,6 +162,7 @@ var Chess = function (fen, sparePieces) {
   var half_moves = 0
   var move_number = 1
   var history = []
+  var added_spares_history = {1: []}
   var start_fen = null
   var start_spares = null
   var header = {}
@@ -199,6 +200,7 @@ var Chess = function (fen, sparePieces) {
     half_moves = 0
     move_number = 1
     history = []
+    added_spares_history = {1: []}
     if (!keep_headers) header = {}
     comments = {}
     update_setup(generate_fen())
@@ -1028,6 +1030,16 @@ var Chess = function (fen, sparePieces) {
     return repetition
   }
 
+  function restore_added_spares() {
+    for(let i in added_spares_history) {
+      for(let j in added_spares_history[i]) {
+        let piece = added_spares_history[i][j]
+        let color = piece.charAt(0) === 'w' ? 'white' : 'black'
+        sparePieces[color][piece] += 1
+      }
+    }
+  }
+
   function push(move) {
     history.push({
       move: move,
@@ -1144,6 +1156,9 @@ var Chess = function (fen, sparePieces) {
 
     if (turn === BLACK) {
       move_number++
+      if(!added_spares_history.hasOwnProperty(move_number)) {
+        added_spares_history[move_number] = []
+      }
     }
     turn = swap_color(turn)
   }
@@ -1596,6 +1611,14 @@ var Chess = function (fen, sparePieces) {
       loadSpares(spares)
     },
 
+    addSpare: function(spare) {
+      var color = spare.charAt(0) === 'w' ? 'white' : 'black'
+      if(sparePieces[color].hasOwnProperty(spare)) {
+        sparePieces[color][spare] += 1
+        added_spares_history[move_number].push(spare)
+      }
+    },
+
     reset: function (fen, spares) {
       return reset(fen, spares)
     },
@@ -1684,6 +1707,11 @@ var Chess = function (fen, sparePieces) {
 
     sparePieces: function() {
       return clone(sparePieces)
+    },
+
+    set_added_spares: function(added_spares_h) {
+      added_spares_history = clone(added_spares_h)
+      restore_added_spares()
     },
 
     board: function () {
@@ -1889,13 +1917,6 @@ var Chess = function (fen, sparePieces) {
         return str.replace(/\\/g, '\\')
       }
 
-      function has_keys(object) {
-        for (var key in object) {
-          return true
-        }
-        return false
-      }
-
       function parse_pgn_header(header, options) {
         var newline_char =
           typeof options === 'object' &&
@@ -1940,8 +1961,13 @@ var Chess = function (fen, sparePieces) {
         ? header_regex.exec(pgn)[1]
         : ''
 
+      // save added spares
+      var original_added_spares = clone(added_spares_history) 
       // Put the board in the starting position
       reset()
+      // restore added spares
+      added_spares_history = original_added_spares
+      restore_added_spares()
 
       /* parse PGN header */
       var headers = parse_pgn_header(header_string, options)
@@ -2128,6 +2154,7 @@ var Chess = function (fen, sparePieces) {
 
       // memorize current state of the game so it can be restored
       var original_state = this.pgn()
+      var original_added_spares = clone(added_spares_history)
 
       // execute premoves
       var allExecuted = true
@@ -2152,6 +2179,8 @@ var Chess = function (fen, sparePieces) {
 
       // restore game
       reset()
+      added_spares_history = original_added_spares
+      restore_added_spares()
       this.load_pgn(original_state)
 
       return {fen: fen, sparePieces: spares, 
@@ -2181,7 +2210,7 @@ var Chess = function (fen, sparePieces) {
         make_move(moves.pop())
       }
 
-      return {fen: fen, sparePieces: spares, move_count: currMoveNum}
+      return { fen: fen, sparePieces: spares, move_count: currMoveNum }
     },
 
     clear: function () {

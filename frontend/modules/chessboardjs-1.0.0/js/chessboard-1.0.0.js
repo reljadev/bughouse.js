@@ -1963,6 +1963,16 @@
       }
     }
 
+    widget.addSpare = function(piece) {
+      if(typeof piece !== 'undefined') {
+        var color = piece.charAt(0) === 'w' ? 'white' : 'black'
+        if(config.sparePieces[color].hasOwnProperty(piece)) {
+          config.sparePieces[color][piece] += 1
+          drawSpares()
+        }
+      }
+    }
+
     widget.getTopUsername = function() {
       return $username_top
     }
