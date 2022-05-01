@@ -1,10 +1,8 @@
 html {
     background-color: #252526;
     color: aliceblue;
-}
-
-.body {
-  user-select: none;
+    user-select: none; /* prevent highlighting */
+    overflow-x: hidden; /* disable horizontal scroll */
 }
 
 .container {
