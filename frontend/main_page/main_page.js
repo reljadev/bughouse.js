@@ -32,6 +32,8 @@ let $pgn1 = $('#pgn_1');
 let $status2 = $('#status_2');
 let $pgn2 = $('#pgn_2');
 
+let $msg = $('#game_over_msg');
+
 //// INITIALIZE GAME ////
 data.myUsername = myUsername;
 data.move_executed = move_executed;
@@ -117,6 +119,8 @@ $reset_button.on('click', function(evt) {
     // show start button
     $start_button.css('display', '');
     $start_button.attr('disabled', 'disabled');
+    // delete game over message
+    $msg.text('');
     // notify server
     server.emit('reset_game', fen, sparePieces); 
   } );
@@ -293,12 +297,13 @@ server.on('game_is_over', (message) => {
   $resign_button.css('display', 'none');
   // TODO: show pop up dialog
   if(message) {
-    console.log(message);
+    $msg.text(message);
   }
 })
 
 server.on('reset_game', (fen, sparePieces) => {
   reset_game(fen, sparePieces);
+  $msg.text('');
 })
 
 // some player disconnected
