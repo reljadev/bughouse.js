@@ -11,7 +11,6 @@ let data = JSON.parse($('#data_data').attr('data-value'));
 // TODO: landing_page should be in history
 
 let game_id = data.id;
-console.log(game_id); //TODO: this should be displayed on page
 let admin = data.admin;
 let fen = data.first_board.fen;
 let sparePieces = data.first_board.sparePieces;
@@ -22,6 +21,11 @@ function get_cookie(name) {
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
+
+// display invite link
+let $text_id = $('#text_game_id');
+$text_id.val(game_id);
+$text_id.prop("readonly", true);
 
 let $status1 = $('#status_1');
 let $pgn1 = $('#pgn_1');
