@@ -38,17 +38,21 @@
     <body>
         <!-- Side navigation -->
         <div id="mySidebar" class="sidebar">
-            <h4>players</h4>
+            <h4>players</h4> <!-- TODO: this should be in stopwatch -->
         </div>
         <div id="game_id" class="id">
             <h5>invite friends</h5>
-            <input type="text" id="text_game_id" class="text_id"/>
+            <input type="text" id="text_game_id" class="text_id" />
         </div>
 
         <div id="main_page" class="main">
             <div id="first_container" class="container">
                 <!-- define chessboard element -->
-                <div id="myBoard_1" class="board"></div>
+                <div class="board_wrapper">
+                    <div id="myBoard_1" class="board"></div>
+                    <input type="text" id="time1_top" class="time1" />
+                    <input type="text" id="time1_bottom" class="time2" />
+                </div>
                 <label>Status:</label>
                 <div id="status_1"></div>
                 <label>PGN:</label>
@@ -58,13 +62,15 @@
                 <button id="backward_button_1">backward</button>
                 <button id="forward_button_1">forward</button>
 
-                <div id="white_clock_1">white timer: </div>
-                <div id="black_clock_1">black timer: </div>
             </div>
 
             <div id="second_container" class="container">
                 <!-- define chessboard element -->
-                <div id="myBoard_2" class="board"></div>
+                <div class="board_wrapper">
+                    <div id="myBoard_2" class="board"></div>
+                    <input type="text" id="time2_top" class="time1" />
+                    <input type="text" id="time2_bottom" class="time2" />
+                </div>
                 <label>Status:</label>
                 <div id="status_2"></div>
                 <label>PGN:</label>
@@ -74,8 +80,6 @@
                 <button id="backward_button_2">backward</button>
                 <button id="forward_button_2">forward</button>
 
-                <div id="white_clock_2">white timer: </div>
-                <div id="black_clock_2">black timer: </div>
             </div>
 
             <!-- admin buttons -->

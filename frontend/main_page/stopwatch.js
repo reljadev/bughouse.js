@@ -3,10 +3,11 @@ class Stopwatch {
     /*                    INITIALIZATION                       */
     /***********************************************************/
 
+    // TODO: element should be made here, instead of in main_page.ejs
     #element;
     #options;
 
-    #timer;
+    // #timer;
     #offset;
     #clock;
     #interval;
@@ -19,7 +20,7 @@ class Stopwatch {
     constructor(element, options) {
         this.#parse_arguments(element, options);
         this.#initialize_formatter();
-        this.#initialize_timer();
+        // this.#initialize_timer();
 
         // initialize
         this.reset();
@@ -44,14 +45,14 @@ class Stopwatch {
         this.#formatter = new Intl.DateTimeFormat([], this.#formatterOptions);
     }
 
-    #initialize_timer() {
-        this.#timer = this.#createTimer();     
-        this.#element.appendChild(this.#timer);
-    }
+    // #initialize_timer() {
+    //     this.#timer = this.#createTimer();     
+    //     this.#element.appendChild(this.#timer);
+    // }
 
-    #createTimer() {
-        return document.createElement("span");
-    }
+    // #createTimer() {
+    //     return document.createElement("span");
+    // }
 
     /***********************************************************/
     /*                    PRIVATE FUNCTIONS                    */
@@ -64,7 +65,8 @@ class Stopwatch {
             this.#formatter = new Intl.DateTimeFormat([], this.#formatterOptions);
             this.#showingFractions = true;
         }
-        this.#timer.innerHTML = this.#formatter.format(this.#clock);
+        // this.#timer.innerHTML = this.#formatter.format(this.#clock);
+        $(this.#element).val(this.#formatter.format(this.#clock)); //TODO: not good, shouldn't make jquery element for every render 
     }
 
     #update() {
@@ -133,6 +135,11 @@ class Stopwatch {
 
     hide() {
         this.#element.style.display = 'none';
+    }
+
+    set_element(element) {
+        this.#element = element;
+        this.#render();
     }
 
 };

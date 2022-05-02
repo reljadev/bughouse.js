@@ -20,8 +20,26 @@ html {
   margin: 1rem;
 }
 
+.board_wrapper {
+  position: relative;
+}
+
 .board {
   width: 400px;
+}
+
+.time1 {
+  width: 40px;
+  position: absolute;
+  top: 55px;
+  right: 50px;
+}
+
+.time2 {
+  width: 40px;
+  position: absolute;
+  bottom: 55px;
+  right: 50px;
 }
 
 .sidebar {

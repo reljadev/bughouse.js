@@ -50,6 +50,7 @@ class Game {
         this.#initialize_players();
 
         if(this.#stage === PLAYING) {
+            this.#update_clocks_position();
             this.#start_clocks();
         }
 
@@ -107,7 +108,7 @@ class Game {
     }
 
     #initialize_first_clocks() {
-        let clocks = this.#initialize_clocks('white_clock_1', 'black_clock_1',
+        let clocks = this.#initialize_clocks('time1_bottom', 'time1_top',
                                             this.#options.first_board.white_time,
                                             this.#options.first_board.black_time);
         this.#white_clock1 = clocks[0];
@@ -115,7 +116,7 @@ class Game {
     }
 
     #initialize_second_clocks() {
-        let clocks = this.#initialize_clocks('white_clock_2', 'black_clock_2',
+        let clocks = this.#initialize_clocks('time2_top', 'time2_bottom',
                                             this.#options.first_board.white_time,
                                             this.#options.first_board.black_time);
         this.#white_clock2 = clocks[0];
@@ -507,7 +508,28 @@ class Game {
         }
     }
 
-    //////////////////// CLOCKS CONTROLLERS /////////////////////
+    ///////////////////// CLOCKS FUNCTIONS /////////////////////
+
+    #update_clocks_position() {
+        // first board
+        if(this.#board1.orientation() === 'white') {
+            this.#white_clock1.set_element($('#time1_bottom').get(0));
+            this.#black_clock1.set_element($('#time1_top').get(0));
+        } else {
+            this.#white_clock1.set_element($('#time1_top').get(0));
+            this.#black_clock1.set_element($('#time1_bottom').get(0));
+        }
+        // second board
+        if(this.#board2.orientation() === 'white') {
+            this.#white_clock2.set_element($('#time2_bottom').get(0));
+            this.#black_clock2.set_element($('#time2_top').get(0));
+        } else {
+            this.#white_clock2.set_element($('#time2_top').get(0));
+            this.#black_clock2.set_element($('#time2_bottom').get(0));
+        }
+    }
+
+    ///////////////////// CLOCKS CONTROLLERS /////////////////////
 
     #update_clocks(board) {
         let chess = board === 'first' ? this.#chess1 :
@@ -698,6 +720,8 @@ class Game {
 
         //update board orientation
         this.#update_boards_orientation();
+        // update clocks positions based on board orientation
+        this.#update_clocks_position();
         
         // reset clocks
         this.#white_clock1.reset();
