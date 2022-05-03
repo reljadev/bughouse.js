@@ -236,7 +236,9 @@ class Players {
         if($element) {
             // removing player at board
             if(p.get_username() === this.#options.$username_top1.text() ||
-                p.get_username() === this.#options.$username_bottom1.text()) {
+                p.get_username() === this.#options.$username_bottom1.text() ||
+                p.get_username() === this.#options.$username_top2.text() ||
+                p.get_username() === this.#options.$username_bottom2.text()) {
                     // while playing
                     if(this.#options.is_playing()) {
                         // not allowed, just gray him out
