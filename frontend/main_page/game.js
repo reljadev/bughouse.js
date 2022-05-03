@@ -511,6 +511,8 @@ class Game {
     ///////////////////// CLOCKS FUNCTIONS /////////////////////
 
     #update_clocks_position() {
+        console.log('update clocks position')
+        console.log('first board ' + this.#board1.orientation())
         // first board
         if(this.#board1.orientation() === 'white') {
             this.#white_clock1.set_element_id('time1_bottom');
@@ -519,6 +521,7 @@ class Game {
             this.#white_clock1.set_element_id('time1_top');
             this.#black_clock1.set_element_id('time1_bottom');
         }
+        console.log('second board ' + this.#board2.orientation())
         // second board
         if(this.#board2.orientation() === 'white') {
             this.#white_clock2.set_element_id('time2_bottom');

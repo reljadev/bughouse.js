@@ -137,6 +137,11 @@ class Stopwatch {
 
     set_element_id(element_id) {
         this.#$element = $('#' + element_id);
+
+        this.#timer.remove();
+        this.#timer = this.#createTimer();
+        this.#$element.append(this.#timer);
+
         this.#render();
     }
 
