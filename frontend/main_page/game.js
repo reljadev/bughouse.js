@@ -117,18 +117,18 @@ class Game {
 
     #initialize_second_clocks() {
         let clocks = this.#initialize_clocks('time2_top', 'time2_bottom',
-                                            this.#options.first_board.white_time,
-                                            this.#options.first_board.black_time);
+                                            this.#options.second_board.white_time,
+                                            this.#options.second_board.black_time);
         this.#white_clock2 = clocks[0];
         this.#black_clock2 = clocks[1];
     }
 
     #initialize_clocks(element_white, element_black, time_white, time_black) {
-        let w_clock = new Stopwatch($('#' + element_white).get(0), {
+        let w_clock = new Stopwatch(element_white, {
                                         clock: time_white, 
                                         delay: 100,
                                     });
-        let b_clock = new Stopwatch($('#' + element_black).get(0), {
+        let b_clock = new Stopwatch(element_black, {
                                         clock: time_black, 
                                         delay: 100,
                                     });
@@ -513,19 +513,19 @@ class Game {
     #update_clocks_position() {
         // first board
         if(this.#board1.orientation() === 'white') {
-            this.#white_clock1.set_element($('#time1_bottom').get(0));
-            this.#black_clock1.set_element($('#time1_top').get(0));
+            this.#white_clock1.set_element_id('time1_bottom');
+            this.#black_clock1.set_element_id('time1_top');
         } else {
-            this.#white_clock1.set_element($('#time1_top').get(0));
-            this.#black_clock1.set_element($('#time1_bottom').get(0));
+            this.#white_clock1.set_element_id('time1_top');
+            this.#black_clock1.set_element_id('time1_bottom');
         }
         // second board
         if(this.#board2.orientation() === 'white') {
-            this.#white_clock2.set_element($('#time2_bottom').get(0));
-            this.#black_clock2.set_element($('#time2_top').get(0));
+            this.#white_clock2.set_element_id('time2_bottom');
+            this.#black_clock2.set_element_id('time2_top');
         } else {
-            this.#white_clock2.set_element($('#time2_top').get(0));
-            this.#black_clock2.set_element($('#time2_bottom').get(0));
+            this.#white_clock2.set_element_id('time2_top');
+            this.#black_clock2.set_element_id('time2_bottom');
         }
     }
 

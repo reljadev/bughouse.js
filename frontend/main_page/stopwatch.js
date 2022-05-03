@@ -3,11 +3,10 @@ class Stopwatch {
     /*                    INITIALIZATION                       */
     /***********************************************************/
 
-    // TODO: element should be made here, instead of in main_page.ejs
-    #element;
     #options;
 
-    // #timer;
+    #$element;
+    #timer;
     #offset;
     #clock;
     #interval;
@@ -17,17 +16,17 @@ class Stopwatch {
     #formatterOptions;
     #formatter;
 
-    constructor(element, options) {
-        this.#parse_arguments(element, options);
+    constructor(element_id, options) {
+        this.#parse_arguments(element_id, options);
         this.#initialize_formatter();
-        // this.#initialize_timer();
+        this.#initialize_timer();
 
         // initialize
         this.reset();
     }
 
-    #parse_arguments(element, options) {
-        this.#element = element;
+    #parse_arguments(element_id, options) {
+        this.#$element = $('#' + element_id);
 
         options = options ?? {};
         options.clock = options.clock ?? 5 * 1000 * 60; // 5 minutes
@@ -45,14 +44,14 @@ class Stopwatch {
         this.#formatter = new Intl.DateTimeFormat([], this.#formatterOptions);
     }
 
-    // #initialize_timer() {
-    //     this.#timer = this.#createTimer();     
-    //     this.#element.appendChild(this.#timer);
-    // }
+    #initialize_timer() {
+        this.#timer = this.#createTimer();     
+        this.#$element.append(this.#timer);
+    }
 
-    // #createTimer() {
-    //     return document.createElement("span");
-    // }
+    #createTimer() {
+        return $('<input type="text" class="clock_display" />');
+    }
 
     /***********************************************************/
     /*                    PRIVATE FUNCTIONS                    */
@@ -65,8 +64,7 @@ class Stopwatch {
             this.#formatter = new Intl.DateTimeFormat([], this.#formatterOptions);
             this.#showingFractions = true;
         }
-        // this.#timer.innerHTML = this.#formatter.format(this.#clock);
-        $(this.#element).val(this.#formatter.format(this.#clock)); //TODO: not good, shouldn't make jquery element for every render 
+        this.#timer.val(this.#formatter.format(this.#clock));
     }
 
     #update() {
@@ -130,15 +128,15 @@ class Stopwatch {
     }
 
     show() {
-        this.#element.style.display = '';
+        this.#$element.css('display', '');
     }
 
     hide() {
-        this.#element.style.display = 'none';
+        this.#$element.css('display', 'none');
     }
 
-    set_element(element) {
-        this.#element = element;
+    set_element_id(element_id) {
+        this.#$element = $('#' + element_id);
         this.#render();
     }
 

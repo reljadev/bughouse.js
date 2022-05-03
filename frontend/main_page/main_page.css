@@ -42,6 +42,10 @@ html {
   right: 50px;
 }
 
+.clock_display {
+  width: 40px;
+}
+
 .sidebar {
   height: 87%;
   width: 160px; /* Set the width of the sidebar */
