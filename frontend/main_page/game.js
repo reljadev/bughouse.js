@@ -696,11 +696,15 @@ class Game {
         if(board === 'first') {
             this.#board1.clearPremoves();
             let state = this.#chess1.get_state(this.#board1.move_count() - 1);
-            this.#update_board_to_state(this.#board1, state);
+            // state.turn ensures only pieces of color whose turn it was are animated
+            // in order to prevent animating eaten pieces
+            this.#update_board_to_state(this.#board1, state, state.turn);
         } else {
             this.#board2.clearPremoves();
             let state = this.#chess2.get_state(this.#board2.move_count() - 1);
-            this.#update_board_to_state(this.#board2, state);
+            // state.turn ensures only pieces of color whose turn it was are animated
+            // in order to prevent animating eaten pieces
+            this.#update_board_to_state(this.#board2, state, state.turn);
         }
     }
 

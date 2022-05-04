@@ -2204,13 +2204,15 @@ var Chess = function (fen, sparePieces) {
       // get state
       var fen = generate_fen()
       var spares = clone(sparePieces)
+      var currentTurn = turn
 
       // redo moves
       while(moves.length !== 0) {
         make_move(moves.pop())
       }
 
-      return { fen: fen, sparePieces: spares, move_count: currMoveNum }
+      return { fen: fen, sparePieces: spares, 
+                move_count: currMoveNum, turn: currentTurn }
     },
 
     clear: function () {
