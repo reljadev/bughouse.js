@@ -186,6 +186,7 @@ var Chess = function (fen, sparePieces) {
   }
   if(validSpares(sparePieces)) {
     start_spares = clone(sparePieces)
+    sparePieces = clone(start_spares)
   } else {
     throw 'sparePieces argument has incorrect form'
   }
