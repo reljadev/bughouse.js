@@ -303,7 +303,7 @@ class Game {
                  piece: piece
                 };
         // do it
-        this.#executeMove(m, chess, board);
+        this.#executeMove(chess, board, m);
     }
       
     #executeMove(chess, board, move) {
