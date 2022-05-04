@@ -334,6 +334,12 @@ class Game {
         let m = chess.move(move);
         // illegal move
         if (m === null) return 'snapback';
+
+        // if promotion move, update board
+        if(m.hasOwnProperty('promotion')) {
+            let state = chess.get_state(chess.move_count());
+            this.#update_board_to_state(b, state, false);
+        }
         this.#update_spares_after_move(board, m);
 
         // update clocks
