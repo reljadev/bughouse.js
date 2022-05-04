@@ -1546,7 +1546,7 @@
 
     function enableClicks() {
       canPickupPieces = true
-      $container.on('mousedown', mousedownSparePiece)
+      $container.on('mousedown', '.' + CSS.sparePieces + ' .' + CSS.piece, mousedownSparePiece)
     }
 
     function clearPromotionSquares() {

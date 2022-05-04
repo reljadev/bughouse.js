@@ -115,7 +115,7 @@ const server = http.createServer(function (request, response) {
 
     // infer correct content type 
     let contentType = utils.ext_to_type(filePath);
-    //NOTE: undefined is actually variable window.undefined which can be defined, in that case, this would break!
+    //NOTE: undefined is actually variable window.undefined which can be defined, in that case this would break!
     let encoding = contentType === 'image/png' ? undefined : 'utf-8';
 
     // read file & send it to client
