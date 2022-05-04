@@ -1046,7 +1046,13 @@
     function animateSparePieceToSquare (piece, dest, completeFn) {
       var color = piece.charAt(0) === 'w' ? 'white' : 'black'
       var i = sparePiecesToSquares[piece.charAt(1)]
-      var srcOffset = $('#' + spareSquareElsIds[color+i]).offset()
+      // TODO: remove this check
+      // don't "add" king piece
+      if(piece.charAt(1) === 'K') {
+        var srcOffset = {left: 0, top: 0}
+      } else {
+        var srcOffset = $('#' + spareSquareElsIds[color+i]).offset()
+      }
       var $destSquare = $('#' + squareElsIds[dest])
       var destOffset = $destSquare.offset()
 
