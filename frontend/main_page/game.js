@@ -25,6 +25,7 @@ class Game {
     #board1;
     #board2;
     #players;
+    #dragging;
 
     constructor(options) {
         this.#parse_arguments(options);
@@ -53,6 +54,9 @@ class Game {
             this.#update_clocks_position();
             this.#start_clocks();
         }
+
+        // initial dragging value
+        this.#dragging = null;
 
         this.#sanity_check();
     }
@@ -217,7 +221,7 @@ class Game {
     #update_spares_after_move(board, m) {
         if(m !== null) {
             if(m.hasOwnProperty('captured')) {
-                let capturedColor = m.color === 'w' ? 'b' : 'w';
+                let capturedColor = m.color === WHITE ? BLACK : WHITE;
                 let piece = capturedColor + m.captured.toUpperCase();
                 if(board === 'first') {
                     this.#chess2.addSpare(piece);
@@ -248,6 +252,7 @@ class Game {
       
     #onDragStart(chess, board,
          source, piece, position, orientation) {
+
         let white_player = board === 'first' ? 
                         this.#options.white_player1 :
                         this.#options.white_player2;
@@ -271,10 +276,19 @@ class Game {
             (piece.search(/^w/) !== -1 && black_player === this.#options.myUsername)) {
             return false;
         }
+
+        // record which piece is beign dragged
+        // so mid-dragging updates of board
+        // won't cause doubling of piece beign dragged 
+        this.#dragging = {source, piece};
     }
       
     #onDrop(chess, board,
         source, target, draggedPiece, newPosition, oldPosition, currentOrientation) {
+
+        // no piece is beign dragged anymore
+        this.#dragging = null;
+        
         // promotion move
         if(source !== 'offboard' &&
             draggedPiece.charAt(1).toLowerCase() === 'p' &&
@@ -797,6 +811,24 @@ class Game {
             let state = chess.get_state(chess.move_count());
             let opponentColor = chess.turn() === WHITE ? BLACK : WHITE;
             this.#update_board_to_state(b, state, opponentColor);
+            
+            if(this.#dragging !== null) {
+                // regular piece
+                if(this.#dragging.source !== 'offboard') {
+                    // if there is my piece on that square
+                    if(b.position()[this.#dragging.source].charAt(0) === chess.turn()) {
+                        b.hidePieceOnSquare(this.#dragging.source);
+                    // if there is opponent's piece on that square, means my piece is eaten
+                    } else {
+                        b.breakPieceDragging();
+                        this.#dragging = null;
+                    }
+                // spare piece
+                } else {
+                    // show one less spare piece, because one is being dragged
+                    b.reduceDisplayCount(this.#dragging.piece);
+                }
+            }
 
             let m = b.getPremove();
             let pm = chess.move(m);

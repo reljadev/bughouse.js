@@ -203,12 +203,10 @@ function updateStats (board) {
   if (game.in_checkmate(board)) {
     status = 'Game over, ' + moveColor + ' is in checkmate.';
   }
-
   // draw?
   else if (game.in_draw(board)) {
     status = 'Game over, drawn position';
-  }
-
+  } 
   // game still on
   else {
     status = moveColor + ' to move';
@@ -295,8 +293,9 @@ server.on('game_is_over', (message) => {
   }
   // hide resign button
   $resign_button.css('display', 'none');
-  // TODO: show pop up dialog
+
   if(message) {
+    // TODO: this should be pop up dialog
     $msg.text(message);
   }
 })

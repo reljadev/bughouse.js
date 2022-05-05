@@ -1955,6 +1955,24 @@
       }
     }
 
+    widget.hidePieceOnSquare = function(square) {
+      // highlight the source square and hide the piece
+      $('#' + squareElsIds[source])
+      .addClass(CSS.highlight1)
+      .find('.' + CSS.piece)
+      .css('display', 'none')
+    }
+
+    widget.breakPieceDragging = function() {
+      removeSquareHighlights()
+
+      // hide the dragged piece
+      $draggedPiece.css('display', 'none')
+
+      // set state
+      isDragging = false
+    }
+
     widget.sparePieces = function(pieces) {
       // if no argument is specified return current spare pieces
       if(typeof pieces === 'undefined') {
@@ -1977,6 +1995,12 @@
           drawSpares()
         }
       }
+    }
+
+    widget.reduceDisplayCount = function(piece) {
+      var color = piece.charAt(0) === 'w' ? 'white' : 'black'
+      var displayCounter = config.sparePieces[color][piece]
+      updateSparePieceDisplay(draggedPiece, displayCounter - 1)
     }
 
     widget.getTopUsername = function() {
