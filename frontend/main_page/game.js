@@ -277,16 +277,16 @@ class Game {
             return false;
         }
 
-        // record which piece is beign dragged
+        // record which piece is being dragged
         // so mid-dragging updates of board
-        // won't cause doubling of piece beign dragged 
+        // won't cause doubling of piece being dragged 
         this.#dragging = {source, piece};
     }
       
     #onDrop(chess, board,
         source, target, draggedPiece, newPosition, oldPosition, currentOrientation) {
 
-        // no piece is beign dragged anymore
+        // no piece is being dragged anymore
         this.#dragging = null;
         
         // promotion move

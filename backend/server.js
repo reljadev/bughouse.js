@@ -7,8 +7,6 @@ const helmet = require('helmet');
 const socket = require('socket.io');
 const Game = require('./game');
 
-// TODO: testing
-
 // games functions
 let games = {};
 

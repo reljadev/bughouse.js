@@ -1957,7 +1957,7 @@
 
     widget.hidePieceOnSquare = function(square) {
       // highlight the source square and hide the piece
-      $('#' + squareElsIds[source])
+      $('#' + squareElsIds[square])
       .addClass(CSS.highlight1)
       .find('.' + CSS.piece)
       .css('display', 'none')

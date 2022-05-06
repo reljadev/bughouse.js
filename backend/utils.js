@@ -34,9 +34,10 @@ function parse_url(request) {
 function ext_to_type(filePath) {
     let extname = path.extname(filePath);
     const ext_to_type = {'.html': 'text/html', '.js': 'text/javascript',
-                         '.css': 'text/css', '.json': 'application/json',
+                         '.css': 'text/css', '.ejs': 'text/html',
+                         '.json': 'application/json', '.ttf': 'font/ttf',
                          '.png': 'image/png', '.jpg': 'image/jpg',
-                         '.ico': 'image/x-icon', '.ejs': 'text/html'}
+                         '.ico': 'image/x-icon'}
     return ext_to_type[extname]
 }
 
