@@ -981,6 +981,12 @@
       for (var piece in pieces) {
         if(pieces.hasOwnProperty(piece)) {
           var displayCounter = pieces[piece]
+          // if the piece is currently being dragged
+          // TODO: this logic should be in game.js
+          if(isDragging && draggedPieceSource === 'offboard' &&
+              draggedPiece === piece) {
+            displayCounter -= 1
+          }
           var hidden = (displayCounter === 0)
           var i = sparePiecesToSquares[piece.charAt(1)]
           // get spare square
@@ -1046,7 +1052,7 @@
     function animateSparePieceToSquare (piece, dest, completeFn) {
       var color = piece.charAt(0) === 'w' ? 'white' : 'black'
       var i = sparePiecesToSquares[piece.charAt(1)]
-      // TODO: remove this check
+      // TODO: remove this hack
       // don't "add" king piece
       if(piece.charAt(1) === 'K') {
         var srcOffset = {left: 0, top: 0}
@@ -1253,6 +1259,10 @@
       // add the pieces
       for (var i in currentPosition) {
         if (!currentPosition.hasOwnProperty(i)) continue
+        // don't draw piece that is currently being dragged
+        // TODO: this logic really should be in game.js
+        if(isDragging && draggedPieceSource === i && 
+            draggedPiece.charAt(0) === currentPosition[i].charAt(0)) continue
 
         $('#' + squareElsIds[i]).append(buildPieceHTML(currentPosition[i]))
       }
@@ -1958,9 +1968,9 @@
     widget.hidePieceOnSquare = function(square) {
       // highlight the source square and hide the piece
       $('#' + squareElsIds[square])
-      .addClass(CSS.highlight1)
-      .find('.' + CSS.piece)
-      .css('display', 'none')
+        .addClass(CSS.highlight1)
+        .find('.' + CSS.piece)
+        .css('display', 'none')
     }
 
     widget.breakPieceDragging = function() {

@@ -817,7 +817,8 @@ class Game {
                 if(this.#dragging.source !== 'offboard') {
                     // if there is my piece on that square
                     if(b.position()[this.#dragging.source].charAt(0) === chess.turn()) {
-                        b.hidePieceOnSquare(this.#dragging.source);
+                        // TODO: move logic here
+                        // b.hidePieceOnSquare(this.#dragging.source);
                     // if there is opponent's piece on that square, means my piece is eaten
                     } else {
                         b.breakPieceDragging();
@@ -826,7 +827,8 @@ class Game {
                 // spare piece
                 } else {
                     // show one less spare piece, because one is being dragged
-                    b.reduceDisplayCount(this.#dragging.piece);
+                    // TODO: move logic here
+                    // b.reduceDisplayCount(this.#dragging.piece);
                 }
             }
 
@@ -846,6 +848,10 @@ class Game {
             // premove not valid
             } else {
                 b.clearPremoves();
+                if(m != null && this.#dragging !== null) {
+                    b.breakPieceDragging();
+                    this.#dragging = null;
+                }
             }
         }
   
