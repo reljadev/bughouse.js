@@ -7,7 +7,9 @@ let username = setRandomUsername($username)
 // start new game
 $('#start_button').click(() => {startGame()})
 // join game
-$('#join_button').click(() => {joinGame()})
+$join_button = $('#join_button');
+$join_container = $('#join_container');
+$id_input = $('#game_id_input');
 
 function setRandomUsername($username) {
     let min = 1000
@@ -50,3 +52,19 @@ function goGame() {
     url += 'gameId=' + game_id
     window.location.replace(url)
 }
+
+$join_button.click((evt) => {   $join_button.addClass('hide');
+                                $join_container.removeClass('hide');
+                                setTimeout(() => { $join_button.css('display', 'none'); 
+                                                    $join_container.css('display', '');
+                                                    $id_input.focus(); 
+                                                 }, 
+                                                    200); 
+                            });
+$id_input.on('blur', (evt) => { $join_container.addClass('hide');
+                                $join_button.removeClass('hide');
+                                setTimeout(() => { $join_container.css('display', 'none');
+                                                    $join_button.css('display', '');
+                                                 },
+                                                    200);
+                            });

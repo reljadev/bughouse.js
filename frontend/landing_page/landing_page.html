@@ -1,21 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    <!-- meta -->
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <!-- google fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@200&family=Squada+One&display=swap" rel="stylesheet">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./landing_page.css">
+
+    <!-- font awesome icons -->
+    <script src="https://kit.fontawesome.com/767c504d89.js" crossorigin="anonymous"></script>
+
+    <!-- css -->
+    <link rel="stylesheet" href="./landing_page.css"> <!-- TODO: change to min -->
+
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-1.12.4.min.js" 
             integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" 
             crossorigin="anonymous">
     </script>
+
+    <!-- client-side socket io -->
     <script src="/socket.io/socket.io.js"></script>
-    <title>Login</title>
+
+    <!-- webapp title -->
+    <title>Bughouse</title>
+
 </head>
+
 <body>
     <div class="container">
         <h2 class="title">bughouse</h2>
@@ -29,12 +45,19 @@
             <div class="input_button_divider"></div>
             <button type="button" class="button" id="start_button">Start</button>
             <div class="buttons_divider"></div>
+
             <button type="button" class="button" id="join_button">Join</button>
-            <input type="text" id="gameId_input" autocomplete="off" hidden>
-            <button type="button" class="button" id="go_button" hidden>Go</button>
+            <div id="join_container" style="display: none;">
+                <input type="text" id="game_id_input" tabindex='-1' placeholder='Paste game id' autocomplete="off">
+                <div id="go_button" tabindex="-1">
+                    <i id="icon_go" class="fa-solid fa-arrow-right-long fa-sm center color-white"></i>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- javascript logic -->
     <script src="./landing_page.js"></script>
+
 </body>
 </html>
