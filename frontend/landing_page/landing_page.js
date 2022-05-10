@@ -35,9 +35,9 @@ function getRandomInt(min, max) {
 
 function startGame() {
     username = $username.val() === '' ? username : $username.val();
-    let url = window.location.href + 'main_page.ejs?';
+    let url = '/main_page.ejs?';
     url += 'username=' + username;
-    window.location.replace(url);
+    window.location.href = url;
 }
 
 function onJoinClick() {
