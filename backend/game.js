@@ -33,7 +33,8 @@ class Game {
 
         this.#players = {};
         this.#admin = options.admin;
-        if(typeof this.#admin === 'undefined') {
+        if(typeof this.#admin === 'undefined' ||
+            typeof this.#admin === 'string' && this.#admin === '') {
             throw 'admin is a required parameter';
         }
         this.#white_player1 = options.white_player ?? null;

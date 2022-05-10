@@ -80,7 +80,8 @@ const server = http.createServer(function (request, response) {
                 if(games[i].has_username(params.username)) {
                     // redirect user to landing page
                     response.writeHead(302, {
-                        // TODO: this location should be changed obviously
+                        // TODO: it should either redirect to landing page with note 'username already in use'
+                        // or redirect to page with an alert that joining two games at once is not currently supported
                         Location: `/404.html`
                     }).end();
                     return
@@ -97,7 +98,7 @@ const server = http.createServer(function (request, response) {
                 response.writeHead(302, {
                         Location: `/main_page.ejs?gameId=${g.get_id()}&username=${g.get_player(user_id).get_username()}`
                     }).end();
-                return
+                return;
             }         
         }
 
@@ -119,7 +120,16 @@ const server = http.createServer(function (request, response) {
         } else {
             // set current game
             let admin = params.username;
-            currentGame = start_new_game(admin);
+            try {
+                currentGame = start_new_game(admin);
+            } catch(error) {
+                response.writeHead(302, {
+                    //TODO: it should show a notation, that username was wrong
+                    Location: `/landing_page.html`
+                }).end();
+                return;
+            }
+            
             user_id = currentGame.add_new_player();
         }
     }
