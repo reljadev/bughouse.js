@@ -68,9 +68,9 @@ function goGame() {
 
     username = $username.val() === '' ? username : $username.val();
     let game_id = $id_input.val();
-    let url = window.location.href + 'main_page.ejs?';
+    let url = '/main_page.ejs?';
     url += 'username=' + username;
     url += '&';
     url += 'gameId=' + game_id;
-    window.location.replace(url); //TODO: don't use replace here
+    window.location.href = url;
 }

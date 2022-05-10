@@ -8,7 +8,6 @@ let myUsername = $('#data_username').attr('data-value');
 let data = JSON.parse($('#data_data').attr('data-value'));
 
 // TODO: after right click, piece eaten shouldn't be animated
-// TODO: landing_page should be in history
 
 let game_id = data.id;
 let admin = data.admin;
