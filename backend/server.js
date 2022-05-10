@@ -72,10 +72,22 @@ const server = http.createServer(function (request, response) {
     //     return
     // }
 
-    //TODO: username should be checked on page serving
-
     // if user wants main_page.ejs or landing page
     if(fileName === '' || fileName === 'landing_page.html' || fileName === 'main_page.ejs') {
+        // multiple users with the same username are not allowed
+        if(params.username) {
+            for(let i in games) {
+                if(games[i].has_username(params.username)) {
+                    // redirect user to landing page
+                    response.writeHead(302, {
+                        // TODO: this location should be changed obviously
+                        Location: `/404.html`
+                    }).end();
+                    return
+                }
+            }
+        }
+
         // & user id is valid
         if(utils.isValidId(user_id)) {
             // & user already playing in game
@@ -88,6 +100,7 @@ const server = http.createServer(function (request, response) {
                 return
             }         
         }
+
     }
     
     let currentGame = null;
@@ -114,7 +127,7 @@ const server = http.createServer(function (request, response) {
     // infer correct content type 
     let contentType = utils.ext_to_type(filePath);
     //NOTE: undefined is actually variable window.undefined which can be defined, in that case this would break!
-    let encoding = contentType === 'image/png' ? undefined : 'utf-8';
+    let encoding = contentType.split('/')[0] === 'image' ? undefined : 'utf-8';
 
     // read file & send it to client
     fs.readFile(filePath, encoding, function(fs_error, content) {
@@ -181,6 +194,7 @@ io.on('connection', (client) => {
     let game_id = client.request._query['gameId'];
     let user_id = client.request._query['user_id'];
     let username = sanitize(client.request._query['username']);
+    
     if((typeof game_id !== 'undefined' && games.hasOwnProperty(game_id)) &&
        (typeof username !== 'undefined')) {
         // update player username & socket

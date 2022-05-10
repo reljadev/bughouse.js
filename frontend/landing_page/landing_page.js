@@ -10,10 +10,12 @@ $('#start_button').click(startGame);
 $join_button = $('#join_button');
 $join_container = $('#join_container');
 $id_input = $('#game_id_input');
+$go_button = $('#go_button');
+let goButtonClicked = false;
 
-$join_button.click(onJoin);
+$join_button.click(onJoinClick);
 $id_input.on('blur', onInputBlur);
-$('#go_button').click(goGame);
+$go_button.click(goGame);
 
 function setRandomUsername($username) {
     let min = 1000;
@@ -38,7 +40,7 @@ function startGame() {
     window.location.replace(url);
 }
 
-function onJoin() {
+function onJoinClick() {
     $join_button.addClass('hide');
     $join_container.removeClass('hide');
     setTimeout(() => { $join_button.css('display', 'none'); 
@@ -49,15 +51,21 @@ function onJoin() {
 }
 
 function onInputBlur(evt) {
+    if(goButtonClicked) return; //TODO: really ugly
     $join_container.addClass('hide');
     $join_button.removeClass('hide');
-    setTimeout(() => { $join_container.css('display', 'none');
+    setTimeout(() => { if(goButtonClicked) return;
+                        $join_container.css('display', 'none');
                         $join_button.css('display', '');
                      },
                         200);
 }
 
 function goGame() {
+    goButtonClicked = true;
+    $join_container.removeClass('hide');
+    $join_button.addClass('hide');
+
     username = $username.val() === '' ? username : $username.val();
     let game_id = $id_input.val();
     let url = window.location.href + 'main_page.ejs?';

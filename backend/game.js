@@ -271,6 +271,18 @@ class Game {
         return this.#players.hasOwnProperty(user_id);
     }
 
+    has_username(username) {
+        for(let i in this.#players) {
+            let p = this.#players[i];
+            if(p.get_username() === username &&
+                p.get_socket() !== null) {
+                    return true;
+                } 
+        }
+        
+        return false;
+    }
+
     is_player(player) {
         return player.get_username() === this.#white_player1 ||
                 player.get_username() === this.#black_player1 ||

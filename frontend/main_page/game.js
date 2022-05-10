@@ -51,6 +51,7 @@ class Game {
         this.#initialize_players();
 
         if(this.#stage === PLAYING) {
+            this.#update_boards_orientation();
             this.#update_clocks_position();
             this.#start_clocks();
         }
