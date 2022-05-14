@@ -8,16 +8,21 @@ class Players {
     #players;
     #$draggedPlayer;
     #dragging;
+    #$screen_dimer;
 
     constructor(options) {
         this.#parse_arguments(options);
         this.#initialize_sidebar();
+        this.#initialize_username_texts();
 
         this.#players = {};
 
         if(this.#options.myUsername === this.#options.admin) {
             this.#initialize_players_controller();   
         }
+
+        this.#$screen_dimer = $('<div class="screen_dimer" style="display: none"></div>');
+        $('body').append(this.#$screen_dimer);
 
         this.#dragging = false;
     }
@@ -55,10 +60,17 @@ class Players {
             throw 'element argument to Sidebar() must be the ID of a DOM node';
         }
     }
+
+    #initialize_username_texts() {
+        this.#options.$username_top1.append('<div class="user_text"></div>');
+        this.#options.$username_bottom1.append('<div class="user_text"></div>');
+        this.#options.$username_top2.append('<div class="user_text"></div>');
+        this.#options.$username_bottom2.append('<div class="user_text"></div>');
+    }
     
     #initialize_players_controller() {
         // create hidden element
-        $('body').append('<div class="player" id="draggingPlayer" style="display: none;"></div>');
+        $('body').append('<div class="dragged_player" id="draggingPlayer" style="display: none;"></div>');
         this.#$draggedPlayer = $('#draggingPlayer');
 
         // add event listeners
@@ -68,15 +80,52 @@ class Players {
         $(window).on('mousemove', this.#mousemove_window.bind(this))
                  .on('mouseup', this.#mouse_up.bind(this));
 
-        // remove opponent by clicking x
-        this.#options.$username_top1.on('click', 
-                                (evt) => { this.#remove_player.call(this, 'first', 'top'); });
-        this.#options.$username_bottom1.on('click', 
-                                (evt) => { this.#remove_player.call(this, 'first', 'bottom'); });
-        this.#options.$username_top2.on('click',
-                                (evt) => { this.#remove_player.call(this, 'second', 'top'); });
-        this.#options.$username_bottom2.on('click', 
-                                (evt) => { this.#remove_player.call(this, 'second', 'bottom'); });
+        let $u_top1_x = $('<div class="username_x" style="display: none">x</div>');
+        let $u_bottom1_x = $('<div class="username_x" style="display: none">x</div>');
+        let $u_top2_x = $('<div class="username_x" style="display: none">x</div>');
+        let $u_bottom2_x = $('<div class="username_x" style="display: none">x</div>');
+
+        // remove player from board by clicking 'x'
+        $u_top1_x.on('click',
+                    (evt) => { this.#remove_player.call(this, 'first', 'top'); });
+        $u_bottom1_x.on('click',
+                    (evt) => { this.#remove_player.call(this, 'first', 'bottom'); });
+        $u_top2_x.on('click',
+                    (evt) => { this.#remove_player.call(this, 'second', 'top'); });
+        $u_bottom2_x.on('click',
+                    (evt) => { this.#remove_player.call(this, 'second', 'bottom'); });
+
+        this.#options.$username_top1.append($u_top1_x);
+        this.#options.$username_bottom1.append($u_bottom1_x);
+        this.#options.$username_top2.append($u_top2_x);
+        this.#options.$username_bottom2.append($u_bottom2_x);
+
+        // toggle 'x' on mouse hovering over board username
+        this.#options.$username_top1.mouseenter(onUsernameHover.bind(this))
+                                    .mouseleave(offUsernameHover);
+        this.#options.$username_bottom1.mouseenter(onUsernameHover.bind(this))
+                                    .mouseleave(offUsernameHover);
+        this.#options.$username_top2.mouseenter(onUsernameHover.bind(this))
+                                    .mouseleave(offUsernameHover);
+        this.#options.$username_bottom2.mouseenter(onUsernameHover.bind(this))
+                                    .mouseleave(offUsernameHover);
+
+        function onUsernameHover(evt) {
+            let $user = $(evt.currentTarget);
+
+            if(!this.#dragging && 
+                !this.#options.is_playing() &&
+                $user.find('.user_text').text() !== '') {
+                    $user.find('.username_x').css('display', '');
+            }
+
+        }
+
+        function offUsernameHover(evt) {
+            $(evt.currentTarget).find('.username_x')
+                                .css('display', 'none');
+        }
+
     }
 
     /***********************************************************/
@@ -90,6 +139,11 @@ class Players {
         }
         
         let $player = $(evt.currentTarget);
+
+        // player coordinates
+        let left = $player.offset().left;
+        let top = $player.offset().top;
+
         // hide player
         $player.css('display', 'none');
 
@@ -98,12 +152,18 @@ class Players {
         this.#$draggedPlayer.css({
                 display: '',
                 position: 'absolute',
-                left: evt.pageX,
-                top: evt.pageY
+                left: left,
+                top: top,
                 });
 
-        // update dragging state
-        this.#dragging = true;
+        this.#$draggedPlayer.animate({width: '90px', height: '20px',
+                                         top: evt.pageY - 10, left: evt.pageX - 45},
+                                         100,
+                                         () => { this.#dragging = true; })
+
+        // dim the whole screen except username spots & dragged player
+        this.#$screen_dimer.css('display', '');
+
     }
 
     #mousemove_window(evt) {
@@ -113,8 +173,8 @@ class Players {
         }
         if (this.#dragging) {
             this.#$draggedPlayer.css({
-                    left: evt.pageX,
-                    top: evt.pageY
+                    left: evt.pageX - 45,
+                    top: evt.pageY - 10,
                     });
         }
     }
@@ -148,8 +208,17 @@ class Players {
                 player.set_element(this.#options.$username_bottom2);
                 this.#options.player_added_to_board('second', 'bottom', username);
             } else {
-                player.get_element().css('display', '');
+                player.get_element().css({display: '',
+                                        width: '90px', height: '20px',
+                                        'font-size': '14px'});
+                player.get_element().animate({'width': '160px',
+                                              'height': '22px',
+                                              'font-size' : '17px'}, 300);
             }
+
+            // undim screen
+            this.#$screen_dimer.css('display', 'none');
+            
             this.#dragging = false;
         }
     }
@@ -178,11 +247,11 @@ class Players {
         let user_left = $holder.offset().left;
         let user_width = $holder.width();
         let user_top = $holder.offset().top;
-    
+
         if((x >= user_left && x <= user_left + user_width) && 
-            y <= user_top && y >= user_top - 40) { //TODO: shouldn't be hardcoded
-                if($holder.text() === '') {
-                    $holder.text(username);
+            y >= user_top && y <= user_top + 20) { //TODO: shouldn't be hardcoded
+                if($holder.find('.user_text').text() === '') { //TODO: change this
+                    $holder.find('.user_text').text(username);
                     return true;
                 }
         }
@@ -190,13 +259,6 @@ class Players {
     }
 
     #remove_player(board, position) {
-        // TODO: x shouldn't even be present there
-        // updates are not possible midgame
-        // once this is handled, delete this function
-        if(this.#options.is_playing()) {
-            return;
-        }
-
         let removed = this.remove_player_from_board(board, position);
         if(removed) {
             this.#options.player_removed_from_board(board, position);
@@ -209,6 +271,9 @@ class Players {
 
     add_player(username, connected) {
         let $new_player = $('<div class="player">' + username + '</div>');
+        $new_player.css({'width': '90px',
+                        'height': '20px', 
+                        'font-size' : '14px'});
         if(username === this.#options.myUsername) {
             $new_player.css('background-color', 'black');
         }
@@ -219,6 +284,9 @@ class Players {
             if(p.is_connected()) {
                 p.set_element($new_player);
                 this.#$sidebar.append($new_player);
+                $new_player.animate({'width': '160px',
+                                'height': '22px',
+                                'font-size' : '17px'}, 300);
             } else {
                 p.set_connected(true);
             }
@@ -226,6 +294,9 @@ class Players {
         } else {
             this.#players[username] = new Players.Player(username, connected, $new_player);
             this.#$sidebar.append($new_player);
+            $new_player.animate({'width': '160px',
+                                'height': '22px',
+                                'font-size' : '17px'}, 300);
         }
     }
 
@@ -267,7 +338,7 @@ class Players {
         if(p) {
             let $player = p.get_element();
             if($player) {
-                $username.text(username)
+                $username.find('.user_text').text(username)
                 $player.remove()
                 p.set_element($username);
             }
@@ -284,16 +355,19 @@ class Players {
                                             this.#options.$username_bottom2;
         }
         
-        let username = $username.text()
+        let $user_text = $username.find('.user_text'); 
+        let username =  $user_text.text();
+
         if(username !== '') {
             let p = this.#players[username];
             if(p) {
                 if(p.is_connected()) {
-                    this.add_player(username, true)
+                    this.add_player(username, true);
                 } else {
                     delete this.#players[username];
                 }
-                $username.text('')
+                
+                $user_text.text('');
                 return true;
             }
         }

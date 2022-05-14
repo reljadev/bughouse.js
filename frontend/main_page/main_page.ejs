@@ -46,48 +46,50 @@
         </div>
 
         <div id="main_page" class="main">
-            <div id="board_containers">
-                <div id="first_container" class="container">
-                    <!-- define chessboard element -->
-                    <div class="board_wrapper">
-                        <div id="myBoard_1" class="board"></div>
-                        <div id="time1_top" class="time1"></div>
-                        <div id="time1_bottom" class="time2"></div>
+            <div id="game_container">
+                <div id="boards_container">
+                    <div id="first_container" class="board_container left">
+                        <!-- define chessboard element -->
+                        <div class="board_wrapper">
+                            <div id="myBoard_1" class="board"></div>
+                            <div id="time1_top" class="time1"></div>
+                            <div id="time1_bottom" class="time2"></div>
+                        </div>
+                        <label>Status:</label>
+                        <div id="status_1"></div>
+                        <label>PGN:</label>
+                        <div id="pgn_1"></div>
+        
+                        <button id="resign_game1">resign</button>
+                        <button id="backward_button_1">backward</button>
+                        <button id="forward_button_1">forward</button>
+        
                     </div>
-                    <label>Status:</label>
-                    <div id="status_1"></div>
-                    <label>PGN:</label>
-                    <div id="pgn_1"></div>
-    
-                    <button id="resign_game1">resign</button>
-                    <button id="backward_button_1">backward</button>
-                    <button id="forward_button_1">forward</button>
-    
+        
+                    <div id="second_container" class="board_container right">
+                        <!-- define chessboard element -->
+                        <div class="board_wrapper">
+                            <div id="myBoard_2" class="board"></div>
+                            <div id="time2_top" class="time1"></div>
+                            <div id="time2_bottom" class="time2"></div>
+                        </div>
+                        <label>Status:</label>
+                        <div id="status_2"></div>
+                        <label>PGN:</label>
+                        <div id="pgn_2"></div>
+        
+                        <button id="resign_game2">resign</button>
+                        <button id="backward_button_2">backward</button>
+                        <button id="forward_button_2">forward</button>
+        
+                    </div>
                 </div>
     
-                <div id="second_container" class="container">
-                    <!-- define chessboard element -->
-                    <div class="board_wrapper">
-                        <div id="myBoard_2" class="board"></div>
-                        <div id="time2_top" class="time1"></div>
-                        <div id="time2_bottom" class="time2"></div>
-                    </div>
-                    <label>Status:</label>
-                    <div id="status_2"></div>
-                    <label>PGN:</label>
-                    <div id="pgn_2"></div>
-    
-                    <button id="resign_game2">resign</button>
-                    <button id="backward_button_2">backward</button>
-                    <button id="forward_button_2">forward</button>
-    
+                <!-- admin buttons -->
+                <div class="buttons">
+                    <button id="start_game">start</button>
+                    <button id="reset_game">reset</button>
                 </div>
-            </div>
-
-            <!-- admin buttons -->
-            <div class="buttons">
-                <button id="start_game">start</button>
-                <button id="reset_game">reset</button>
             </div>
 
             <h5 id="game_over_msg"></h5>

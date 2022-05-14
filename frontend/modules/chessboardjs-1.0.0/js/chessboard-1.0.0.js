@@ -48,6 +48,7 @@
   CSS['chessboard'] = 'chessboard-63f37'
   CSS['board_top'] = 'board_top-450qr'
   CSS['board_bottom'] = 'board_bottom-fp13q'
+  CSS['username_container'] = 'username_container-o0kr2'
   CSS['username_top'] = 'username_top-007jb'
   CSS['username_bottom'] = 'username_bottom-987lp'
   CSS['clearfix'] = 'clearfix-7da63'
@@ -562,8 +563,12 @@
 
     // top of the board
     html += '<div class="{board_top}">'
+    // username container
+    html += '<div class="{username_container}">'
     // username
-    html += '<text class={username_top}></text>'
+    html += '<div class="{username_top}"></div>'
+    // end username container
+    html += '</div>'
     // spare pieces on top
     html += '<div class="{sparePieces} {sparePiecesTop}"></div>'
     // close top board div
@@ -574,8 +579,12 @@
 
     // bottom of the board
     html += '<div class="{board_bottom}">'
+    // username container
+    html += '<div class="{username_container}">'
     // username
-    html += '<text class={username_bottom}></text>'
+    html += '<div class="{username_bottom}"></div>'
+    // end username container
+    html += '</div>'
     // spare pieces on bottom
     html += '<div class="{sparePieces} {sparePiecesBottom}"></div>'
     // close bottom board div
@@ -736,7 +745,6 @@
     // Stateful
     // -------------------------------------------------------------------------
 
-    var boardBorderSize = 2
     var currentOrientation = 'white'
     var currentPosition = {}
     var move_count = 0
@@ -880,13 +888,24 @@
         row = 1
       }
 
+      if(orientation === 'white') {
+        var roundedCornersClasses = {a1: 'bottom left ', h1: 'bottom right ',
+                                      a8: 'top left ', h8: 'top right '}
+      } else {
+        var roundedCornersClasses = {h8: 'bottom left ', a8: 'bottom right ',
+                                      h1: 'top left ', a1: 'top right '}
+      }
+
       var squareColor = 'white'
       for (var i = 0; i < 8; i++) {
         html += '<div class="{row}">'
         for (var j = 0; j < 8; j++) {
           var square = alpha[j] + row
 
-          html += '<div class="{square} ' + CSS[squareColor] + ' ' +
+          var roundCorners = roundedCornersClasses[square] ?? ''
+
+          html += '<div class="{square} ' + roundCorners +
+            CSS[squareColor] + ' ' +
             'square-' + square + '" ' +
             'style="width:' + squareSize + 'px;height:' + squareSize + 'px;" ' +
             'id="' + squareElsIds[square] + '" ' +
@@ -2028,11 +2047,17 @@
       // set board width
       $board.css('width', squareSize * 8 + 'px')
 
+      // set board top, bottom size
+      $container.find('.' + CSS.board_top).css('width', squareSize * 8 + 'px')
+      $container.find('.' + CSS.board_bottom).css('width', squareSize * 8 + 'px')
+      // $container.find('.' + CSS.board_top).css('height', squareSize + 'px')
+      // $container.find('.' + CSS.board_bottom).css('height', squareSize + 'px')
+
       // usernames width
+      $container.find('.' + CSS.username_container).css('width', squareSize * 2 + 'px')
+      $container.find('.' + CSS.username_container).css('height', squareSize + 'px')
       // $username_top.css('width', squareSize * 2 + 'px')
       // $username_bottom.css('width', squareSize * 2 + 'px')
-      $username_top.css('width', '80px')
-      $username_bottom.css('width', '80px')
 
       // spare pieces width
       $sparePiecesTop.css('width', squareSize * 6 + 'px')
@@ -2271,9 +2296,6 @@
 
       // TODO: need to remove this dragged piece element if the board is no
       // longer in the DOM
-
-      // get the border size
-      boardBorderSize = parseInt($board.css('borderLeftWidth'), 10)
 
       // set the size and draw the board
       widget.resize()

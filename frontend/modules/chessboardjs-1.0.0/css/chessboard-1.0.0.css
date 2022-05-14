@@ -4,8 +4,34 @@
   clear: both;
 }
 
+.board_top-450qr {
+  -webkit-box-sizing:border-box;
+  -moz-box-sizing:border-box;
+  box-sizing:border-box;
+}
+
+.board_bottom-fp13q {
+  -webkit-box-sizing:border-box;
+  -moz-box-sizing:border-box;
+  box-sizing:border-box;
+}
+
+.username_container-o0kr2 {
+  box-sizing: border-box;
+  display: inline-block;
+}
+
+.spare-pieces-top-4028b {
+  display: inline-block;
+  box-sizing: border-box;
+}
+
+.spare-pieces-bottom-ae20f {
+  display: inline-block;
+  box-sizing: border-box;
+}
+
 .board-b72b1 {
-  border: 2px solid #404040;
   box-sizing: content-box;
 }
 
@@ -22,63 +48,33 @@
             user-select: none;
 }
 
-.spare-pieces-7492f {
-  display: inline-block;
-  border-left: 2px solid transparent;
+.square-55d63.top.left {
+  border-radius: 5px 0 0 0;
 }
 
-.spare_square-871g9 {
+.square-55d63.top.right {
+  border-radius: 0 5px 0 0;
+}
+
+.square-55d63.bottom.right {
+  border-radius: 0 0 5px 0;
+}
+
+.square-55d63.bottom.left {
+  border-radius: 0 0 0 5px;
+}
+
+/* .spare-pieces-7492f {
   display: inline-block;
+} */
+
+.spare_square-871g9 {
   position: relative;
+  display: inline-block;
 }
 
 .promotion_square-nm8l0 {
   background-color: purple;
-}
-
-.username_top-007jb {
-  display:inline-block;
-  background-color:#eaeaea;
-  color: black;
-  border-radius:4px;
-  position: relative;
-  padding:6px;
-  /* padding-right: 5px; */
-  font-size:12px;
-  /* cursor:pointer; */
-  margin:4px;
-  pointer-events: none;
-}
-
-.username_top-007jb::after {
-  content: 'X';
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  pointer-events: all;
-}
-
-.username_bottom-987lp {
-  display:inline-block;
-  background-color:#eaeaea;
-  color: black;
-  border-radius:4px;
-  position: relative;
-  padding:6px;
-  /* padding-right: 5px; */
-  font-size:12px;
-  /* cursor:pointer; */
-  margin:4px;
-}
-
-.username_bottom-987lp::after {
-  content: 'X';
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  pointer-events: all;
 }
 
 .display_count-7654a {
