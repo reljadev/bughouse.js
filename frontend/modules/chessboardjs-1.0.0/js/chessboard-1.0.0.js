@@ -1004,8 +1004,9 @@
           // TODO: this logic should be in game.js
           if(isDragging && draggedPieceSource === 'offboard' &&
               draggedPiece === piece) {
-            displayCounter -= 1
+            displayCounter = displayCounter !== 0 ? displayCounter - 1 : 0
           }
+
           var hidden = (displayCounter === 0)
           var i = sparePiecesToSquares[piece.charAt(1)]
           // get spare square
@@ -1504,7 +1505,7 @@
       removeSquareHighlights()
 
       drawPositionInstant()
-      drawSpares();
+      drawSpares()
       $draggedPiece.css('display', 'none')
 
       // execute their onSnapEnd function
