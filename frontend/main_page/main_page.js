@@ -134,6 +134,8 @@ if(myUsername !== admin || !game.is_pre_game()) {
   $reset_button.css('display', 'none');
 }
 
+$('#copy_button').on('click', copy_id);
+
 ///////////////////////// EVENTS /////////////////////////
 
 function start_game() {
@@ -181,6 +183,20 @@ function reset_game(fen, sparePieces) {
 
   // status
   resetStatus();
+}
+
+function copy_id() {
+  navigator.clipboard.writeText(game_id).then(
+    function() { 
+      $text_id.val('Copied!');
+      $text_id.css({'color': 'white',
+                    'background-color': 'gray'});
+      setTimeout(() => { $text_id.val(game_id);
+                          $text_id.css({'color': 'black', 
+                                        'background-color': 'white'}); },
+                  500);
+    }
+  );
 }
 
 //////////////////// STATUS FUNCTIONS ////////////////////

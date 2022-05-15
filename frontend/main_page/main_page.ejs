@@ -12,6 +12,9 @@
         <!-- Import style -->
         <link rel="stylesheet" href="./main_page.css">
 
+        <!-- font awesome icons -->
+        <script src="https://kit.fontawesome.com/767c504d89.js" crossorigin="anonymous"></script>
+
         <!-- Import chess.js library -->
         <script src="../modules/chess.js/chess.js"></script> <!-- TODO: Change this to min later -->
 
@@ -40,9 +43,15 @@
         <div id="mySidebar" class="sidebar">
             <h4>players</h4> <!-- TODO: this should be in stopwatch -->
         </div>
-        <div id="game_id" class="id">
+        <div id="game_id" class="id_container">
             <h5>invite friends</h5>
-            <input type="text" id="text_game_id" class="text_id" />
+            <!-- <input type="text" id="text_game_id" class="text_id" /> -->
+            <div class="id_input_container">
+                <input type="text" id="text_game_id">
+                <div id="copy_button">
+                    <i id="copy_icon" class="fa-solid fa-copy center color-white"></i>
+                </div>
+            </div>
         </div>
 
         <div id="main_page" class="main">
