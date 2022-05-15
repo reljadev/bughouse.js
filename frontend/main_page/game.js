@@ -150,16 +150,16 @@ class Game {
     #start_clocks() {
         // start clock on first board
         if(this.#chess1.turn() === WHITE) {
-            this.#white_clock1.start()
+            this.#white_clock1.start();
         } else {
-            this.#black_clock1.start()
+            this.#black_clock1.start();
         }
 
         // start clock on second board
         if(this.#chess2.turn() === WHITE) {
-            this.#white_clock2.start()
+            this.#white_clock2.start();
         } else {
-            this.#black_clock2.start()
+            this.#black_clock2.start();
         }
     }
 

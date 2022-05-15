@@ -6,7 +6,7 @@ class Stopwatch {
     #options;
 
     #$element;
-    #timer;
+    #$timer;
     #offset;
     #clock;
     #interval;
@@ -45,8 +45,8 @@ class Stopwatch {
     }
 
     #initialize_timer() {
-        this.#timer = this.#createTimer();     
-        this.#$element.append(this.#timer);
+        this.#$timer = this.#createTimer();     
+        this.#$element.append(this.#$timer);
     }
 
     #createTimer() {
@@ -64,7 +64,7 @@ class Stopwatch {
             this.#formatter = new Intl.DateTimeFormat([], this.#formatterOptions);
             this.#showingFractions = true;
         }
-        this.#timer.val(this.#formatter.format(this.#clock));
+        this.#$timer.val(this.#formatter.format(this.#clock));
     }
 
     #update() {
@@ -94,12 +94,18 @@ class Stopwatch {
             this.#interval = setInterval(this.#update.bind(this), this.#options.delay);
             this.#startTime = this.#clock;
         }
+        if(!this.#$timer.hasClass('working')) {
+            this.#$timer.addClass('working');
+        }
     }
 
     stop() {
         if (this.#interval) {
             clearInterval(this.#interval);
             this.#interval = null;
+        }
+        if(this.#$timer.hasClass('working')) {
+            this.#$timer.removeClass('working');
         }
     }
 
@@ -138,9 +144,9 @@ class Stopwatch {
     set_element_id(element_id) {
         this.#$element = $('#' + element_id);
 
-        this.#timer.remove();
-        this.#timer = this.#createTimer();
-        this.#$element.append(this.#timer);
+        this.#$timer.remove();
+        this.#$timer = this.#createTimer();
+        this.#$element.append(this.#$timer);
 
         this.#render();
     }

@@ -113,6 +113,14 @@ body {
 
 .clock_display {
   width: 40px;
+  background-color: rgb(170, 170, 170);
+  border-radius: 3px;
+  border: 0;
+  outline: 0;
+}
+
+.clock_display.working {
+  background-color: white;
 }
 
 .sidebar {

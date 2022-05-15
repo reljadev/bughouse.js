@@ -26,9 +26,7 @@ let $text_id = $('#text_game_id');
 $text_id.val(game_id);
 $text_id.prop("readonly", true);
 
-let $status1 = $('#status_1');
 let $pgn1 = $('#pgn_1');
-let $status2 = $('#status_2');
 let $pgn2 = $('#pgn_2');
 
 let $msg = $('#game_over_msg');
@@ -207,45 +205,16 @@ function updateStatus() {
 }
 
 function updateStats (board) {
-  let status = '';
-
-  let moveColor = 'White';
-  if (game.turn(board) === 'b') {
-    moveColor = 'Black';
-  }
-
-  // checkmate?
-  if (game.in_checkmate(board)) {
-    status = 'Game over, ' + moveColor + ' is in checkmate.';
-  }
-  // draw?
-  else if (game.in_draw(board)) {
-    status = 'Game over, drawn position';
-  } 
-  // game still on
-  else {
-    status = moveColor + ' to move';
-    
-    // check?
-    if (game.in_check(board)) {
-      status += ', ' + moveColor + ' is in check';
-    }
-  }
-
   if(board === 'first') {
-    $status1.html(status);
     $pgn1.html(game.pgn(board));
   } else {
-    $status2.html(status);
     $pgn2.html(game.pgn(board));
   }
   
 }
 
 function resetStatus() {
-  $status1.html('');
   $pgn1.html('');
-  $status2.html('');
   $pgn2.html('');
 }
 
