@@ -100,14 +100,14 @@ body {
 .time1 {
   width: 40px;
   position: absolute;
-  top: 60px;
+  top: 225px;
   right: 20px;
 }
 
 .time2 {
   width: 40px;
   position: absolute;
-  bottom: 60px;
+  bottom: 225px;
   right: 20px;
 }
 
@@ -121,6 +121,34 @@ body {
 
 .clock_display.working {
   background-color: white;
+}
+
+.controllers_container {
+  width: 80px;
+  height: auto;
+  position: absolute;
+  bottom: 60px;
+  right: -20px;
+  -webkit-box-sizing:border-box;
+  -moz-box-sizing:border-box;
+  box-sizing:border-box;
+  display: flex;
+}
+
+.backward_button {
+  margin-right: 3px;
+}
+
+.forward_button {
+  margin-right: 10px;
+}
+
+.controller:hover {
+  color: rgb(201, 201, 201);
+}
+
+.controller:active {
+  color: rgb(0, 0, 0);
 }
 
 .sidebar {
