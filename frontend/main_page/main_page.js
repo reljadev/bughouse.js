@@ -206,7 +206,7 @@ function updateStatus() {
 
 function updateStats (board) {
   if(board === 'first') {
-    $pgn1.html(game.pgn(board));
+    $pgn1.text(game.pgn(board));
   } else {
     $pgn2.html(game.pgn(board));
   }
@@ -214,7 +214,7 @@ function updateStats (board) {
 }
 
 function resetStatus() {
-  $pgn1.html('');
+  $pgn1.text('');
   $pgn2.html('');
 }
 

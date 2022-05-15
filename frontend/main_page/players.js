@@ -250,8 +250,12 @@ class Players {
 
         if((x >= user_left && x <= user_left + user_width) && 
             y >= user_top && y <= user_top + 20) { //TODO: shouldn't be hardcoded
-                if($holder.find('.user_text').text() === '') { //TODO: change this
-                    $holder.find('.user_text').text(username);
+                let $user_text = $holder.find('.user_text');
+                if($user_text.text() === '') {
+                    $user_text.text(username);
+                    $holder.css({'color': 'white',
+                                'background-color': 'black',
+                                'border': 'solid 1px white'});
                     return true;
                 }
         }
@@ -338,7 +342,11 @@ class Players {
         if(p) {
             let $player = p.get_element();
             if($player) {
-                $username.find('.user_text').text(username)
+                let $user_text = $username.find('.user_text');
+                $user_text.text(username);
+                $username.css({'color': 'white',
+                                'background-color': 'black',
+                                'border': 'solid 1px white'});
                 $player.remove()
                 p.set_element($username);
             }
@@ -356,7 +364,7 @@ class Players {
         }
         
         let $user_text = $username.find('.user_text'); 
-        let username =  $user_text.text();
+        let username = $user_text.text();
 
         if(username !== '') {
             let p = this.#players[username];
@@ -368,6 +376,9 @@ class Players {
                 }
                 
                 $user_text.text('');
+                $username.css({'color': 'black',
+                                'background-color': 'white',
+                                'border': 'none'});
                 return true;
             }
         }

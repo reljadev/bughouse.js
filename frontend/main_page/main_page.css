@@ -89,11 +89,18 @@ body {
   z-index: 2;
 }
 
+.user_text {
+  text-align: center;
+  line-height: 18px;
+  border: 0;
+  outline: 0;
+}
+
 .username_x {
-  color: black;
+  color: white;
   position: absolute;
   font-size: 14px;
-  top: 1px;
+  top: 0px;
   left: 77px;
 }
 
@@ -151,6 +158,23 @@ body {
   color: rgb(0, 0, 0);
 }
 
+.pgn {
+  width: 384px;
+  height: 70px;
+  border-radius: 5px;
+  color: white;
+  background-color: rgb(75, 0, 0);
+  line-height: 20px;
+  resize: none;
+  border: 1px solid black;  
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE */
+}
+
+.pgn::-webkit-scrollbar {
+  display: none; /* Chrome */
+}
+
 .sidebar {
   height: 87%;
   width: 160px; /* Set the width of the sidebar */
@@ -178,7 +202,6 @@ body {
   border-radius: 5px;
   border: solid 1px white;
   margin: auto;
-  /* display: inline-block; */
 }
 
 .dragged_player {
