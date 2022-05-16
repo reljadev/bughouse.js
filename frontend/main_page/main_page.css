@@ -8,10 +8,6 @@ html {
     overflow: hidden; /* disable horizontal scroll */
 }
 
-body {
-  overflow: hidden; /* Hide scrollbars */
-}
-
 #game_container {
   position: absolute;
   top: 10%;
@@ -27,7 +23,6 @@ body {
   width: 460px;
   max-width: 460px;
   padding: 2rem;
-  /* box-shadow: 0 0 40px rgba(0, 0, 0, 0.2); */
   border-radius: 13px;
   background: #56575a;
 }
@@ -53,7 +48,6 @@ body {
 }
 
 .username_top-007jb {
-  /* display: none; */
   width: 90px;
   height: 20px;
   max-height: 20px;
@@ -66,7 +60,6 @@ body {
   border-radius:4px;
   position: relative;
   float: left;
-  /* margin: 0 auto; */
   top: 25px;
   z-index: 2;
 }
@@ -83,7 +76,6 @@ body {
   font-size:12px;
   border-radius:4px;
   position: relative;
-  /* margin: 0 auto; */
   float: left;
   top: 9px;
   z-index: 2;
@@ -307,4 +299,39 @@ body {
   /* for real browsers */
   box-shadow: 0 0 0 100vmax rgba(0,0,0,.5);
   z-index: 1;
+}
+
+/* The Modal (background) */
+.modal {
+  display: none; 
+  position: fixed; /* Stay in place */
+  z-index: 5; /* Sit on top */
+  padding-top: 250px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  z-index: 5;
+}
+
+/* Modal Content */
+.modal-content {
+  color: black;
+  background-color: #fefefe;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 15%;
+  height: 7%;
+  border-radius: 5px;
+  z-index: inherit;
+}
+
+.close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
 }

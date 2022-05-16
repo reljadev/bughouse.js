@@ -132,7 +132,23 @@ if(myUsername !== admin || !game.is_pre_game()) {
   $reset_button.css('display', 'none');
 }
 
+// copy game id
 $('#copy_button').on('click', copy_id);
+
+// game over modal
+let $modal = $("#myModal");
+
+// clicking 'x' on modal content
+$('#modal_close').on('click', 
+                    () => { $modal.css('display', 'none') });
+
+// when the user clicks anywhere outside of the modal, close it
+$(window).on('click', (evt) => {
+    if ($(evt.target).attr('id') === 'myModal') {
+      $modal.css('display', 'none');
+    }
+  }
+);
 
 ///////////////////////// EVENTS /////////////////////////
 
@@ -279,10 +295,10 @@ server.on('game_is_over', (message) => {
   $resign_button.css('display', 'none');
 
   if(message) {
-    // TODO: this should be pop up dialog
     $msg.text(message);
+    $modal.css('display', 'block');
   }
-})
+});
 
 server.on('reset_game', (fen, sparePieces) => {
   reset_game(fen, sparePieces);
