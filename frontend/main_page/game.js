@@ -749,10 +749,11 @@ class Game {
         this.#update_clocks_position();
         
         // reset clocks
-        this.#white_clock1.reset();
-        this.#black_clock1.reset();
-        this.#white_clock2.reset();
-        this.#black_clock2.reset();
+        let new_time = 5 * 1000 * 60; //TODO: this should be set by admin each time
+        this.#white_clock1.reset(new_time);
+        this.#black_clock1.reset(new_time);
+        this.#white_clock2.reset(new_time);
+        this.#black_clock2.reset(new_time);
         // show clocks
         this.#white_clock1.show();
         this.#black_clock1.show();

@@ -119,8 +119,12 @@ class Stopwatch {
         }
     }
 
-    reset() {
-        this.#clock = this.#options.clock;
+    reset(new_time) {
+        if(new_time) {
+            this.#clock = new_time;
+        } else {
+            this.#clock = this.#options.clock;
+        }
         this.#render();
     }
 

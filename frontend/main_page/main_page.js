@@ -109,7 +109,7 @@ $start_button.on('click', function(evt) {
 
 // reset button
 let $reset_button = $('#reset_game');
-$reset_button.on('click', function(evt) { 
+$reset_button.on('click', function(evt) {
     reset_game(fen, sparePieces);
     // hide reset button
     $reset_button.css('display', 'none');
@@ -179,7 +179,9 @@ function resign_game(evt) {
     $reset_button.css('display', '');
   }
   // hide resign button
-  $resign_button.css('display', 'none');
+  if($resign_button) {
+    $resign_button.css('display', 'none');
+  }
 
   server.emit('resigned');
 }
@@ -290,7 +292,9 @@ server.on('game_is_over', (message) => {
     $reset_button.css('display', '');
   }
   // hide resign button
-  $resign_button.css('display', 'none');
+  if($resign_button) {
+    $resign_button.css('display', 'none');
+  }
 
   if(message) {
     $msg.text(message);
