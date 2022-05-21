@@ -32,7 +32,11 @@ class Stopwatch {
         options.clock = options.clock ?? 5 * 1000 * 60; // 5 minutes
         options.delay = options.delay ?? 1; // 1 ms
 
-        this.#options = options;
+        function clone(obj) {
+            return JSON.parse(JSON.stringify(obj));
+        }
+
+        this.#options = clone(options);
     }
 
     #initialize_formatter() {

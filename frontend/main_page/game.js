@@ -419,7 +419,7 @@ class Game {
                 this.#board1.flip();
                 this.#players.swap_usernames_at_board('first');
             }
-            //teammate's board
+            // teammate's board
             if(this.#board2.orientation() === 'white') {
                 this.#board2.flip();
                 this.#players.swap_usernames_at_board('second');
@@ -431,7 +431,7 @@ class Game {
                 this.#board1.flip();
                 this.#players.swap_usernames_at_board('first');
             }
-            //teammate's board
+            // teammate's board
             if(this.#board2.orientation() === 'black') {
                 this.#board2.flip();
                 this.#players.swap_usernames_at_board('second');
@@ -443,7 +443,7 @@ class Game {
                 this.#board2.flip();
                 this.#players.swap_usernames_at_board('second');
             }
-            //teammate's board
+            // teammate's board
             if(this.#board1.orientation() === 'white') {
                 this.#board1.flip();
                 this.#players.swap_usernames_at_board('first');
@@ -455,7 +455,7 @@ class Game {
                 this.#board2.flip();
                 this.#players.swap_usernames_at_board('second');
             }
-            //teammate's board
+            // teammate's board
             if(this.#board1.orientation() === 'black') {
                 this.#board1.flip();
                 this.#players.swap_usernames_at_board('first');

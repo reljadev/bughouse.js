@@ -309,21 +309,30 @@ class Players {
         let $element = p.get_element();
 
         if($element) {
-            // removing player at board
-            if(p.get_username() === this.#options.$username_top1.text() ||
-                p.get_username() === this.#options.$username_bottom1.text() ||
-                p.get_username() === this.#options.$username_top2.text() ||
-                p.get_username() === this.#options.$username_bottom2.text()) {
+            // player at board
+            if(p.get_username() === this.#options.$username_top1.find('.user_text').text() || //TODO: use white_player1 instead
+                p.get_username() === this.#options.$username_bottom1.find('.user_text').text() ||
+                p.get_username() === this.#options.$username_top2.find('.user_text').text() ||
+                p.get_username() === this.#options.$username_bottom2.find('.user_text').text()) {
                     // while playing
                     if(this.#options.is_playing()) {
                         // not allowed, just gray him out
                         p.set_connected(false);
-                        return;
+                    // not playing
+                    } else {
+                        // remove from board
+                        $element.find('.user_text').text('');
+                        $element.css({'color': 'black',
+                                        'background-color': 'white',
+                                        'border': 'none'});
+                        // delete from players list
+                        delete this.#players[username];
                     }
-                }
-
-            $element.remove();
-            delete this.#players[username];
+            // player is in sidebar
+            } else {
+                $element.remove();
+                delete this.#players[username];
+            }
         }
     }
 
@@ -347,7 +356,7 @@ class Players {
                 $username.css({'color': 'white',
                                 'background-color': 'black',
                                 'border': 'solid 1px white'});
-                $player.remove()
+                $player.remove();
                 p.set_element($username);
             }
         }
@@ -388,18 +397,18 @@ class Players {
 
     swap_usernames_at_board(board) {
         let u_top = board === 'first' ? 
-                        this.#options.$username_top1.text() :
-                        this.#options.$username_top2.text();
+                        this.#options.$username_top1.find('.user_text').text() :
+                        this.#options.$username_top2.find('.user_text').text();
         let u_bottom = board === 'first' ? 
-                        this.#options.$username_bottom1.text() :
-                        this.#options.$username_bottom2.text();
+                        this.#options.$username_bottom1.find('.user_text').text() :
+                        this.#options.$username_bottom2.find('.user_text').text();
         let p_top = this.#players[u_top];
         let p_bottom = this.#players[u_bottom];
 
         if(p_top && p_bottom) {
             // swap usernames
-            p_bottom.get_element().text(p_top.get_username())
-            p_top.get_element().text(p_bottom.get_username())
+            p_bottom.get_element().find('.user_text').text(p_top.get_username())
+            p_top.get_element().find('.user_text').text(p_bottom.get_username())
             
             // swap element references
             if(board === 'first') {

@@ -315,6 +315,15 @@ class Game {
              this.#black_player2 === p.get_username())) {
                 p.set_socket(null);
         } else {
+            if(this.#white_player1 === p.get_username()) {
+                this.#white_player1 = null;
+            } else if(this.#black_player1 === p.get_username()) {
+                this.#black_player1 = null;
+            } else if(this.#white_player2 === p.get_username()) {
+                this.#white_player2 = null;
+            } else if(this.#black_player2 === p.get_username()) {
+                this.#black_player2 = null;
+            }
             delete this.#players[user_id];
         }
     }

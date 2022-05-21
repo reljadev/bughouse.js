@@ -16,6 +16,7 @@ let goButtonClicked = false;
 $join_button.click(onJoinClick);
 $id_input.on('blur', onInputBlur);
 $go_button.click(goGame);
+$(document).on('keypress', onKeyPressed);
 
 function setRandomUsername($username) {
     let min = 1000;
@@ -73,4 +74,14 @@ function goGame() {
     url += '&';
     url += 'gameId=' + game_id;
     window.location.href = url;
+}
+
+function onKeyPressed(evt) {
+    // enter pressed
+    if(evt.which == 13) {
+        if($id_input.css('display') === 'block' &&
+            $id_input.is(":focus")) {
+            goGame();
+        }
+    }
 }

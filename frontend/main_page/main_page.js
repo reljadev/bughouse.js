@@ -116,8 +116,6 @@ $reset_button.on('click', function(evt) {
     // show start button
     $start_button.css('display', '');
     $start_button.attr('disabled', 'disabled');
-    // delete game over message
-    $msg.text('');
     // notify server
     server.emit('reset_game', fen, sparePieces); 
   } );
@@ -302,7 +300,6 @@ server.on('game_is_over', (message) => {
 
 server.on('reset_game', (fen, sparePieces) => {
   reset_game(fen, sparePieces);
-  $msg.text('');
 })
 
 // some player disconnected

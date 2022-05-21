@@ -84,12 +84,12 @@ const server = http.createServer(function (request, response) {
                         // or redirect to page with an alert that joining two games at once is not currently supported
                         Location: `/404.html`
                     }).end();
-                    return
+                    return;
                 }
             }
         }
 
-        // & user id is valid
+        // user id is valid
         if(utils.isValidId(user_id)) {
             // & user already playing in game
             let g = get_game_containing_user(user_id);
