@@ -99,12 +99,13 @@ if(game.am_i_at_board() && game.is_playing()) {
 
 // start button
 let $start_button = $('#start_game');
-$start_button.on('click', function(evt) { 
-    start_game();
+$start_button.on('click', function(evt) {
+    let times = game.get_times();
+    start_game(times);
     // hide start button
     $start_button.css('display', 'none');
     // notify server of game started
-    server.emit('game_has_started'); 
+    server.emit('game_has_started', times); 
   } );
 
 // reset button
@@ -150,7 +151,8 @@ $(window).on('click', (evt) => {
 
 ///////////////////////// EVENTS /////////////////////////
 
-function start_game() {
+function start_game(times) {
+  game.set_times(times);
   game.start();
   
   // show resign button to players
@@ -280,8 +282,8 @@ server.on('cant_start_game', () => {
 })
 
 // admin initiated new game
-server.on('game_has_started', () => {
-  start_game();
+server.on('game_has_started', (times) => {
+  start_game(times);
 })
 
 server.on('game_is_over', (message) => {

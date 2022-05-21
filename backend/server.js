@@ -263,15 +263,16 @@ io.on('connection', (client) => {
     });
 
     // admin has initiated the game
-    client.on('game_has_started', () => {
+    client.on('game_has_started', (times) => {
         let g = games[client.data.game_id];
         if(g) {
             let p = g.get_player(client.data.user_id);
             if(p && g.is_admin(p)) {
+                g.set_times(times);
                 let game_started = g.start();
         
                 if(game_started) {
-                    client.broadcast.to(client.data.game_id).emit('game_has_started');
+                    client.broadcast.to(client.data.game_id).emit('game_has_started', times);
                 }
             }
         }

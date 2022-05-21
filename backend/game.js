@@ -501,6 +501,13 @@ class Game {
         }
     }
 
+    set_times(times) {
+        this.#white_timer1.time(times.w_time1);
+        this.#black_timer1.time(times.b_time1);
+        this.#white_timer2.time(times.w_time2);
+        this.#black_timer2.time(times.b_time2);
+    }
+
 }
 
 Game.Player = class Player {

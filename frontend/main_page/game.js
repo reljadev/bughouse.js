@@ -54,6 +54,11 @@ class Game {
             this.#update_boards_orientation();
             this.#update_clocks_position();
             this.#start_clocks();
+        } else if(this.#stage === PRE_GAME) {
+            // make clock editable if admin
+            if(this.#options.myUsername === this.#options.admin) {
+                this.#set_editable_clocks(true);
+            }
         }
 
         // initial dragging value
@@ -140,8 +145,8 @@ class Game {
 
         // player joins while game is being set up
         if(this.#stage === PRE_GAME) {
-            w_clock.hide();
-            b_clock.hide();
+            // w_clock.hide();
+            // b_clock.hide();
         } 
 
         return [w_clock, b_clock];
@@ -571,6 +576,13 @@ class Game {
         }
     }
 
+    #set_editable_clocks(value) {
+        this.#white_clock1.editable(value);
+        this.#black_clock1.editable(value);
+        this.#white_clock2.editable(value);
+        this.#black_clock2.editable(value);
+    }
+
     ///////////////////////// MISC UTIL /////////////////////////
 
     // update white and black player variables
@@ -688,7 +700,20 @@ class Game {
             this.#white_clock2.time(whiteClock);
             this.#black_clock2.time(blackClock);
         }
-        
+    }
+
+    get_times() {
+        return {w_time1: this.#white_clock1.get_displayed_value(), 
+                b_time1: this.#black_clock1.get_displayed_value(),
+                w_time2: this.#white_clock2.get_displayed_value(), 
+                b_time2: this.#black_clock2.get_displayed_value()};
+    }
+
+    set_times(times) {
+        this.#white_clock1.time(times.w_time1);
+        this.#black_clock1.time(times.b_time1);
+        this.#white_clock2.time(times.w_time2);
+        this.#black_clock2.time(times.b_time2);
     }
 
     add_player(username) {
@@ -748,20 +773,18 @@ class Game {
         // update clocks positions based on board orientation
         this.#update_clocks_position();
         
-        // reset clocks
-        let new_time = 5 * 1000 * 60; //TODO: this should be set by admin each time
-        this.#white_clock1.reset(new_time);
-        this.#black_clock1.reset(new_time);
-        this.#white_clock2.reset(new_time);
-        this.#black_clock2.reset(new_time);
         // show clocks
-        this.#white_clock1.show();
-        this.#black_clock1.show();
-        this.#white_clock2.show();
-        this.#black_clock2.show();
+        // this.#white_clock1.show();
+        // this.#black_clock1.show();
+        // this.#white_clock2.show();
+        // this.#black_clock2.show();
         // start clocks
         this.#white_clock1.start();
         this.#white_clock2.start();
+
+        // make clock non-editable
+        this.#set_editable_clocks(false);
+        
     }
 
     game_over() {
@@ -786,12 +809,24 @@ class Game {
 
         // reset usernames
         this.#players.clear_board_usernames();
+
+        // reset clocks
+        let new_time = 5 * 1000 * 60; //TODO: this should be set by admin each time
+        this.#white_clock1.reset(new_time);
+        this.#black_clock1.reset(new_time);
+        this.#white_clock2.reset(new_time);
+        this.#black_clock2.reset(new_time);
+
+        // make clocks editable if admin
+        if(this.#options.myUsername === this.#options.admin) {
+            this.#set_editable_clocks(true);
+        }
         
         // hide clocks
-        this.#white_clock1.hide();
-        this.#black_clock1.hide();
-        this.#white_clock2.hide();
-        this.#black_clock2.hide();
+        // this.#white_clock1.hide();
+        // this.#black_clock1.hide();
+        // this.#white_clock2.hide();
+        // this.#black_clock2.hide();
 
         // reset console
         console.clear();

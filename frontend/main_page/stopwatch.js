@@ -49,12 +49,12 @@ class Stopwatch {
     }
 
     #initialize_timer() {
-        this.#$timer = this.#createTimer();     
+        this.#$timer = this.#createTimer();
         this.#$element.append(this.#$timer);
     }
 
     #createTimer() {
-        return $('<input type="text" class="clock_display" />');
+        return $('<input type="text" class="clock_display" readonly/>');
     }
 
     /***********************************************************/
@@ -141,12 +141,36 @@ class Stopwatch {
         return this.#clock;
     }
 
+    get_displayed_value() {
+        const time = this.#$timer.val();
+        
+        // check if format is correct
+        const reg_min = /^([0-9][0-9]):([0-9][0-9])$/;
+        const reg_sec = /^([0-9][0-9]).([0-9])$/;
+        let found = time.match(reg_min);
+
+        if(found) {
+            return (parseInt(found[1], 10) * 60 + parseInt(found[2], 10)) * 1000;
+        } else {
+            found = time.match(reg_sec);
+            if(found) {
+                return parseInt(found[1], 10) * 1000 + parseInt(found[2], 10) * 100;
+            } else {
+                throw 'incorrect time format';
+            }
+        }
+    }
+
     show() {
         this.#$element.css('display', '');
     }
 
     hide() {
         this.#$element.css('display', 'none');
+    }
+
+    editable(value) {
+        this.#$timer.prop('readonly', !value);
     }
 
     set_element_id(element_id) {
