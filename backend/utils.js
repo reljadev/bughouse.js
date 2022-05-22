@@ -37,7 +37,7 @@ function ext_to_type(filePath) {
                          '.css': 'text/css', '.ejs': 'text/html',
                          '.json': 'application/json', '.ttf': 'font/ttf',
                          '.png': 'image/png', '.jpg': 'image/jpg',
-                         '.ico': 'image/x-icon'}
+                         '.svg': 'image/svg+xml', '.ico': 'image/x-icon'}
     return ext_to_type[extname]
 }
 

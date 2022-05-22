@@ -111,14 +111,17 @@ $start_button.on('click', function(evt) {
 // reset button
 let $reset_button = $('#reset_game');
 $reset_button.on('click', function(evt) {
-    reset_game(fen, sparePieces);
+    let temp_fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    let temp_spares = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
+                        'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}};
+    reset_game(temp_fen, temp_spares);
     // hide reset button
     $reset_button.css('display', 'none');
     // show start button
     $start_button.css('display', '');
     $start_button.attr('disabled', 'disabled');
     // notify server
-    server.emit('reset_game', fen, sparePieces); 
+    server.emit('reset_game', temp_fen, temp_spares);
   } );
 
 if(myUsername !== admin || !game.is_pre_game()) {
