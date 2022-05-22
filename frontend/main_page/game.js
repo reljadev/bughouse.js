@@ -484,12 +484,12 @@ class Game {
     #reset_boards(fen, sparePieces) {
         this.#board1.orientation('white');
         this.#board1.move_count(0);
-        this.#board1.position(fen);
+        this.#board1.position(fen, false);
         this.#board1.sparePieces(sparePieces);
 
         this.#board2.orientation('white');
         this.#board2.move_count(0);
-        this.#board2.position(fen);
+        this.#board2.position(fen, false);
         this.#board2.sparePieces(sparePieces);
 
     }
