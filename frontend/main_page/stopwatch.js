@@ -119,12 +119,8 @@ class Stopwatch {
         }
     }
 
-    reset(new_time) {
-        if(new_time) {
-            this.#clock = new_time;
-        } else {
-            this.#clock = this.#options.clock;
-        }
+    reset() {
+        this.#clock = this.#options.clock;
         this.#render();
     }
 
@@ -136,6 +132,12 @@ class Stopwatch {
     time(t) {
         if(t) {
             this.#clock = t;
+            if(t >= 1000 * 60) {
+                delete this.#formatterOptions.fractionalSecondDigits;
+                this.#formatterOptions.minute = 'numeric';
+                this.#formatter = new Intl.DateTimeFormat([], this.#formatterOptions);
+                this.#showingFractions = false;
+            }
             this.#render();
         }
         return this.#clock;
@@ -143,7 +145,7 @@ class Stopwatch {
 
     get_displayed_value() {
         const time = this.#$timer.val();
-        
+
         // check if format is correct
         const reg_min = /^([0-9][0-9]):([0-9][0-9])$/;
         const reg_sec = /^([0-9][0-9]).([0-9])$/;

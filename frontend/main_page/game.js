@@ -143,12 +143,6 @@ class Game {
                                         delay: 100,
                                     });
 
-        // player joins while game is being set up
-        if(this.#stage === PRE_GAME) {
-            // w_clock.hide();
-            // b_clock.hide();
-        } 
-
         return [w_clock, b_clock];
     }
 
@@ -773,11 +767,6 @@ class Game {
         // update clocks positions based on board orientation
         this.#update_clocks_position();
         
-        // show clocks
-        // this.#white_clock1.show();
-        // this.#black_clock1.show();
-        // this.#white_clock2.show();
-        // this.#black_clock2.show();
         // start clocks
         this.#white_clock1.start();
         this.#white_clock2.start();
@@ -812,24 +801,20 @@ class Game {
 
         // reset clocks
         let new_time = 5 * 1000 * 60; //TODO: this should be set by admin each time
-        this.#white_clock1.reset(new_time);
-        this.#black_clock1.reset(new_time);
-        this.#white_clock2.reset(new_time);
-        this.#black_clock2.reset(new_time);
+        this.#white_clock1.time(new_time);
+        this.#black_clock1.time(new_time);
+        this.#white_clock2.time(new_time);
+        this.#black_clock2.time(new_time);
 
         // make clocks editable if admin
         if(this.#options.myUsername === this.#options.admin) {
             this.#set_editable_clocks(true);
         }
-        
-        // hide clocks
-        // this.#white_clock1.hide();
-        // this.#black_clock1.hide();
-        // this.#white_clock2.hide();
-        // this.#black_clock2.hide();
 
         // reset console
         console.clear();
+
+        // print boards
         this.#sanity_check();
     }
 

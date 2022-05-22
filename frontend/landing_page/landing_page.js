@@ -21,7 +21,7 @@ $(document).on('keypress', onKeyPressed);
 function setRandomUsername($username) {
     let min = 1000;
     let max = 10000;
-    let username = 'guest' + getRandomInt(min, max);
+    let username = 'username' + getRandomInt(min, max);
     $username.attr("placeholder", username);
     
     return username;

@@ -391,10 +391,6 @@ class Game {
     start() {
         if(this.boards_are_set()) {
             this.#stage = PLAYING;
-            this.#white_timer1.reset();
-            this.#black_timer1.reset();
-            this.#white_timer2.reset();
-            this.#black_timer2.reset();
 
             this.#white_timer1.start();
             this.#white_timer2.start();

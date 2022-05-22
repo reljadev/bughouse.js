@@ -154,6 +154,9 @@ $(window).on('click', (evt) => {
 function start_game(times) {
   game.set_times(times);
   game.start();
+
+  // close modal
+  $modal.css('display', 'none');
   
   // show resign button to players
   if(game.am_i_at_board()) {
