@@ -642,7 +642,7 @@
     // default piece theme is wikipedia
     if (!config.hasOwnProperty('pieceTheme') ||
         (!isString(config.pieceTheme) && !isFunction(config.pieceTheme))) {
-      config.pieceTheme = RELATIVE_PATH + 'img/chesspieces/wikipedia/{piece}.svg'
+      config.pieceTheme = RELATIVE_PATH + 'img/chesspieces/wikipedia/{piece}.png'
     }
 
     if(typeof config.onRightClick === 'undefined') {
