@@ -52,24 +52,33 @@
                         <div id="first_container" class="board_container left">
                             
                             <div class="board_wrapper">
+
                                 <!-- define chessboard element -->
                                 <div id="myBoard_1" class="board"></div>
 
+                                <!-- white's & black's clocks -->
                                 <div id="time1_top" class="time1"></div>
                                 <div id="time1_bottom" class="time2"></div>
 
-                                <div class="controllers_container">
-                                    <div id="backward_button_1" class="backward_button">
-                                        <i class="fa-solid fa-circle-chevron-left center color-white controller"></i>
-                                    </div>
-                                    <div id="forward_button_1" class="forward_button">
-                                        <i class="fa-solid fa-circle-chevron-right center color-white controller"></i>
-                                    </div>
-                                    <div id="resign_game1" class="resign_button">
-                                        <i class="fa-solid fa-flag center color-white controller"></i>
-                                    </div>
+                            </div>
+
+                            <div class="controllers_container">
+                                <!-- forward & backward -->
+                                <div id="backward_button_1" class="backward_button">
+                                    <i class="fa-solid fa-circle-chevron-left center color-white controller"></i>
+                                </div>
+                                <div id="forward_button_1" class="forward_button">
+                                    <i class="fa-solid fa-circle-chevron-right center color-white controller"></i>
+                                </div>
+                                <div id="pgn_button_1" class="pgn_button controller">
+                                    PGN
+                                </div>
+                                <!-- resign game -->
+                                <div id="resign_game1" class="resign_button">
+                                    <i class="fa-solid fa-flag center color-white controller"></i>
                                 </div>
 
+                                
                             </div>
 
                             <textarea id="pgn_1" class="pgn" readonly></textarea>
@@ -83,19 +92,24 @@
                                 <!-- define chessboard element -->
                                 <div id="myBoard_2" class="board"></div>
 
+                                <!-- white's & black's clocks -->
                                 <div id="time2_top" class="time1"></div>
                                 <div id="time2_bottom" class="time2"></div>
 
-                                <div class="controllers_container">
-                                    <div id="backward_button_2" class="backward_button">
-                                        <i class="fa-solid fa-circle-chevron-left center color-white controller"></i>
-                                    </div>
-                                    <div id="forward_button_2" class="forward_button">
-                                        <i class="fa-solid fa-circle-chevron-right center color-white controller"></i>
-                                    </div>
-                                    <div id="resign_game2" class="resign_button">
-                                        <i class="fa-solid fa-flag center color-white controller"></i>
-                                    </div>
+                            </div>
+
+                            <div class="controllers_container">
+                                <div id="backward_button_2" class="backward_button">
+                                    <i class="fa-solid fa-circle-chevron-left center color-white controller"></i>
+                                </div>
+                                <div id="forward_button_2" class="forward_button">
+                                    <i class="fa-solid fa-circle-chevron-right center color-white controller"></i>
+                                </div>
+                                <div id="pgn_button_2" class="pgn_button controller">
+                                    PGN
+                                </div>
+                                <div id="resign_game2" class="resign_button">
+                                    <i class="fa-solid fa-flag center color-white controller"></i>
                                 </div>
                             </div>
 
@@ -105,10 +119,8 @@
                     </div>
 
                     <!-- admin buttons -->
-                    <div class="buttons">
-                        <button id="start_game">start</button>
-                        <button id="reset_game">reset</button>
-                    </div>
+                    <button id="start_game">start</button>
+                    <button id="reset_game">reset</button>
 
                 </div>
 
@@ -124,7 +136,8 @@
 
                 <!-- game id -->
                 <div id="game_id" class="id_container">
-                    <h5>invite friends</h5>
+                    <div class="upper_margin"></div>
+                    <span class="invite_text">invite friends<span>
                     
                     <div class="id_input_container">
                         <input type="text" id="text_game_id">

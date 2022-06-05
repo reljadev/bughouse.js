@@ -156,7 +156,8 @@ class Players {
                 top: top,
                 });
 
-        this.#$draggedPlayer.animate({width: '90px', height: '20px',
+        this.#$draggedPlayer.animate({width: this.#options.$username_top1.width(),
+                                        height: this.#options.$username_top1.outerHeight(),
                                          top: evt.pageY - 10, left: evt.pageX - 45},
                                          100,
                                          () => { this.#dragging = true; })
@@ -209,11 +210,12 @@ class Players {
                 this.#options.player_added_to_board('second', 'bottom', username);
             } else {
                 player.get_element().css({display: '',
-                                        width: '90px', height: '20px',
-                                        'font-size': '14px'});
-                player.get_element().animate({'width': '160px',
-                                              'height': '22px',
-                                              'font-size' : '17px'}, 300);
+                                        width: this.#options.$username_top1.width(),
+                                        height: this.#options.$username_top1.height(),
+                                        'font-size': '0.7vw'});
+                player.get_element().animate({'width': '100%',
+                                              'height': '5%',
+                                              'font-size' : '1.1vw'}, 300);
             }
 
             // undim screen
@@ -288,9 +290,9 @@ class Players {
             if(p.is_connected()) {
                 p.set_element($new_player);
                 this.#$sidebar.append($new_player);
-                $new_player.animate({'width': '160px',
-                                'height': '22px',
-                                'font-size' : '17px'}, 300);
+                $new_player.animate({'width': '100%',
+                                'height': '5%',
+                                'font-size' : '1.1vw'}, 300);
             } else {
                 p.set_connected(true);
             }
@@ -298,9 +300,9 @@ class Players {
         } else {
             this.#players[username] = new Players.Player(username, connected, $new_player);
             this.#$sidebar.append($new_player);
-            $new_player.animate({'width': '160px',
-                                'height': '22px',
-                                'font-size' : '17px'}, 300);
+            $new_player.animate({'width': '100%',
+                                'height': '5%',
+                                'font-size' : '1.1vw'}, 300);
         }
     }
 

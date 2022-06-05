@@ -28,6 +28,8 @@ $text_id.prop("readonly", true);
 
 let $pgn1 = $('#pgn_1');
 let $pgn2 = $('#pgn_2');
+let $pgn_button1 = $('#pgn_button_1');
+let $pgn_button2 = $('#pgn_button_2');
 
 let $msg = $('#game_over_msg');
 
@@ -77,6 +79,8 @@ if(game.is_pre_game()) {
   $forward_button1.css('display', 'none');
   $backward_button2.css('display', 'none');
   $forward_button2.css('display', 'none');
+  $pgn_button1.css('display', 'none');
+  $pgn_button2.css('display', 'none');
 } 
 
 // resign button
@@ -172,11 +176,13 @@ function start_game(times) {
     $resign_button.on('click', resign_game);
     $resign_button.css('display', '');
   }
-  // show forward, backward buttons
+  // show game controllers
   $forward_button1.css('display', '');
   $backward_button1.css('display', '');
   $forward_button2.css('display', '');
   $backward_button2.css('display', '');
+  $pgn_button1.css('display', '');
+  $pgn_button2.css('display', '');
 
   // update status
   updateStatus();
@@ -197,11 +203,13 @@ function resign_game(evt) {
 function reset_game(fen, sparePieces) {
   game.reset(fen, sparePieces);
 
-  // hide forward & backward buttons
+  // hide game controllers
   $forward_button1.css('display', 'none');
   $backward_button1.css('display', 'none');
   $forward_button2.css('display', 'none');
   $backward_button2.css('display', 'none');
+  $pgn_button1.css('display', 'none');
+  $pgn_button2.css('display', 'none');
 
   // status
   resetStatus();
