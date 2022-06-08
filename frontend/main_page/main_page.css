@@ -16,7 +16,6 @@ body {
 
 .content_container {
   min-height: 100vh;
-  /* height: 100vh; */
   margin: 0;
   padding: 0;
 }
@@ -24,29 +23,21 @@ body {
 /*************  GAME CONTAINER  *************/
 
 .main {
-  width: 90vw;
+  /* width: 90vw; */
+  width: calc(100vw - 192px);
   min-height: 100vh;
-}
-
-/* TODO: not needed anymore */
-#game_container {
-  width: 90%;
-  position: relative;
-  top: 5vh; /* percentage doesn't work because parent has no height */
-  left: 5%;
-  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 #boards_container {
-  width: 100%;
   display: flex;
-  /* display: inline-block; */
+  column-gap: 0.7vw;
 }
 
 .board_container {
-  /* display: inline-block; */
-  width: 48%; /* TODO: shouldn't be guessed, but deduce somehow correct width */
-  height: 90vh;
+  width: 40vw;
   padding: 20px 0 30px 30px; /* top right bottom left */
   box-sizing: border-box; /* TODO: stuff that is the same everywhere should be put in one place */
   -webkit-box-sizing: border-box;
@@ -55,16 +46,9 @@ body {
   background: #56575a;
 }
 
-.board_container.left {
-  margin-right: 0.7vw;
-}
-
-.board_container.right {
-  margin-left: 0.7vw;
-}
-
 .board_wrapper {
-  position: relative;
+  display: flex;
+  column-gap: 5px;
   width: 100%;
 }
 
@@ -123,18 +107,12 @@ body {
   right: 6%;
 }
 
-.time1 {
-  position: absolute;
-  top: 44.8%;
-  right: 10px;
-  width: fit-content;
-}
-
-.time2 {
-  position: absolute;
-  bottom: 44.8%;
-  right: 10px;
-  width: fit-content;
+.times {
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
+  justify-content: center;
+  align-items: center;
 }
 
 .clock_display {
@@ -153,15 +131,17 @@ body {
 }
 
 .controllers_container {
+  /* background-color: green; */
   width: 83%;
   height: 7%;
-  -webkit-box-sizing:border-box;
+  /* -webkit-box-sizing:border-box;
   -moz-box-sizing:border-box;
-  box-sizing:border-box;
+  box-sizing:border-box; */
   display: flex;
   align-items: center;
   padding-left: 1.5rem;
   padding-right: 1.5rem;
+  margin-bottom: 10px;
 }
 
 .backward_button {
@@ -261,7 +241,8 @@ body {
 .side_container {
   min-height: 100vh;
   height: 100vh;
-  width: 10vw;
+  /* width: 10vw; */
+  width: 192px;
   position: fixed; 
   top: 0; 
   right: 0;
@@ -269,7 +250,7 @@ body {
 
 .sidebar {
   height: 87%;
-  width: 100%; /* Set the width of the sidebar */
+  width: 100%;
   background-color: rgb(122, 90, 90);
   overflow-x: hidden; /* Disable horizontal scroll */
   padding-top: 20px;
@@ -285,7 +266,8 @@ body {
   box-sizing:border-box;
   text-align: center;
   text-decoration: none;
-  font-size: 1.1vw;
+  font-size: 1.2rem;
+  overflow: hidden;
   color: white;
   background-color: rgb(247, 134, 134);
   border-radius: 5px;
@@ -308,6 +290,7 @@ body {
   z-index: 2;
 }
 
+/* TODO: needs fixing, won't work on resize  */
 .screen_dimer {
   position: fixed;
   /* for IE */
@@ -341,14 +324,14 @@ body {
   -webkit-box-sizing:border-box;
   -moz-box-sizing:border-box;
   box-sizing:border-box;
-  /* margin-top: 4%; */
   margin-left: 7.5%;
 }
 
 #text_game_id {
   height: 100%;
   width: 80.5%;
-  font-size: 0.9vw;
+  font-size: 1.2rem;
+  overflow: hidden;
   text-align: center;
   -webkit-box-sizing:border-box;
   -moz-box-sizing:border-box;
@@ -439,32 +422,43 @@ body {
 
 /*************  ON RESIZE  *************/
 
-@media screen and (max-width: 1500px) {
-
-  #game_container {
-    position: static;
-    margin-top: 40px;
-    margin-bottom: 40px;
-
-    /* width: 90%;
-    position: relative;
-    top: 5%;
-    left: 5%;
-    margin: 0; */
-  }
-
-  #boards_container {
-    /* display: block; */
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  .board_container.left {
-    margin-right: 0;
-    margin-bottom: 40px;
-  }
+/* @media screen and (min-wid) {
   
+} */
+
+@media screen and (max-width: 1600px) {
+  #boards_container {
+    flex-direction: column;
+    row-gap: 2vh;
+  }
+  .board_container {
+    width: 800px;
+  }
+  .board_container.left {
+    margin-top: 4vh;
+  }
   .board_container.right {
-    margin-left: 0;
+    margin-bottom: 4vh;
+  }
+}
+
+@media screen and (max-width: 1000px) and (min-width: 450px) {
+  .main {
+    width: 80vw;
+  }
+  .board_container {
+    width: 75vw;
+  }
+  .side_container {
+    width: 20vw;
+  }
+}
+
+@media screen and (max-width: 450px) {
+  .board_container {
+    width: 360px;
+  }
+  .side_container {
+    width: 90px;
   }
 }

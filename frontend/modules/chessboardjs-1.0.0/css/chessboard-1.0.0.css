@@ -81,16 +81,16 @@
   /* position it at bottom right */
   position: absolute;
   bottom: 0;
-  right: 0;
+  right: 4%;
   /* text color */
   color: black;
+  font-size: 17px; /* TODO: shouldn't be hardcoded */
   /* background */
   background:red;
   border-radius:50%;
-  height: 15px;
-  width: 15px;
-  line-height: 15px;
-  display: inline-block;
+  height: 27%;
+  width: 27%;
+  vertical-align: middle;
   text-align: center;
 }
 

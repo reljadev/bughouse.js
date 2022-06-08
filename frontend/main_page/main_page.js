@@ -229,6 +229,9 @@ function copy_id() {
   );
 }
 
+// on window resize
+$( window ).resize(game.resize.bind(game));
+
 //////////////////// STATUS FUNCTIONS ////////////////////
 
 function updateStatus() {

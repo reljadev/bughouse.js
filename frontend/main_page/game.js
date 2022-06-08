@@ -730,6 +730,11 @@ class Game {
         this.#players.remove_player_from_board(board, position);
     }
 
+    resize() {
+        this.#board1.resize();
+        this.#board2.resize();
+    }
+
     ///////////////////// GAME CONTROLLERS //////////////////////
 
     backward_move(board) {

@@ -215,7 +215,7 @@ class Players {
                                         'font-size': '0.7vw'});
                 player.get_element().animate({'width': '100%',
                                               'height': '5%',
-                                              'font-size' : '1.1vw'}, 300);
+                                              'font-size' : '1.2rem'}, 300);
             }
 
             // undim screen
@@ -292,7 +292,7 @@ class Players {
                 this.#$sidebar.append($new_player);
                 $new_player.animate({'width': '100%',
                                 'height': '5%',
-                                'font-size' : '1.1vw'}, 300);
+                                'font-size' : '1.2rem'}, 300);
             } else {
                 p.set_connected(true);
             }
@@ -302,7 +302,7 @@ class Players {
             this.#$sidebar.append($new_player);
             $new_player.animate({'width': '100%',
                                 'height': '5%',
-                                'font-size' : '1.1vw'}, 300);
+                                'font-size' : '1.2rem'}, 300);
         }
     }
 
