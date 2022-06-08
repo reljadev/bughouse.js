@@ -5,7 +5,7 @@
 html {
     background-color: black;
     color: white;
-    overflow: hidden; /* disable horizontal scroll */
+    overflow-x: hidden; /* disable horizontal scroll */
 }
 
 body {
@@ -16,32 +16,35 @@ body {
 
 .content_container {
   min-height: 100vh;
+  /* height: 100vh; */
   margin: 0;
   padding: 0;
-  /* display: flex; */
 }
 
 /*************  GAME CONTAINER  *************/
 
 .main {
   width: 90vw;
+  min-height: 100vh;
 }
 
+/* TODO: not needed anymore */
 #game_container {
   width: 90%;
   position: relative;
-  top: 5%;
+  top: 5vh; /* percentage doesn't work because parent has no height */
   left: 5%;
   margin: 0;
 }
 
 #boards_container {
   width: 100%;
-  display: inline-block;
+  display: flex;
+  /* display: inline-block; */
 }
 
 .board_container {
-  display: inline-block;
+  /* display: inline-block; */
   width: 48%; /* TODO: shouldn't be guessed, but deduce somehow correct width */
   height: 90vh;
   padding: 20px 0 30px 30px; /* top right bottom left */
@@ -59,10 +62,6 @@ body {
 .board_container.right {
   margin-left: 0.7vw;
 }
-
-/* .buttons {
-  margin: 1rem;
-} */
 
 .board_wrapper {
   position: relative;
@@ -84,7 +83,7 @@ body {
   font-size:0.9vw;
   border-radius:4px;
   position: relative;
-  /* left: 2.5%; */
+  left: 2.5%;
   float: left;
   top: 53%;
   padding-top: 4%;
@@ -102,7 +101,7 @@ body {
   font-size:0.9vw;
   border-radius:4px;
   position: relative;
-  /* left: 2.5%; */
+  left: 2.5%;
   float: left;
   top: 10%;
   padding-top: 4%;
@@ -154,7 +153,6 @@ body {
 }
 
 .controllers_container {
-  /* background-color: rgb(170, 170, 170); */
   width: 83%;
   height: 7%;
   -webkit-box-sizing:border-box;
@@ -168,6 +166,52 @@ body {
 
 .backward_button {
   margin-right: 0.2rem;
+}
+
+#start_game {
+  width: 5rem;
+  height: 2.3rem;
+  font-size: 1.2rem;
+  color: white;
+  background-color: transparent;
+  border: solid white;
+  border-radius: 15%;
+}
+
+#start_game:disabled {
+  color: #9d9d9d;
+  border: solid #9d9d9d;
+}
+
+#start_game:hover {
+  color: #c1baff;
+  border: solid #c1baff;
+}
+
+#start_game:active {
+  color: #8e81ff;
+  border: solid #8e81ff;
+}
+
+#reset_game {
+  width: 5rem;
+  height: 2.3rem;
+  font-size: 1.2rem;
+  color: white;
+  background-color: transparent;
+  border: solid white;
+  border-radius: 15%;
+  margin-left: auto;
+}
+
+#reset_game:hover {
+  color: #c1baff;
+  border: solid #c1baff;
+}
+
+#reset_game:active {
+  color: #8e81ff;
+  border: solid #8e81ff;
 }
 
 .forward_button {
@@ -391,4 +435,36 @@ body {
 
 .data {
   display: none;
+}
+
+/*************  ON RESIZE  *************/
+
+@media screen and (max-width: 1500px) {
+
+  #game_container {
+    position: static;
+    margin-top: 40px;
+    margin-bottom: 40px;
+
+    /* width: 90%;
+    position: relative;
+    top: 5%;
+    left: 5%;
+    margin: 0; */
+  }
+
+  #boards_container {
+    /* display: block; */
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .board_container.left {
+    margin-right: 0;
+    margin-bottom: 40px;
+  }
+  
+  .board_container.right {
+    margin-left: 0;
+  }
 }
