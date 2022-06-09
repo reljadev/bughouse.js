@@ -19,7 +19,7 @@ body {
 }
 
 .container {
-    width: 390px;
+    /* width: 390px; */
     -webkit-box-sizing:border-box;
     -moz-box-sizing:border-box;
     box-sizing:border-box;
@@ -31,7 +31,7 @@ body {
     text-align: center;
     position: relative;
     top: -100px;
-    font-size: 83px;
+    font-size: 7rem;
     -webkit-text-stroke: 2px #dabe15;
     color: black;
     font-family: 'Saira Condensed', sans-serif;
@@ -46,14 +46,15 @@ body {
 }
 
 .logo {
-    width:150px;
-    height:150px;
+    width: 10vw;
+    height: 10vw;
     z-index: 2;
 }
 
 .input_container {
-    width: 390px;
-    height: 170px;
+    /* width: 390px; */
+    width: 25vw;
+    height: 20.5vh;
     position: relative;
     top: -30px;
     -webkit-box-sizing:border-box;
@@ -68,9 +69,10 @@ body {
 }
 
 .form_input {
-    width: 254px;
-    height: 30px;
-    font-size: 15px;
+    /* width: 254px; */
+    width: 15vw;
+    height: 4vh;
+    font-size: 1.2rem;
     color: black;
     padding: 7px;
     -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
@@ -94,13 +96,13 @@ body {
 }
 
 .input_button_divider {
-    height: 10px;
+    height: 12px;
 }
 
 .button {
-    width: 254px;
-    height: 30px;
-    font-size: 14px;
+    width: 15vw;
+    height: 4vh;
+    font-size: 1.2rem;
     color: white;
     /* background-color: #0086d3; */
     background-color: green;
@@ -110,8 +112,8 @@ body {
 }
 
 .button:hover {
-    width: 262px;
-    height: 34px;
+    width: 15.5vw;
+    height: 4.5vh;
     transition: 0.3s;
 }
 
@@ -126,7 +128,7 @@ body {
 }
 
 .buttons_divider {
-    height: 5px;
+    height: 6px;
 }
 
 #join_button {
@@ -139,7 +141,7 @@ body {
 }
 
 #join_container {
-    width: 254px;
+    width: 15vw;
     display: flex;
     margin: auto;
     opacity: 1;
@@ -151,9 +153,9 @@ body {
 }
   
 #game_id_input {
-    width: 214px;
-    height: 30px;
-    font-size: 14px;
+    width: 85%;
+    height: 4vh;
+    font-size: 1.2rem;
     color: black;
     border-radius: 5px 0px 0px 5px;
     -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
@@ -172,12 +174,11 @@ body {
 }
 
 #go_button {
-    width: 40px;
-    height: 30px;
-    line-height: 30px;
-    display:inline-block;
+    width: 15%;
+    height: 4vh;
+    line-height: 4vh;
+    /* display:inline-block; */
     text-align: center;
-    vertical-align: bottom;
     /* flex: none; */
     border-radius: 0px 5px 5px 0px;
     background-color: green;
