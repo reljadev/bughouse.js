@@ -32,7 +32,7 @@ body {
     position: relative;
     top: -100px;
     font-size: 83px;
-    -webkit-text-stroke: 2px #06e2ff;
+    -webkit-text-stroke: 2px #dabe15;
     color: black;
     font-family: 'Saira Condensed', sans-serif;
     display: inline-block;
@@ -90,7 +90,7 @@ body {
     background-color: white;
     outline-color: transparent;
     outline-style: solid;
-    box-shadow: 0 0 0 2px #06e2ff;
+    box-shadow: 0 0 0 2px #dabe15;
 }
 
 .input_button_divider {
@@ -102,9 +102,11 @@ body {
     height: 30px;
     font-size: 14px;
     color: white;
-    background-color: #0086d3;
+    /* background-color: #0086d3; */
+    background-color: green;
     border-radius: 5px;
-    border: #0086d3;
+    /* border: #0086d3; */
+    border: green;
 }
 
 .button:hover {
@@ -116,11 +118,11 @@ body {
 .button:focus {
     outline-color: transparent;
     outline-style: solid;
-    box-shadow: 0 0 0 2px #06e2ff;
+    box-shadow: 0 0 0 2px #dabe15;
 }
 
 .button:active {
-    background-color: #06e2ff;
+    background-color: #dabe15;
 }
 
 .buttons_divider {
@@ -164,9 +166,9 @@ body {
 #game_id_input:focus {
     outline-color: transparent;
     outline-style: solid;
-    -moz-box-shadow:    inset 0 0 5px #06e2ff;
-    -webkit-box-shadow: inset 0 0 5px #06e2ff;
-    box-shadow:         inset 0 0 5px #06e2ff;
+    -moz-box-shadow:    inset 0 0 5px #dabe15;
+    -webkit-box-shadow: inset 0 0 5px #dabe15;
+    box-shadow:         inset 0 0 5px #dabe15;
 }
 
 #go_button {
@@ -178,18 +180,19 @@ body {
     vertical-align: bottom;
     /* flex: none; */
     border-radius: 0px 5px 5px 0px;
-    background-color: #0086d3;
+    background-color: green;
     border:0;
     outline:0;
 }
 
 #go_button:hover {
-    background-color: #0072b4;
+    background-color: #c2a711;
     transition: 0.3s;
 }
 
 #go_button:focus {
-    background-color: #06e2ff;
+    /* background-color: #06e2ff; */
+    background-color: #dabe15;
 }
 
 .color-white {
