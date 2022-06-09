@@ -3,9 +3,16 @@
 }
 
 html {
-    background-color: black;
+    background-color: #302e2b;
     color: white;
     overflow-x: hidden; /* disable horizontal scroll */
+    background-size: 1300px 1300px;
+    /* background-image: -webkit-gradient(linear, 0 0, 100% 100%, color-stop(.25, gray), color-stop(.25, transparent), color-stop(.5, transparent), color-stop(.5, gray), color-stop(.75, gray), color-stop(.75, transparent), to(transparent)); */
+    /* background-image: -webkit-linear-gradient(-45deg, gray 25%, transparent 25%, transparent 50%, gray 50%, gray 75%, transparent 75%, transparent); */
+    /* background-image: -moz-linear-gradient(-45deg, gray 25%, transparent 25%, transparent 50%, gray 50%, gray 75%, transparent 75%, transparent); */
+    /* background-image: -ms-linear-gradient(-45deg, gray 25%, transparent 25%, transparent 50%, gray 50%, gray 75%, transparent 75%, transparent); */
+    /* background-image: -o-linear-gradient(-45deg, gray 25%, transparent 25%, transparent 50%, gray 50%, gray 75%, transparent 75%, transparent); */
+    background-image: linear-gradient(-45deg, rgba(128, 128, 128, 0.5) 25%, transparent 25%, transparent 50%, rgba(128, 128, 128, 0.5) 50%, rgba(128, 128, 128, 0.5) 75%, transparent 75%, transparent);
 }
 
 body {
@@ -43,7 +50,7 @@ body {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   border-radius: 13px;
-  background: #56575a;
+  background: #1f1e1e;
 }
 
 .board_wrapper {
@@ -251,7 +258,7 @@ body {
 .sidebar {
   height: 87%;
   width: 100%;
-  background-color: rgb(122, 90, 90);
+  background-color: #1f1e1e;
   overflow-x: hidden; /* Disable horizontal scroll */
   padding-top: 20px;
   border-radius: 7px 7px 0px 0px;
@@ -303,7 +310,7 @@ body {
 .id_container {
   height: 13%;
   width: 100%;
-  background-color: rgb(102, 72, 72);
+  background-color: #1f1e1e;
   overflow-x: hidden;
   border-radius: 0px 0px 7px 7px;
 }
