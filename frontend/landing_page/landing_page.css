@@ -19,7 +19,6 @@ body {
 }
 
 .container {
-    /* width: 390px; */
     -webkit-box-sizing:border-box;
     -moz-box-sizing:border-box;
     box-sizing:border-box;
@@ -31,7 +30,7 @@ body {
     text-align: center;
     position: relative;
     top: -100px;
-    font-size: 7rem;
+    font-size: 116px;
     -webkit-text-stroke: 2px #dabe15;
     color: black;
     font-family: 'Saira Condensed', sans-serif;
@@ -46,15 +45,15 @@ body {
 }
 
 .logo {
-    width: 10vw;
-    height: 10vw;
+    width: 208px;
+    height: 208px;
     z-index: 2;
 }
 
 .input_container {
-    /* width: 390px; */
-    width: 25vw;
-    height: 20.5vh;
+    width: 462px;
+    /* width: 25vw; */
+    height: 200px;
     position: relative;
     top: -30px;
     -webkit-box-sizing:border-box;
@@ -70,8 +69,8 @@ body {
 
 .form_input {
     /* width: 254px; */
-    width: 15vw;
-    height: 4vh;
+    width: 288px;
+    height: 38px;
     font-size: 1.2rem;
     color: black;
     padding: 7px;
@@ -100,8 +99,8 @@ body {
 }
 
 .button {
-    width: 15vw;
-    height: 4vh;
+    width: 288px;
+    height: 38px;
     font-size: 1.2rem;
     color: white;
     /* background-color: #0086d3; */
@@ -112,8 +111,8 @@ body {
 }
 
 .button:hover {
-    width: 15.5vw;
-    height: 4.5vh;
+    width: 298px;
+    height: 43px;
     transition: 0.3s;
 }
 
@@ -141,7 +140,7 @@ body {
 }
 
 #join_container {
-    width: 15vw;
+    width: 288px;
     display: flex;
     margin: auto;
     opacity: 1;
@@ -154,7 +153,7 @@ body {
   
 #game_id_input {
     width: 85%;
-    height: 4vh;
+    height: 38px;
     font-size: 1.2rem;
     color: black;
     border-radius: 5px 0px 0px 5px;
@@ -175,8 +174,8 @@ body {
 
 #go_button {
     width: 15%;
-    height: 4vh;
-    line-height: 4vh;
+    height: 38px;
+    line-height: 38px;
     /* display:inline-block; */
     text-align: center;
     /* flex: none; */
