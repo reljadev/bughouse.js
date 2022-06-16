@@ -9,3 +9,4 @@ Online multi-player game of bughouse (4-player variant of chess). Code deployed 
     - Content Security Policy header
 - Design: improve UI/UX
 - Code refactoring
+    - transition from CommonJS to ES modules
