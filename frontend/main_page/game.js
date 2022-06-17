@@ -816,6 +816,9 @@ class Game {
             this.#set_editable_clocks(true);
         }
 
+        // update status
+        this.#stage = PRE_GAME;
+
         // reset console
         console.clear();
 

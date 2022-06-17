@@ -1,22 +1,17 @@
-let $ = window['jQuery']
 
-// set default username
+/***********************************************************/
+/*                    INITIALIZATION                       */
+/***********************************************************/
+
 let $username = $('#username_input')
-let username = setRandomUsername($username)
-
-// start new game
-$('#start_button').click(startGame);
-// join game
-$join_button = $('#join_button');
-$join_container = $('#join_container');
-$id_input = $('#game_id_input');
-$go_button = $('#go_button');
+let $join_button = $('#join_button');
+let $join_container = $('#join_container');
+let $id_input = $('#game_id_input');
+let $go_button = $('#go_button');
 let goButtonClicked = false;
 
-$join_button.click(onJoinClick);
-$id_input.on('blur', onInputBlur);
-$go_button.click(goGame);
-$(document).on('keypress', onKeyPressed);
+// set default username
+let username = setRandomUsername($username)
 
 function setRandomUsername($username) {
     let min = 1000;
@@ -33,6 +28,17 @@ function getRandomInt(min, max) {
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min) + min);
 }
+
+// add events
+$('#start_button').click(startGame);
+$join_button.click(onJoinClick);
+$id_input.on('blur', onInputBlur);
+$go_button.click(goGame);
+$(document).on('keypress', onKeyPressed);
+
+/***********************************************************/
+/*                         EVENTS                          */
+/***********************************************************/
 
 function startGame() {
     username = $username.val() === '' ? username : $username.val();

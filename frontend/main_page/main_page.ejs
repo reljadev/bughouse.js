@@ -75,10 +75,10 @@
                                 PGN
                             </div>
                             <!-- admin buttons -->
-                            <button id="start_game">start</button>
-                            <button id="reset_game">reset</button>
+                            <button id="start_game" style="display: none;">start</button>
+                            <button id="reset_game" style="display: none;">reset</button>
                             <!-- resign game -->
-                            <div id="resign_game1" class="resign_button">
+                            <div id="resign_game1" class="resign_button" style="display: none;">
                                 <i class="fa-solid fa-flag center color-white controller"></i>
                             </div>
 
@@ -114,7 +114,7 @@
                             <div id="pgn_button_2" class="pgn_button controller">
                                 PGN
                             </div>
-                            <div id="resign_game2" class="resign_button">
+                            <div id="resign_game2" class="resign_button" style="display: none;">
                                 <i class="fa-solid fa-flag center color-white controller"></i>
                             </div>
                         </div>
@@ -140,7 +140,7 @@
                     <span class="invite_text">invite friends<span>
                     
                     <div class="id_input_container">
-                        <input type="text" id="text_game_id">
+                        <input type="text" id="text_game_id" readonly>
                         <div id="copy_button">
                             <i id="copy_icon" class="fa-solid fa-copy center color-white"></i>
                         </div>
@@ -167,10 +167,12 @@
         <div id="data_username" class="data" data-value='<%-username%>'></div>
         <div id="data_data" class="data" data-value='<%-JSON.stringify(data)%>'></div>
 
-        <!-- import socket lib -->
+        <!-- socket lib -->
         <script src="/socket.io/socket.io.js"></script>
-        <!-- import main page logic -->
+        <!-- main page logic -->
         <script src="./main_page.js"></script>
+        <!-- communication with server -->
+        <script src="./client.js"></script>
     </body>
 
 </html>

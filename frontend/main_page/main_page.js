@@ -6,32 +6,10 @@
 // NOTE: data variable is included at renderization time (runtime)
 let myUsername = $('#data_username').attr('data-value');
 let data = JSON.parse($('#data_data').attr('data-value'));
-
-// TODO: after right click, piece eaten shouldn't be animated
-
 let game_id = data.id;
 let admin = data.admin;
 let fen = data.first_board.fen;
 let sparePieces = data.first_board.sparePieces;
-
-//// MISC UTIL ////
-function get_cookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-}
-
-// display invite link
-let $text_id = $('#text_game_id');
-$text_id.val(game_id);
-$text_id.prop("readonly", true);
-
-let $pgn1 = $('#pgn_1');
-let $pgn2 = $('#pgn_2');
-let $pgn_button1 = $('#pgn_button_1');
-let $pgn_button2 = $('#pgn_button_2');
-
-let $msg = $('#game_over_msg');
 
 //// INITIALIZE GAME ////
 data.myUsername = myUsername;
@@ -40,8 +18,7 @@ data.player_joined_board = player_joined_board;
 data.player_left_board = player_left_board;
 let game = new Game(data);
 
-///////////////////// GAME FUNCTIONS ////////////////////
-
+//// GAME FUNCTIONS ////
 function move_executed(board, move, elapsed_time) {
   // send move to server
   server.emit('move', board, move, elapsed_time);
@@ -56,162 +33,77 @@ function player_left_board(board, color) {
   server.emit('playerRemoved', board, color);
 }
 
-// when player joins midgame, update status immedietely
-if(game.is_playing) {
+//// INITIALIZE ELEMENTS ////
+let $backward_button1 = $('#backward_button_1');
+let $forward_button1 = $('#forward_button_1');
+let $backward_button2 = $('#backward_button_2');
+let $forward_button2 = $('#forward_button_2');
+let $resign_button = null;
+let $start_button = $('#start_game');
+let $reset_button = $('#reset_game');
+let $modal = $("#myModal");
+let $text_id = $('#text_game_id');
+let $pgn1 = $('#pgn_1');
+let $pgn2 = $('#pgn_2');
+let $pgn_button1 = $('#pgn_button_1');
+let $pgn_button2 = $('#pgn_button_2');
+let $msg = $('#game_over_msg');
+
+// if player joins midgame, update status immedietely
+if(game.is_playing()) {
   updateStatus();
 }
+// display invite link
+$text_id.val(game_id);
 
-//////////////////////// BUTTONS /////////////////////////
-
-// forward and backward buttons on first board
-let $backward_button1 = $('#backward_button_1');
+// add events
 $backward_button1.on('click', game.backward_move.bind(game, 'first'));
-let $forward_button1 = $('#forward_button_1');
 $forward_button1.on('click', game.forward_move.bind(game, 'first'));
-// on second
-let $backward_button2 = $('#backward_button_2');
 $backward_button2.on('click', game.backward_move.bind(game, 'second'));
-let $forward_button2 = $('#forward_button_2');
 $forward_button2.on('click', game.forward_move.bind(game, 'second'));
-// hide buttons if not playing
-if(game.is_pre_game()) {
-  $backward_button1.css('display', 'none');
-  $forward_button1.css('display', 'none');
-  $backward_button2.css('display', 'none');
-  $forward_button2.css('display', 'none');
-  $pgn_button1.css('display', 'none');
-  $pgn_button2.css('display', 'none');
-} 
 
-// resign button
-$('#resign_game1').css('display', 'none');
-$('#resign_game2').css('display', 'none');
-let $resign_button = null;
-if(game.am_i_at_board() && game.is_playing()) {
-  // i'm at first board
-  if(myUsername === data.white_player1 ||
-    myUsername === data.black_player1) {
-      $resign_button = $('#resign_game1');
-  // i'm at second board
-  } else {
-      $resign_button = $('#resign_game2');
-  }
-
-  $resign_button.on('click', resign_game);
-  $resign_button.css('display', '');
-}
-
-// start button
-let $start_button = $('#start_game');
 $start_button.on('click', function(evt) {
     let times = game.get_times();
     start_game(times);
+
     // hide start button
     $start_button.css('display', 'none');
+
     // notify server of game started
     server.emit('game_has_started', times); 
   } );
 
-// reset button
-let $reset_button = $('#reset_game');
 $reset_button.on('click', function(evt) {
-    // TODO: it should be start position for both boards
     let fen = data.first_board.start_fen;
     let spares = data.first_board.start_spares;
+    
     reset_game(fen, spares);
-    // hide reset button
-    $reset_button.css('display', 'none');
-    // show start button
-    $start_button.css('display', '');
-    $start_button.attr('disabled', 'disabled');
+    on_game_state_change();
+
     // notify server
     server.emit('reset_game', fen, spares);
   } );
 
-if(myUsername !== admin || !game.is_pre_game()) {
-  $start_button.css('display', 'none'); //TODO: should be hidden by default
-  $reset_button.css('display', 'none');
-
-//// init admin page ////
-} else { 
-  $start_button.attr('disabled', 'disabled');
-  $reset_button.css('display', 'none');
-}
-
 // copy game id
 $('#copy_button').on('click', copy_id);
 
-// game over modal
-let $modal = $("#myModal");
+// show & hide appropriate buttons
+on_game_state_change();
 
-// clicking 'x' on modal content
-$('#modal_close').on('click', 
-                    () => { $modal.css('display', 'none') });
-
-// when the user clicks anywhere outside of the modal, close it
-$(window).on('click', (evt) => {
-    if ($(evt.target).attr('id') === 'myModal') {
-      $modal.css('display', 'none');
-    }
-  }
-);
-
-///////////////////////// EVENTS /////////////////////////
-
+//// EVENTS ////
 function start_game(times) {
   game.set_times(times);
   game.start();
 
-  // close modal
-  $modal.css('display', 'none');
-  
-  // show resign button to players
-  if(game.am_i_at_board()) {
-    if(myUsername === data.white_player1 ||
-      myUsername === data.black_player1) {
-        $resign_button = $('#resign_game1');
-      } else {
-        $resign_button = $('#resign_game2');
-    }
-    $resign_button.on('click', resign_game);
-    $resign_button.css('display', '');
-  }
-  // show game controllers
-  $forward_button1.css('display', '');
-  $backward_button1.css('display', '');
-  $forward_button2.css('display', '');
-  $backward_button2.css('display', '');
-  $pgn_button1.css('display', '');
-  $pgn_button2.css('display', '');
-
-  // update status
+  on_game_state_change();
   updateStatus();
-}
 
-function resign_game(evt) {
-  if(myUsername === admin) {
-    $reset_button.css('display', '');
-  }
-  // hide resign button
-  if($resign_button) {
-    $resign_button.css('display', 'none');
-  }
-
-  server.emit('resigned');
 }
 
 function reset_game(fen, sparePieces) {
   game.reset(fen, sparePieces);
-
-  // hide game controllers
-  $forward_button1.css('display', 'none');
-  $backward_button1.css('display', 'none');
-  $forward_button2.css('display', 'none');
-  $backward_button2.css('display', 'none');
-  $pgn_button1.css('display', 'none');
-  $pgn_button2.css('display', 'none');
-
-  // status
+  on_game_state_change();
+  
   resetStatus();
 }
 
@@ -229,23 +121,37 @@ function copy_id() {
   );
 }
 
+// clicking 'x' on modal content
+$('#modal_close').on('click', 
+                    () => { $modal.css('display', 'none') });
+
+// when the user clicks anywhere outside of the modal, close it
+$(window).on('click', (evt) => {
+    if ($(evt.target).attr('id') === 'myModal') {
+      $modal.css('display', 'none');
+    }
+  }
+);
+
 // on window resize
 $( window ).resize(game.resize.bind(game));
 
-//////////////////// STATUS FUNCTIONS ////////////////////
+/***********************************************************/
+/*                  CONTROLLER FUNCTIONS                   */
+/***********************************************************/
 
+//// STATUS FUNCTIONS ////
 function updateStatus() {
-  updateStats('first');
-  updateStats('second');
+  update_stats('first');
+  update_stats('second');
 }
 
-function updateStats (board) {
+function update_stats (board) {
   if(board === 'first') {
     $pgn1.text(game.pgn(board));
   } else {
     $pgn2.html(game.pgn(board));
   }
-  
 }
 
 function resetStatus() {
@@ -253,79 +159,87 @@ function resetStatus() {
   $pgn2.html('');
 }
 
-/***********************************************************/
-/*                       SOCKET IO                         */
-/***********************************************************/
+//// BUTTONS VISIBILITY ////
+function on_game_state_change() {
+  // PRE GAME //
+  if(game.is_pre_game()) {
+    hide_controllers();
 
-// connect to server
-// NOTE: io is imported in game.ejs
-const server = io('/',  { query: "gameId=" + game_id + 
-                                  "&user_id=" + get_cookie('user_id') + 
-                                  "&username=" + myUsername });
+    if(myUsername === admin) {
+      // hide reset button
+      if($reset_button) {
+        $reset_button.css('display', 'none');
+      }
+      // show start button
+      if($start_button) {
+        $start_button.css('display', '');
+        $start_button.attr('disabled', 'disabled');
+      }
+    }
 
-// opponent moved
-server.on('move', (board, move, whiteClock, blackClock) => {
-  game.move(board, move);
-  game.set_clocks(board, whiteClock, blackClock);
+  // PLAYING //
+  } else if(game.is_playing()) {
+    // close modal
+    $modal.css('display', 'none');
 
-  updateStatus();
-})
+    if(game.am_i_at_board()) {
+      initialize_resign_button();
+      // show resign button
+      $resign_button.css('display', '');
+    }
 
-// some player joined
-server.on('joined', (username) => {
-  game.add_player(username);
-})
+    show_controllers();
 
-// player added to chessboard
-server.on('playerJoined', (board, color, username) => {
-  game.add_player_to_board(board, color, username);
-})
+  // POST GAME //
+  } else if(game.is_post_game()) {
+    // show reset button
+    if(myUsername === admin) {
+      $reset_button.css('display', '');
+    }
+    // hide resign button
+    if($resign_button) {
+      $resign_button.css('display', 'none');
+    }
 
-// removed player from chessboard
-server.on('playerRemoved', (board, color) => {
-  game.remove_player_from_board(board, color);
-})
-
-// admin can start a game
-server.on('can_start_game', () => {
-  // NOTE: this will never be sent to a client that's not an admin
-  $start_button.removeAttr('disabled');
-})
-
-// admin can't start a game
-server.on('cant_start_game', () => {
-  // NOTE: this will never be sent to a client that's not an admin
-  $start_button.attr('disabled', 'disabled');
-})
-
-// admin initiated new game
-server.on('game_has_started', (times) => {
-  start_game(times);
-})
-
-server.on('game_is_over', (message) => {
-  game.game_over(); 
-  
-  // show reset button
-  if(myUsername === admin) {
-    $reset_button.css('display', '');
+  } else {
+    console.error('unknown game state');
   }
-  // hide resign button
-  if($resign_button) {
-    $resign_button.css('display', 'none');
+}
+
+function initialize_resign_button() {
+  // i'm at first board
+  if(myUsername === data.white_player1 ||
+    myUsername === data.black_player1) {
+      $resign_button = $('#resign_game1');
+  // i'm at second board
+  } else {
+      $resign_button = $('#resign_game2');
   }
 
-  if(message) {
-    $msg.text(message);
-    $modal.css('display', 'block');
-  }
-});
+  // on click
+  $resign_button.on('click', () => {
+    // notify server
+    server.emit('resigned');
+  });
 
-server.on('reset_game', (fen, sparePieces) => {
-  reset_game(fen, sparePieces);
-})
+}
 
-// some player disconnected
-server.on('disconnected', (username) => {
-  game.remove_player(username);
-})
+function hide_controllers() {
+  set_controllers_visibility('none');
+}
+
+function show_controllers() {
+  set_controllers_visibility('');
+}
+
+function set_controllers_visibility(visibility) {
+  $forward_button1.css('display', visibility);
+  $backward_button1.css('display', visibility);
+
+  $forward_button2.css('display', visibility);
+  $backward_button2.css('display', visibility);
+
+  $pgn_button1.css('display', visibility);
+  $pgn_button2.css('display', visibility);
+
+}
