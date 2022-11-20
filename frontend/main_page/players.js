@@ -251,7 +251,7 @@ class Players {
         let user_top = $holder.offset().top;
 
         if((x >= user_left && x <= user_left + user_width) && 
-            y >= user_top && y <= user_top + 20) { //TODO: shouldn't be hardcoded
+            y >= user_top && y <= user_top + 20) {
                 let $user_text = $holder.find('.user_text');
                 if($user_text.text() === '') {
                     $user_text.text(username);

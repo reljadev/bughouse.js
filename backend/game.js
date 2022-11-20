@@ -129,7 +129,7 @@ class Game {
         } else if (this.#chess1.in_draw() || this.#chess2.in_draw()) {
             msgForWatchers = 'Draw';
             msgForWhite1 = 'Draw';
-            msgForBlack1 = 'Draw'; //TODO: why is it a draw, insufficient material??
+            msgForBlack1 = 'Draw';
             msgForWhite2 = 'Draw';
             msgForBlack2 = 'Draw';
         // white player on first board ran out of time
@@ -268,7 +268,7 @@ class Game {
         return users;
     }
 
-    has_player(user_id) { //TODO: rename this
+    has_player(user_id) {
         return this.#players.hasOwnProperty(user_id);
     }
 
@@ -377,7 +377,6 @@ class Game {
             }
         }
         
-        // TODO: should be return true, false
         return true;
     }
 

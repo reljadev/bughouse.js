@@ -84,7 +84,7 @@
   right: 4%;
   /* text color */
   color: black;
-  font-size: 17px; /* TODO: shouldn't be hardcoded */
+  font-size: 17px;
   /* background */
   background:red;
   border-radius:50%;

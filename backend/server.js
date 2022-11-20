@@ -11,7 +11,8 @@ const Game = require('./game');
 let games = {};
 
 function start_new_game(admin) {
-    //TODO: fen, sparePieces and time should be set up by game admin
+    //NOTE: in next version of code there should be
+    //  a possibility for admin to set fen, sparePieces
     let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
     let sparePieces = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
                        'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}};
@@ -36,16 +37,6 @@ function get_game_containing_user(user_id) {
 
 // CONSTANTS
 const PORT = process.env.PORT || 3000;
-
-// initialize helmet
-//TODO: delete style-src 'unsafe-inline'
-//TODO: missing require-sri-for script
-// const run_helmet = helmet({ contentSecurityPolicy: { 
-//                                 directives: {"script-src": ["'self'", "https://code.jquery.com/jquery-1.12.4.min.js"], 
-//                                             "style-src": ["'self'", "'unsafe-inline'"], 
-//                                             "frame-ancestors": ["'none'"],} },
-//                             frameguard: {action: "deny"},
-//                         });
 
 // create server
 const server = http.createServer(function (request, response) {
@@ -80,8 +71,8 @@ const server = http.createServer(function (request, response) {
                 if(games[i].has_username(params.username)) {
                     // redirect user to landing page
                     response.writeHead(302, {
-                        // TODO: it should either redirect to landing page with note 'username already in use'
-                        // or redirect to page with an alert that joining two games at once is not currently supported
+                        // NOTE: it should either redirect to landing page with note 'username already in use'
+                        // or redirect to game page with an alert that joining two games at once is not currently supported
                         Location: `/404.html`
                     }).end();
                     return;
@@ -124,7 +115,7 @@ const server = http.createServer(function (request, response) {
                 currentGame = start_new_game(admin);
             } catch(error) {
                 response.writeHead(302, {
-                    //TODO: it should show a notation, that username was wrong
+                    //NOTE: it should show a notation, that username was wrong
                     Location: `/landing_page.html`
                 }).end();
                 return;
@@ -141,24 +132,9 @@ const server = http.createServer(function (request, response) {
 
     // read file & send it to client
     fs.readFile(filePath, encoding, function(fs_error, content) {
-
-        // run_helmet(request, response, (h_error) => {
-        //     // helmet error
-        //     if (h_error) {
-        //       response.writeHead(500);
-        //       response.end(
-        //         "Helmet failed for some unexpected reason. Was it configured correctly?"
-        //       );
-
-        //     // helmet set up
-        //     } else {
-                
-        //     }
-        // });
-
         // error while reading the file
         if (fs_error) {
-            if(fs_error.code == 'ENOENT') { //TODO: why didn't this throw error, no such file?
+            if(fs_error.code == 'ENOENT') {
                 fs.readFile('./404.html', function(fs_error, content) {
                     response.writeHead(200, { 'Content-Type': 'text/html' });
                     response.end(content, 'utf-8');
@@ -170,13 +146,6 @@ const server = http.createServer(function (request, response) {
             }
         // file read succesfully
         } else {
-            // TODO: fix the cors error
-            // https://code.jquery.com/jquery-1.12.4.min.js
-            // response.setHeader('Access-Control-Allow-Origin', '*');
-            // response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // If needed
-            // response.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); // If needed
-            // response.setHeader('Access-Control-Allow-Credentials', true); // If needed
-            
             response.writeHead(200, { 'Content-Type': contentType,
                                     'Set-Cookie': 'user_id=' +  user_id });
             // renderize ejs page
@@ -211,8 +180,6 @@ io.on('connection', (client) => {
         let p = games[game_id].get_player(user_id);
         if(p) {
             client.join(game_id);
-            client.data.game_id = game_id;
-            client.data.user_id = user_id;
 
             p.set_username(username);
             p.set_socket(client);
@@ -228,13 +195,13 @@ io.on('connection', (client) => {
         color = sanitize(color);
         username = sanitize(username);
 
-        let g = games[client.data.game_id];
+        let g = games[game_id];
         if(g) {
-            let p = g.get_player(client.data.user_id);
+            let p = g.get_player(user_id);
             if(p && g.is_admin(p)) {
                 let player_set = g.set_player_at_board(board, color, username);
                 if(player_set) {
-                    client.broadcast.to(client.data.game_id).emit('playerJoined', board, color, username);
+                    client.broadcast.to(game_id).emit('playerJoined', board, color, username);
                     if(g.boards_are_set()) {
                         client.emit('can_start_game');
                     }
@@ -249,13 +216,13 @@ io.on('connection', (client) => {
         board = sanitize(board);
         color = sanitize(color);
 
-        let g = games[client.data.game_id];
+        let g = games[game_id];
         if(g) {
-            let p = g.get_player(client.data.user_id);
+            let p = g.get_player(user_id);
             if(p && g.is_admin(p)) {
                 let player_removed = g.remove_player_from_board(board, color);
                 if(player_removed) {
-                    client.broadcast.to(client.data.game_id).emit('playerRemoved', board, color);
+                    client.broadcast.to(game_id).emit('playerRemoved', board, color);
                     client.emit('cant_start_game');
                 }
             }
@@ -264,15 +231,15 @@ io.on('connection', (client) => {
 
     // admin has initiated the game
     client.on('game_has_started', (times) => {
-        let g = games[client.data.game_id];
+        let g = games[game_id];
         if(g) {
-            let p = g.get_player(client.data.user_id);
+            let p = g.get_player(user_id);
             if(p && g.is_admin(p)) {
                 g.set_times(times);
                 let game_started = g.start();
         
                 if(game_started) {
-                    client.broadcast.to(client.data.game_id).emit('game_has_started', times);
+                    client.broadcast.to(game_id).emit('game_has_started', times);
                 }
             }
         }
@@ -280,9 +247,9 @@ io.on('connection', (client) => {
 
     // on player move
     client.on('move', (board, move, elapsedTime) => {
-        let g = games[client.data.game_id];
+        let g = games[game_id];
         if(g) {
-            let p = g.get_player(client.data.user_id);
+            let p = g.get_player(user_id);
             if(p) {
                 let updated = g.move(board, p, move);
                 if(updated) {
@@ -298,19 +265,19 @@ io.on('connection', (client) => {
     });
 
     client.on('resigned', () => {
-        let g = games[client.data.game_id];
+        let g = games[game_id];
         if(g) {
-            let p = g.get_player(client.data.user_id);
+            let p = g.get_player(user_id);
             if(p) {
-                games[client.data.game_id].resigned(p);
+                games[game_id].resigned(p);
             }
         }
     });
 
     client.on('reset_game', (fen, sparePieces) => {
-        let g = games[client.data.game_id];
+        let g = games[game_id];
         if(g) {
-            let p = g.get_player(client.data.user_id);
+            let p = g.get_player(user_id);
             if(p && g.is_admin(p)) {
                 let position_set = g.set_position(fen, sparePieces);
                 if(position_set) {
@@ -326,13 +293,13 @@ io.on('connection', (client) => {
     client.on('disconnect', () => {
         console.log('A user has disconnected.');
 
-        let g = games[client.data.game_id];
+        let g = games[game_id];
         if(g) {
-            let p = g.get_player(client.data.user_id);
+            let p = g.get_player(user_id);
             if(p) {
                 client.broadcast.to(g.get_id()).emit('disconnected', 
                                                     p.get_username());
-                g.remove_player(client.data.user_id);
+                g.remove_player(user_id);
             }
         }
     });

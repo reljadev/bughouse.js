@@ -1544,7 +1544,7 @@
                 'style="width:' + squareSize + 'px;height:' + squareSize + 'px;"></img>'
         html += '</div>'
         var $promotionSquare = $(html)
-        $promotionSquare.on('mousedown', pickedPromotionPiece) //TODO: should be a left click only
+        $promotionSquare.on('mousedown', pickedPromotionPiece)
         $('body').append($promotionSquare)
 
         var sq = squares[i]
@@ -1879,7 +1879,6 @@
     widget.ascii = function () {
       var s = ''
 
-      // TODO: print the board according to rotation
       var top = 'black'
       var bottom = 'white'
       if(widget.orientation() === 'black') {
@@ -2314,7 +2313,7 @@
     return widget
   } // end constructor
 
-  // TODO: do module exports here
+  // do module exports here
   window['Chessboard'] = constructor
 
   // support legacy ChessBoard name

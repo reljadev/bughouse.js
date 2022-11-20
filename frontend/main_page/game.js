@@ -805,7 +805,7 @@ class Game {
         this.#players.clear_board_usernames();
 
         // reset clocks
-        let new_time = 5 * 1000 * 60; //TODO: this should be set by admin each time
+        let new_time = 5 * 1000 * 60;
         this.#white_clock1.time(new_time);
         this.#black_clock1.time(new_time);
         this.#white_clock2.time(new_time);

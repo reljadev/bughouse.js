@@ -58,7 +58,7 @@ function onJoinClick() {
 }
 
 function onInputBlur(evt) {
-    if(goButtonClicked) return; //TODO: really ugly & doesn't truly work
+    if(goButtonClicked) return;
     $join_container.addClass('hide');
     $join_button.removeClass('hide');
     setTimeout(() => { if(goButtonClicked) return;
