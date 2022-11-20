@@ -312,7 +312,7 @@ class Players {
 
         if($element) {
             // player at board
-            if(p.get_username() === this.#options.$username_top1.find('.user_text').text() || //TODO: use white_player1 instead
+            if(p.get_username() === this.#options.$username_top1.find('.user_text').text() ||
                 p.get_username() === this.#options.$username_bottom1.find('.user_text').text() ||
                 p.get_username() === this.#options.$username_top2.find('.user_text').text() ||
                 p.get_username() === this.#options.$username_bottom2.find('.user_text').text()) {
