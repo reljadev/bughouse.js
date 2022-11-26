@@ -4,5 +4,8 @@
     "helmet": "^5.0.2",
     "sanitize-html": "^2.7.0",
     "socket.io": "^4.4.1"
-  }
+  },
+  "scripts": {
+    "start": "node backend/server.js"
+ }
 }

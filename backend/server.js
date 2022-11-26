@@ -12,7 +12,7 @@ let games = {};
 
 function start_new_game(admin) {
     //NOTE: in next version of code there should be
-    //  a possibility for admin to set fen, sparePieces
+    //  a possibility for admin to starting position and spares
     let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
     let sparePieces = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
                        'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}};
