@@ -131,9 +131,7 @@ function deepCopy(obj) {
 
 // export all functions
 module.exports = {extractDataFromRequest: extractDataFromRequest,
-                  parse_url: parse_url, //TODO: delete
                   ext_to_type: ext_to_type,
-                  parse_cookies: parse_cookies, //TODO: delete
                   uuid,
                   isValidId,
                   remove_item: remove_item,
