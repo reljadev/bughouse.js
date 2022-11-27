@@ -3,7 +3,6 @@ const ejs = require('ejs');
 const fs = require('fs');
 const utils = require('./utils');
 const sanitize = require('sanitize-html');
-const helmet = require('helmet');
 const socket = require('socket.io');
 const Game = require('./game');
 
@@ -42,33 +41,16 @@ const PORT = process.env.PORT || 3000;
 const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
 
-    // parse url
-    let parsed_url = utils.parse_url(request);
-    let protocol = parsed_url.protocol;
-    let fileName = parsed_url.fileName;
-    let filePath = parsed_url.filePath;
-    let params = parsed_url.params;
-    // parse cookies
-    let cookies = utils.parse_cookies(request);
-    let user_id = cookies.user_id;
-    // sanitize client suplied data
-    params.username = sanitize(params.username);
+    let data = utils.extractDataFromRequest(request); 
 
-    // NOTE: can't set up SSL certificate with heroku free tier
-    // redirect to https
-    // if(protocol !== 'https') {
-    //     response.writeHead(301, {
-    //         Location: 'https://' + request.headers.host + request.url
-    //     }).end();
-    //     return
-    // }
-
+    // TODO: try redirectUserWithDuplicateUsername(response, data.file.name, params)
+    // TODO: try redirectPlayingUser(response, data.file.name, params, user_id)
     // if user wants main_page.ejs or landing page
-    if(fileName === '' || fileName === 'landing_page.html' || fileName === 'main_page.ejs') {
+    if(data.file.name === '' || data.file.name === 'landing_page.html' || data.file.name === 'main_page.ejs') {
         // multiple users with the same username are not allowed
-        if(params.username) {
+        if(data.user.name) {
             for(let i in games) {
-                if(games[i].has_username(params.username)) {
+                if(games[i].has_username(data.user.name)) {
                     // redirect user to landing page
                     response.writeHead(302, {
                         // NOTE: it should either redirect to landing page with note 'username already in use'
@@ -81,13 +63,13 @@ const server = http.createServer(function (request, response) {
         }
 
         // user id is valid
-        if(utils.isValidId(user_id)) {
+        if(utils.isValidId(data.user.id)) {
             // & user already playing in game
-            let g = get_game_containing_user(user_id);
-            if(g && g.get_id() !== params.gameId) {
+            let g = get_game_containing_user(data.user.id);
+            if(g && g.get_id() !== data.game.id) {
                 // redirect user to that game
                 response.writeHead(302, {
-                        Location: `/main_page.ejs?gameId=${g.get_id()}&username=${g.get_player(user_id).get_username()}`
+                        Location: `/main_page.ejs?gameId=${g.get_id()}&username=${g.get_player(data.user.id).get_username()}`
                     }).end();
                 return;
             }         
@@ -97,20 +79,22 @@ const server = http.createServer(function (request, response) {
     
     let currentGame = null;
 
-    if(fileName === 'main_page.ejs') {
+    // try joinExistingGame(data.file.name, params, currentGame)
+    // catch does nothing
+    if(data.file.name === 'main_page.ejs') {
         // join existing game
-        if(params.hasOwnProperty('gameId') && 
-           games.hasOwnProperty(params['gameId'])) {
-            currentGame = games[params['gameId']];
+        if(data.game.id !== null && 
+           games.hasOwnProperty(data.game.id)) {
+            currentGame = games[data.game.id];
 
-            if(!currentGame.has_player(user_id)) {
-                user_id = currentGame.add_new_player();
+            if(!currentGame.has_player(data.user.id)) {
+                data.user.id = currentGame.add_new_player();
             }
             
         // start new game
         } else {
             // set current game
-            let admin = params.username;
+            let admin = data.user.name;
             try {
                 currentGame = start_new_game(admin);
             } catch(error) {
@@ -121,19 +105,20 @@ const server = http.createServer(function (request, response) {
                 return;
             }
             
-            user_id = currentGame.add_new_player();
+            data.user.id = currentGame.add_new_player();
         }
     }
 
     // infer correct content type 
-    let contentType = utils.ext_to_type(filePath);
+    let contentType = utils.ext_to_type(data.file.path);
     //NOTE: undefined is actually variable window.undefined which can be defined, in that case this would break!
     let encoding = contentType.split('/')[0] === 'image' ? undefined : 'utf-8';
 
     // read file & send it to client
-    fs.readFile(filePath, encoding, function(fs_error, content) {
+    fs.readFile(data.file.path, encoding, function(fs_error, content) {
         // error while reading the file
         if (fs_error) {
+            // TODO: returnError(fs_error, response)
             if(fs_error.code == 'ENOENT') {
                 fs.readFile('./404.html', function(fs_error, content) {
                     response.writeHead(200, { 'Content-Type': 'text/html' });
@@ -146,11 +131,12 @@ const server = http.createServer(function (request, response) {
             }
         // file read succesfully
         } else {
+            // TODO: returnFile(response, content, contentType, user_id, data.file.name, params, currentGame)
             response.writeHead(200, { 'Content-Type': contentType,
-                                    'Set-Cookie': 'user_id=' +  user_id });
+                                    'Set-Cookie': 'user_id=' +  data.user.id });
             // renderize ejs page
-            if(fileName === 'main_page.ejs') {
-                let renderizedPage = ejs.render(content, { username: params.username, 
+            if(data.file.name === 'main_page.ejs') {
+                let renderizedPage = ejs.render(content, { username: data.user.name, 
                                                             data: currentGame.info() });
                 response.end(renderizedPage, 'utf-8');
 
