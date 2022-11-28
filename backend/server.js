@@ -4,7 +4,7 @@ const fs = require('fs');
 const utils = require('./utils');
 const sanitize = require('sanitize-html');
 const socket = require('socket.io');
-const Game = require('./game');
+const { gameCoordinator } = require('./games_coordinator');
 
 // CONSTANTS
 const PORT = process.env.PORT || 3000;
@@ -13,35 +13,6 @@ const MAIN_PAGE = "main_page.ejs";
 const LANDING_PAGES = ["", "landing_page.html"];
 const PAGES = [MAIN_PAGE, ...LANDING_PAGES];
 const ERROR_PAGE = "404.html";
-
-const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-const START_SPARES = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
-                      'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}};
-
-//TODO: abstract out in GameCoordinator Singleton class
-// contains all current games
-let games = {};
-
-function startNewGame(admin) {
-    //NOTE: in next version of code there should be
-    //  a possibility for admin to set starting position and spares
-    let g = new Game({ admin: admin, fen: START_FEN, spares: START_SPARES });
-    games[g.get_id()] = g;
-
-    return g;
-}
-
-function getGameContainingUser(user_id) {
-    if(typeof user_id === 'undefined') return null;
-
-    for(let i in games) {
-        if(games[i].has_player(user_id)) {
-            return games[i];
-        }
-    }
-    
-    return null;
-}
 
 class DuplicateUsernameException extends Error {
     constructor(message) {
@@ -62,11 +33,11 @@ class UserInMultipleGamesException extends Error {
 function assertUsernameUniqueness(data) {
     // username is set
     if(data.user.name) {
-        for(let i in games) {
-            // & exists a game already with that username
-            if(games[i].has_username(data.user.name))
-                throw new DuplicateUsernameException(`Username ${data.user.name} already in use`);
-        }
+        let game = gameCoordinator.getGameContainingUsername(data.user.name);
+
+        // exists a game with this username
+        if(game)
+            throw new DuplicateUsernameException(`Username ${data.user.name} already in use`);
     }
 }
 
@@ -79,10 +50,10 @@ function assertUserIsNotAlreadyPlaying(data) {
     // user id is valid
     if(utils.isValidId(data.user.id)) {
         // & user already playing in game
-        let g = getGameContainingUser(data.user.id);
-        if(g && g.get_id() !== data.game.id)
-            throw new UserInMultipleGamesException(`User ${data.user.id} is already playing in ${g.get_id()} game`, 
-                                                    data.user.id, g);    
+        let game = gameCoordinator.getGameContainingUser(data.user.id);
+        if(game && game.get_id() !== data.game.id)
+            throw new UserInMultipleGamesException(`User ${data.user.id} is already playing in ${game.get_id()} game`, 
+                                                    data.user.id, game);    
     }
 }
 
@@ -146,49 +117,20 @@ const server = http.createServer(function (request, response) {
     try {
         let data = utils.extractDataFromRequest(request);
 
+        // request for a page
         if(PAGES.includes(data.file.name)) {
             assertUsernameUniqueness(data);
             assertUserIsNotAlreadyPlaying(data);
 
+            // game page
             if(data.file.name == MAIN_PAGE) {
-                // get game from coordinator
-                let currentGame = null;
-
-                // TODO: joinExistingGame
-                if(data.file.name === MAIN_PAGE) {
-                    // join existing game
-                    if(data.game.id !== null && 
-                    games.hasOwnProperty(data.game.id)) {
-                        currentGame = games[data.game.id];
-
-                        if(!currentGame.has_player(data.user.id)) {
-                            data.user.id = currentGame.add_new_player();
-                        }
-                        
-                    // TODO: try startNewGame
-                    //       catch errorWhileStartingGame 
-                    //       redirect to landing page
-                    // start new game
-                    } else {
-                        // set current game
-                        let admin = data.user.name;
-                        try {
-                            currentGame = startNewGame(admin);
-                        } catch(error) {
-                            //NOTE: it should show a notation, that username was wrong
-                            redirectTo(response, `/${LANDING_PAGES[1]}`);
-                            return; //TODO: remove this after
-                        }
-                        
-                        data.user.id = currentGame.add_new_player();
-                    }
-                }
-
-                // render main page and return it
-                renderizePageAndReturn(response, data, currentGame);
+                let game = gameCoordinator.getGameOfJoiningUser(data);
+                renderizePageAndReturn(response, data, game);
+            // landing page
             } else {
                 returnResources(response, data);
             }
+        // all other resources
         } else {
             returnResources(response, data);
         }
@@ -199,28 +141,31 @@ const server = http.createServer(function (request, response) {
         } else if(err instanceof UserInMultipleGamesException) {
             let g = err.game, uId = err.userId;
             redirectTo(response, `/${MAIN_PAGE}?gameId=${g.get_id()}&username=${g.get_player(uId).get_username()}`);
+        } else if(err instanceof MissingAdminFieldException) { //TODO: should i import this exception?
+            redirectTo(response, `/${LANDING_PAGES[1]}`);
         } else {
             redirectTo(response, `/${ERROR_PAGE}`);
         }
-        //TODO: missing catch for admin exception on game start
     }
 
 });
 
+//TODO: use game coordinator here
 // set up websocket
 let io = socket(server);
 
 io.on('connection', (client) => {
     console.log('A user just connected.');
 
+    //TODO: should i get the game here?
     let game_id = client.request._query['gameId'];
     let user_id = client.request._query['user_id'];
     let username = sanitize(client.request._query['username']);
     
-    if((typeof game_id !== 'undefined' && games.hasOwnProperty(game_id)) &&
-       (typeof username !== 'undefined')) {
+    let game = gameCoordinator.getGameById(game_id);
+    if(game && typeof username !== 'undefined') {
         // update player username & socket
-        let p = games[game_id].get_player(user_id);
+        let p = game.get_player(user_id);
         if(p) {
             client.join(game_id);
 
@@ -238,14 +183,14 @@ io.on('connection', (client) => {
         color = sanitize(color);
         username = sanitize(username);
 
-        let g = games[game_id];
-        if(g) {
-            let p = g.get_player(user_id);
-            if(p && g.is_admin(p)) {
-                let player_set = g.set_player_at_board(board, color, username);
+        let game = gameCoordinator.getGameById(game_id);
+        if(game) {
+            let p = game.get_player(user_id);
+            if(p && game.is_admin(p)) {
+                let player_set = game.set_player_at_board(board, color, username);
                 if(player_set) {
                     client.broadcast.to(game_id).emit('playerJoined', board, color, username);
-                    if(g.boards_are_set()) {
+                    if(game.boards_are_set()) {
                         client.emit('can_start_game');
                     }
                 }
@@ -259,11 +204,11 @@ io.on('connection', (client) => {
         board = sanitize(board);
         color = sanitize(color);
 
-        let g = games[game_id];
-        if(g) {
-            let p = g.get_player(user_id);
-            if(p && g.is_admin(p)) {
-                let player_removed = g.remove_player_from_board(board, color);
+        let game = gameCoordinator.getGameById(game_id);
+        if(game) {
+            let p = game.get_player(user_id);
+            if(p && game.is_admin(p)) {
+                let player_removed = game.remove_player_from_board(board, color);
                 if(player_removed) {
                     client.broadcast.to(game_id).emit('playerRemoved', board, color);
                     client.emit('cant_start_game');
@@ -274,12 +219,12 @@ io.on('connection', (client) => {
 
     // admin has initiated the game
     client.on('game_has_started', (times) => {
-        let g = games[game_id];
-        if(g) {
-            let p = g.get_player(user_id);
-            if(p && g.is_admin(p)) {
-                g.set_times(times);
-                let game_started = g.start();
+        let game = gameCoordinator.getGameById(game_id);
+        if(game) {
+            let p = game.get_player(user_id);
+            if(p && game.is_admin(p)) {
+                game.set_times(times);
+                let game_started = game.start();
         
                 if(game_started) {
                     client.broadcast.to(game_id).emit('game_has_started', times);
@@ -290,41 +235,43 @@ io.on('connection', (client) => {
 
     // on player move
     client.on('move', (board, move, elapsedTime) => {
-        let g = games[game_id];
-        if(g) {
-            let p = g.get_player(user_id);
+        let game = gameCoordinator.getGameById(game_id);
+        if(game) {
+            let p = game.get_player(user_id);
             if(p) {
-                let updated = g.move(board, p, move);
+                let updated = game.move(board, p, move);
                 if(updated) {
-                    g.update_timers(board, elapsedTime);
+                    game.update_timers(board, elapsedTime);
                     // broadcast move & updated timers
-                    client.broadcast.to(g.get_id()).emit('move', board, move,
-                                                                g.get_white_time(board),
-                                                                g.get_black_time(board));
-                    g.check_status();
+                    client.broadcast.to(game.get_id()).emit('move', board, move,
+                                                                    game.get_white_time(board),
+                                                                    game.get_black_time(board));
+                    game.check_status();
                 }
             }
         }
     });
 
     client.on('resigned', () => {
-        let g = games[game_id];
-        if(g) {
-            let p = g.get_player(user_id);
-            if(p) {
-                games[game_id].resigned(p);
+        let game = gameCoordinator.getGameById(game_id);
+
+        if(game) {
+            let player = game.get_player(user_id);
+            if(player) {
+                game.resigned(player);
             }
         }
     });
 
     client.on('reset_game', (fen, sparePieces) => {
-        let g = games[game_id];
-        if(g) {
-            let p = g.get_player(user_id);
-            if(p && g.is_admin(p)) {
-                let position_set = g.set_position(fen, sparePieces);
+        let game = gameCoordinator.getGameById(game_id);
+
+        if(game) {
+            let p = game.get_player(user_id);
+            if(p && game.is_admin(p)) {
+                let position_set = game.set_position(fen, sparePieces);
                 if(position_set) {
-                    g.reset();
+                    game.reset();
                 
                     client.broadcast.to(game_id).emit('reset_game', fen, sparePieces);
                 }
@@ -336,13 +283,14 @@ io.on('connection', (client) => {
     client.on('disconnect', () => {
         console.log('A user has disconnected.');
 
-        let g = games[game_id];
-        if(g) {
-            let p = g.get_player(user_id);
+        let game = gameCoordinator.getGameById(game_id);
+
+        if(game) {
+            let p = game.get_player(user_id);
             if(p) {
-                client.broadcast.to(g.get_id()).emit('disconnected', 
+                client.broadcast.to(game.get_id()).emit('disconnected', 
                                                     p.get_username());
-                g.remove_player(user_id);
+                game.remove_player(user_id);
             }
         }
     });

@@ -7,6 +7,13 @@ const PRE_GAME = Symbol('pre-game');
 const PLAYING = Symbol('playing');
 const POST_GAME = Symbol('post-game');
 
+class MissingAdminFieldException extends Error {
+    constructor(message) {
+        super(message);
+        this.name = this.constructor.name;
+    }
+}
+
 class Game {
     // declare private variables
     #id;
@@ -33,9 +40,9 @@ class Game {
 
         this.#players = {};
         this.#admin = options.admin;
-        if(typeof this.#admin === 'undefined' ||
+        if(typeof this.#admin === 'undefined' || this.#admin === null ||
             typeof this.#admin === 'string' && this.#admin === '') {
-            throw 'admin is a required parameter';
+                throw MissingAdminFieldException('admin is a required parameter');
         }
         this.#white_player1 = options.white_player ?? null;
         this.#black_player1 = options.black_player ?? null;
