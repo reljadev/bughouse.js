@@ -59,9 +59,7 @@ class UserInMultipleGamesException extends Error {
     }
 }
 
-function verifyUsernameUniqueness(data) {
-    if(!PAGES.includes(data.file.name)) return;
-
+function assertUsernameUniqueness(data) {
     // username is set
     if(data.user.name) {
         for(let i in games) {
@@ -72,9 +70,7 @@ function verifyUsernameUniqueness(data) {
     }
 }
 
-function verifyUserIsNotAlreadyPlaying(data) {
-    if(!PAGES.includes(data.file.name)) return;
-
+function assertUserIsNotAlreadyPlaying(data) {
     // NOTE: this has a bug! If user has been in this game
     // as a watcher, his id was set. If he joins later
     // with a different name, possibly some players name
@@ -96,18 +92,37 @@ function redirectTo(response, url) {
     }).end();
 }
 
-function returnFile(response, fileContent, contentType, data, currentGame) {
-    // set header
-    response.writeHead(200, { 'Content-Type': contentType,
-                                'Set-Cookie': 'user_id=' +  data.user.id });
+function renderizePageAndReturn(response, data, game) {
+    fs.readFile(data.file.path, 'utf-8', function(fs_error, fileContent) {
+        if(fs_error) {
+            returnErrorPage(fs_error, response);
+        } else {
+            let content = ejs.render(fileContent, { username: data.user.name, 
+                                                    data: game.info() });
+            returnFile(response, content, 'text/html', data);
+        }
+    });
+}
 
-    let content = null;
-    // inserts data into main page
-    if(data.file.name === MAIN_PAGE)
-        content = ejs.render(fileContent, { username: data.user.name, 
-                                            data: currentGame.info() });
-    // html, js or css file
-    else content = fileContent;
+function returnResources(response, data) {
+    let contentType = utils.fileExtensionToContentType(data.file.path);
+    //NOTE: undefined is actually variable window.undefined which can be defined, in that case this would break!
+    let encoding = contentType.split('/')[0] === 'image' ? undefined : 'utf-8';
+
+    fs.readFile(data.file.path, encoding, function(fs_error, content) {
+        if (fs_error)
+            // TODO: all return should be renamed to setResponse
+            returnErrorPage(fs_error, response);
+        else
+            returnFile(response, content, contentType, data);
+    });
+}
+
+function returnFile(response, content, contentType, data) {
+    // set header
+    let headers = { 'Content-Type': contentType };
+    if(data) headers['Set-Cookie'] = `user_id=${data.user.id}`;
+    response.writeHead(200, headers);
 
     // set content
     response.end(content, 'utf-8');
@@ -116,13 +131,11 @@ function returnFile(response, fileContent, contentType, data, currentGame) {
 function returnErrorPage(fs_error, response) {
     if(fs_error.code == 'ENOENT') {
         fs.readFile(`./${ERROR_PAGE}`, function(fs_error, content) {
-            response.writeHead(200, { 'Content-Type': 'text/html' });
-            response.end(content, 'utf-8');
+            returnFile(response, content, 'text/html');
         });
     } else {
         response.writeHead(500);
         response.end('Sorry, check with the site admin for error: ' + fs_error.code + ' ..\n');
-        response.end(); 
     }
 }
 
@@ -131,70 +144,68 @@ const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
 
     try {
-        let data = utils.extractDataFromRequest(request); 
+        let data = utils.extractDataFromRequest(request);
+
+        if(PAGES.includes(data.file.name)) {
+            assertUsernameUniqueness(data);
+            assertUserIsNotAlreadyPlaying(data);
+
+            if(data.file.name == MAIN_PAGE) {
+                // get game from coordinator
+                let currentGame = null;
+
+                // TODO: joinExistingGame
+                if(data.file.name === MAIN_PAGE) {
+                    // join existing game
+                    if(data.game.id !== null && 
+                    games.hasOwnProperty(data.game.id)) {
+                        currentGame = games[data.game.id];
+
+                        if(!currentGame.has_player(data.user.id)) {
+                            data.user.id = currentGame.add_new_player();
+                        }
+                        
+                    // TODO: try startNewGame
+                    //       catch errorWhileStartingGame 
+                    //       redirect to landing page
+                    // start new game
+                    } else {
+                        // set current game
+                        let admin = data.user.name;
+                        try {
+                            currentGame = startNewGame(admin);
+                        } catch(error) {
+                            //NOTE: it should show a notation, that username was wrong
+                            redirectTo(response, `/${LANDING_PAGES[1]}`);
+                            return; //TODO: remove this after
+                        }
+                        
+                        data.user.id = currentGame.add_new_player();
+                    }
+                }
+
+                // render main page and return it
+                renderizePageAndReturn(response, data, currentGame);
+            } else {
+                returnResources(response, data);
+            }
+        } else {
+            returnResources(response, data);
+        }
         
-        verifyUsernameUniqueness(data);
-        verifyUserIsNotAlreadyPlaying(data);
     } catch(err) {
         if(err instanceof DuplicateUsernameException) {
             redirectTo(response, `/${ERROR_PAGE}`);
-            return; //TODO: remove this after
         } else if(err instanceof UserInMultipleGamesException) {
             let g = err.game, uId = err.userId;
             redirectTo(response, `/${MAIN_PAGE}?gameId=${g.get_id()}&username=${g.get_player(uId).get_username()}`);
-            return; //TODO: remove this after
         } else {
             redirectTo(response, `/${ERROR_PAGE}`);
-            return; //TODO: remove this after
         }
-    }
-    
-    let currentGame = null;
-
-    // TODO: joinExistingGame
-    if(data.file.name === MAIN_PAGE) {
-        // join existing game
-        if(data.game.id !== null && 
-           games.hasOwnProperty(data.game.id)) {
-            currentGame = games[data.game.id];
-
-            if(!currentGame.has_player(data.user.id)) {
-                data.user.id = currentGame.add_new_player();
-            }
-            
-        // TODO: try startNewGame
-        //       catch errorWhileStartingGame 
-        //       redirect to landing page
-        // start new game
-        } else {
-            // set current game
-            let admin = data.user.name;
-            try {
-                currentGame = startNewGame(admin);
-            } catch(error) {
-                //NOTE: it should show a notation, that username was wrong
-                redirectTo(response, `/${LANDING_PAGES[1]}`);
-                return; //TODO: remove this after
-            }
-            
-            data.user.id = currentGame.add_new_player();
-        }
+        //TODO: missing catch for admin exception on game start
     }
 
-    // infer correct content type 
-    let contentType = utils.ext_to_type(data.file.path);
-    //NOTE: undefined is actually variable window.undefined which can be defined, in that case this would break!
-    let encoding = contentType.split('/')[0] === 'image' ? undefined : 'utf-8';
-
-    // read file & send it to client
-    fs.readFile(data.file.path, encoding, function(fs_error, content) {
-        if (fs_error)
-            returnErrorPage(fs_error, response);
-        else
-            returnFile(response, content, contentType, data, currentGame);
-    });
-
-})
+});
 
 // set up websocket
 let io = socket(server);

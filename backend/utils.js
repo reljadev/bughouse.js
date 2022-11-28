@@ -78,15 +78,15 @@ function convertRequestURLToFilePath(parser) {
     return {filePath, fileName};
 }
 
-function ext_to_type(filePath) {
+function fileExtensionToContentType(filePath) {
     let extname = path.extname(filePath);
-    const ext_to_type = {'.html': 'text/html', '.js': 'text/javascript',
+    const extToType = {'.html': 'text/html', '.js': 'text/javascript',
                          '.css': 'text/css', '.ejs': 'text/html',
                          '.json': 'application/json', '.ttf': 'font/ttf',
                          '.png': 'image/png', '.jpg': 'image/jpg',
                          '.svg': 'image/svg+xml', '.ico': 'image/x-icon'};
 
-    return ext_to_type[extname];
+    return extToType[extname];
 }
 
 /***************** ID *****************/
@@ -131,7 +131,7 @@ function deepCopy(obj) {
 
 // export all functions
 module.exports = {extractDataFromRequest: extractDataFromRequest,
-                  ext_to_type: ext_to_type,
+                  fileExtensionToContentType: fileExtensionToContentType,
                   uuid,
                   isValidId,
                   remove_item: remove_item,
