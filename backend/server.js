@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 const MAIN_PAGE = "main_page.ejs";
 const LANDING_PAGES = ["", "landing_page.html"];
 const PAGES = [MAIN_PAGE, ...LANDING_PAGES];
+const ERROR_PAGE = "404.html";
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const START_SPARES = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
@@ -58,7 +59,7 @@ class UserInMultipleGamesException extends Error {
     }
 }
 
-function verifyUsernameUniquness(data) {
+function verifyUsernameUniqueness(data) {
     if(!PAGES.includes(data.file.name)) return;
 
     // username is set
@@ -95,25 +96,55 @@ function redirectTo(response, url) {
     }).end();
 }
 
+function returnFile(response, fileContent, contentType, data, currentGame) {
+    // set header
+    response.writeHead(200, { 'Content-Type': contentType,
+                                'Set-Cookie': 'user_id=' +  data.user.id });
+
+    let content = null;
+    // inserts data into main page
+    if(data.file.name === MAIN_PAGE)
+        content = ejs.render(fileContent, { username: data.user.name, 
+                                            data: currentGame.info() });
+    // html, js or css file
+    else content = fileContent;
+
+    // set content
+    response.end(content, 'utf-8');
+}
+
+function returnErrorPage(fs_error, response) {
+    if(fs_error.code == 'ENOENT') {
+        fs.readFile(`./${ERROR_PAGE}`, function(fs_error, content) {
+            response.writeHead(200, { 'Content-Type': 'text/html' });
+            response.end(content, 'utf-8');
+        });
+    } else {
+        response.writeHead(500);
+        response.end('Sorry, check with the site admin for error: ' + fs_error.code + ' ..\n');
+        response.end(); 
+    }
+}
+
 // create server
 const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
 
-    let data = utils.extractDataFromRequest(request); 
-
     try {
-        verifyUsernameUniquness(data);
+        let data = utils.extractDataFromRequest(request); 
+        
+        verifyUsernameUniqueness(data);
         verifyUserIsNotAlreadyPlaying(data);
     } catch(err) {
         if(err instanceof DuplicateUsernameException) {
-            redirectTo(response, `/404.html`);
+            redirectTo(response, `/${ERROR_PAGE}`);
             return; //TODO: remove this after
         } else if(err instanceof UserInMultipleGamesException) {
             let g = err.game, uId = err.userId;
-            redirectTo(response, `/main_page.ejs?gameId=${g.get_id()}&username=${g.get_player(uId).get_username()}`);
+            redirectTo(response, `/${MAIN_PAGE}?gameId=${g.get_id()}&username=${g.get_player(uId).get_username()}`);
             return; //TODO: remove this after
         } else {
-            redirectTo(response, `/404.html`);
+            redirectTo(response, `/${ERROR_PAGE}`);
             return; //TODO: remove this after
         }
     }
@@ -121,7 +152,7 @@ const server = http.createServer(function (request, response) {
     let currentGame = null;
 
     // TODO: joinExistingGame
-    if(data.file.name === 'main_page.ejs') {
+    if(data.file.name === MAIN_PAGE) {
         // join existing game
         if(data.game.id !== null && 
            games.hasOwnProperty(data.game.id)) {
@@ -141,11 +172,9 @@ const server = http.createServer(function (request, response) {
             try {
                 currentGame = startNewGame(admin);
             } catch(error) {
-                response.writeHead(302, {
-                    //NOTE: it should show a notation, that username was wrong
-                    Location: `/landing_page.html`
-                }).end();
-                return;
+                //NOTE: it should show a notation, that username was wrong
+                redirectTo(response, `/${LANDING_PAGES[1]}`);
+                return; //TODO: remove this after
             }
             
             data.user.id = currentGame.add_new_player();
@@ -159,36 +188,10 @@ const server = http.createServer(function (request, response) {
 
     // read file & send it to client
     fs.readFile(data.file.path, encoding, function(fs_error, content) {
-        // error while reading the file
-        if (fs_error) {
-            // TODO: returnErrorPage(fs_error, response)
-            if(fs_error.code == 'ENOENT') {
-                fs.readFile('./404.html', function(fs_error, content) {
-                    response.writeHead(200, { 'Content-Type': 'text/html' });
-                    response.end(content, 'utf-8');
-                });
-            } else {
-                response.writeHead(500);
-                response.end('Sorry, check with the site admin for error: ' + fs_error.code + ' ..\n');
-                response.end(); 
-            }
-        // file read succesfully
-        } else {
-            // TODO: returnFile(response, content, contentType, data, currentGame)
-            response.writeHead(200, { 'Content-Type': contentType,
-                                    'Set-Cookie': 'user_id=' +  data.user.id });
-            // renderize ejs page
-            if(data.file.name === 'main_page.ejs') {
-                let renderizedPage = ejs.render(content, { username: data.user.name, 
-                                                            data: currentGame.info() });
-                response.end(renderizedPage, 'utf-8');
-
-            // html, js or css file
-            } else {
-                response.end(content, 'utf-8');
-            }
-        }
-        
+        if (fs_error)
+            returnErrorPage(fs_error, response);
+        else
+            returnFile(response, content, contentType, data, currentGame);
     });
 
 })
