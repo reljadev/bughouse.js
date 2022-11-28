@@ -6,24 +6,32 @@ const sanitize = require('sanitize-html');
 const socket = require('socket.io');
 const Game = require('./game');
 
-// games functions
+// CONSTANTS
+const PORT = process.env.PORT || 3000;
+
+const MAIN_PAGE = "main_page.ejs";
+const LANDING_PAGES = ["", "landing_page.html"];
+const PAGES = [MAIN_PAGE, ...LANDING_PAGES];
+
+const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+const START_SPARES = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
+                      'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}};
+
+//TODO: abstract out in GameCoordinator Singleton class
+// contains all current games
 let games = {};
 
-function start_new_game(admin) {
+function startNewGame(admin) {
     //NOTE: in next version of code there should be
-    //  a possibility for admin to starting position and spares
-    let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-    let sparePieces = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
-                       'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}};
-    
-    let g = new Game({ admin: admin, fen: fen, spares: sparePieces });
+    //  a possibility for admin to set starting position and spares
+    let g = new Game({ admin: admin, fen: START_FEN, spares: START_SPARES });
     games[g.get_id()] = g;
 
     return g;
 }
 
-function get_game_containing_user(user_id) {
-    if(typeof user_id === 'undefined') return false;
+function getGameContainingUser(user_id) {
+    if(typeof user_id === 'undefined') return null;
 
     for(let i in games) {
         if(games[i].has_player(user_id)) {
@@ -31,11 +39,61 @@ function get_game_containing_user(user_id) {
         }
     }
     
-    return false;
+    return null;
 }
 
-// CONSTANTS
-const PORT = process.env.PORT || 3000;
+class DuplicateUsernameException extends Error {
+    constructor(message) {
+        super(message);
+        this.name = this.constructor.name;
+    }
+}
+
+class UserInMultipleGamesException extends Error {
+    constructor(message, userId, game) {
+        super(message);
+        this.name = this.constructor.name;
+        this.userId = userId;
+        this.game = game;
+    }
+}
+
+function verifyUsernameUniquness(data) {
+    if(!PAGES.includes(data.file.name)) return;
+
+    // username is set
+    if(data.user.name) {
+        for(let i in games) {
+            // & exists a game already with that username
+            if(games[i].has_username(data.user.name))
+                throw new DuplicateUsernameException(`Username ${data.user.name} already in use`);
+        }
+    }
+}
+
+function verifyUserIsNotAlreadyPlaying(data) {
+    if(!PAGES.includes(data.file.name)) return;
+
+    // NOTE: this has a bug! If user has been in this game
+    // as a watcher, his id was set. If he joins later
+    // with a different name, possibly some players name
+    // who is at that time disconnected, he will be able
+    // to assume his position !
+    // user id is valid
+    if(utils.isValidId(data.user.id)) {
+        // & user already playing in game
+        let g = getGameContainingUser(data.user.id);
+        if(g && g.get_id() !== data.game.id)
+            throw new UserInMultipleGamesException(`User ${data.user.id} is already playing in ${g.get_id()} game`, 
+                                                    data.user.id, g);    
+    }
+}
+
+function redirectTo(response, url) {
+    response.writeHead(302, {
+        Location: url
+    }).end();
+}
 
 // create server
 const server = http.createServer(function (request, response) {
@@ -43,44 +101,26 @@ const server = http.createServer(function (request, response) {
 
     let data = utils.extractDataFromRequest(request); 
 
-    // TODO: try redirectUserWithDuplicateUsername(response, data.file.name, params)
-    // TODO: try redirectPlayingUser(response, data.file.name, params, user_id)
-    // if user wants main_page.ejs or landing page
-    if(data.file.name === '' || data.file.name === 'landing_page.html' || data.file.name === 'main_page.ejs') {
-        // multiple users with the same username are not allowed
-        if(data.user.name) {
-            for(let i in games) {
-                if(games[i].has_username(data.user.name)) {
-                    // redirect user to landing page
-                    response.writeHead(302, {
-                        // NOTE: it should either redirect to landing page with note 'username already in use'
-                        // or redirect to game page with an alert that joining two games at once is not currently supported
-                        Location: `/404.html`
-                    }).end();
-                    return;
-                }
-            }
+    try {
+        verifyUsernameUniquness(data);
+        verifyUserIsNotAlreadyPlaying(data);
+    } catch(err) {
+        if(err instanceof DuplicateUsernameException) {
+            redirectTo(response, `/404.html`);
+            return; //TODO: remove this after
+        } else if(err instanceof UserInMultipleGamesException) {
+            let g = err.game, uId = err.userId;
+            redirectTo(response, `/main_page.ejs?gameId=${g.get_id()}&username=${g.get_player(uId).get_username()}`);
+            return; //TODO: remove this after
+        } else {
+            redirectTo(response, `/404.html`);
+            return; //TODO: remove this after
         }
-
-        // user id is valid
-        if(utils.isValidId(data.user.id)) {
-            // & user already playing in game
-            let g = get_game_containing_user(data.user.id);
-            if(g && g.get_id() !== data.game.id) {
-                // redirect user to that game
-                response.writeHead(302, {
-                        Location: `/main_page.ejs?gameId=${g.get_id()}&username=${g.get_player(data.user.id).get_username()}`
-                    }).end();
-                return;
-            }         
-        }
-
     }
     
     let currentGame = null;
 
-    // try joinExistingGame(data.file.name, params, currentGame)
-    // catch does nothing
+    // TODO: joinExistingGame
     if(data.file.name === 'main_page.ejs') {
         // join existing game
         if(data.game.id !== null && 
@@ -91,12 +131,15 @@ const server = http.createServer(function (request, response) {
                 data.user.id = currentGame.add_new_player();
             }
             
+        // TODO: try startNewGame
+        //       catch errorWhileStartingGame 
+        //       redirect to landing page
         // start new game
         } else {
             // set current game
             let admin = data.user.name;
             try {
-                currentGame = start_new_game(admin);
+                currentGame = startNewGame(admin);
             } catch(error) {
                 response.writeHead(302, {
                     //NOTE: it should show a notation, that username was wrong
@@ -118,7 +161,7 @@ const server = http.createServer(function (request, response) {
     fs.readFile(data.file.path, encoding, function(fs_error, content) {
         // error while reading the file
         if (fs_error) {
-            // TODO: returnError(fs_error, response)
+            // TODO: returnErrorPage(fs_error, response)
             if(fs_error.code == 'ENOENT') {
                 fs.readFile('./404.html', function(fs_error, content) {
                     response.writeHead(200, { 'Content-Type': 'text/html' });
@@ -131,7 +174,7 @@ const server = http.createServer(function (request, response) {
             }
         // file read succesfully
         } else {
-            // TODO: returnFile(response, content, contentType, user_id, data.file.name, params, currentGame)
+            // TODO: returnFile(response, content, contentType, data, currentGame)
             response.writeHead(200, { 'Content-Type': contentType,
                                     'Set-Cookie': 'user_id=' +  data.user.id });
             // renderize ejs page
