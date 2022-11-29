@@ -2,6 +2,7 @@ const http = require('http');
 const ejs = require('ejs');
 const fs = require('fs');
 const utils = require('./utils');
+const { MissingAdminFieldException } = require('./game');
 const { gameCoordinator } = require('./games_coordinator');
 const { initalizeClientIO } = require('./clientIO');
 

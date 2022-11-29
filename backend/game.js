@@ -543,4 +543,5 @@ Game.Player = class Player {
     }
 }
 
-module.exports = Game;
+module.exports = {Game: Game, 
+                  MissingAdminFieldException: MissingAdminFieldException};
