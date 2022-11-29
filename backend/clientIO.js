@@ -1,6 +1,6 @@
 const sanitize = require('sanitize-html');
 const socket = require('socket.io');
-const { gameCoordinator } = require('./games_coordinator');
+const { gameCoordinator } = require('./gameCoordinator');
 
 /**********************************************************/
 /*                  CLIENT COMMUNICATION                  */

@@ -5,7 +5,7 @@ const { extractDataFromRequest } = require('./utils/requestParser');
 const { fileExtensionToContentType } = require('./utils/fileHandler');
 const { isValidId } = require('./utils/idHandler');
 const { MissingAdminFieldException } = require('./game/game');
-const { gameCoordinator } = require('./games_coordinator');
+const { gameCoordinator } = require('./gameCoordinator');
 const { initalizeClientIO } = require('./clientIO');
 
 // CONSTANTS

@@ -12,7 +12,7 @@ const START_SPARES = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
 let instance;
 let games = {};
 
-class GamesCoordinator {
+class GameCoordinator {
 
     constructor() {
         if(instance)
@@ -88,7 +88,7 @@ class GamesCoordinator {
 }
 
 // initialize singleton object & make it immutable
-let gameCoordinator = Object.freeze(new GamesCoordinator());
+let gameCoordinator = Object.freeze(new GameCoordinator());
 
 /**********************************************************/
 /*                   EXCEPTION CLASSES                    */
