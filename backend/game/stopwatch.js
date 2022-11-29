@@ -1,4 +1,4 @@
-const { deepCopy } = require("./utils/misc");
+const { deepCopy } = require("../utils/misc");
 
 class Stopwatch {
     // declare private variables

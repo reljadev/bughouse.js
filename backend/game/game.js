@@ -1,6 +1,6 @@
-const Chess = require("./modules/chess.js/chess");
+const Chess = require("../modules/chess.js/chess");
 const Stopwatch = require("./stopwatch");
-const { uuid } = require("./utils/idHandler");
+const { uuid } = require("../utils/idHandler");
 
 // STAGE ENUM
 const PRE_GAME = Symbol('pre-game');

@@ -4,7 +4,7 @@ const fs = require('fs');
 const { extractDataFromRequest } = require('./utils/requestParser');
 const { fileExtensionToContentType } = require('./utils/fileHandler');
 const { isValidId } = require('./utils/idHandler');
-const { MissingAdminFieldException } = require('./game');
+const { MissingAdminFieldException } = require('./game/game');
 const { gameCoordinator } = require('./games_coordinator');
 const { initalizeClientIO } = require('./clientIO');
 
