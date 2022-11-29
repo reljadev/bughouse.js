@@ -1,7 +1,9 @@
 const http = require('http');
 const ejs = require('ejs');
 const fs = require('fs');
-const utils = require('./utils');
+const { extractDataFromRequest } = require('./utils/requestParser');
+const { fileExtensionToContentType } = require('./utils/fileHandler');
+const { isValidId } = require('./utils/idHandler');
 const { MissingAdminFieldException } = require('./game');
 const { gameCoordinator } = require('./games_coordinator');
 const { initalizeClientIO } = require('./clientIO');
@@ -23,7 +25,7 @@ const server = http.createServer(function (request, response) {
     console.log('requesting ' + request.url);
 
     try {
-        let data = utils.extractDataFromRequest(request);
+        let data = extractDataFromRequest(request);
 
         // request for a page
         if(PAGES.includes(data.file.name)) {
@@ -49,7 +51,7 @@ const server = http.createServer(function (request, response) {
         } else if(err instanceof UserInMultipleGamesException) {
             let g = err.game, uId = err.userId;
             redirectTo(response, `/${MAIN_PAGE}?gameId=${g.get_id()}&username=${g.get_player(uId).get_username()}`);
-        } else if(err instanceof MissingAdminFieldException) { //TODO: should i import this exception?
+        } else if(err instanceof MissingAdminFieldException) {
             redirectTo(response, `/${LANDING_PAGES[1]}`);
         } else {
             redirectTo(response, `/${ERROR_PAGE}`);
@@ -67,7 +69,7 @@ server.listen(PORT, function(error) {
     }
 });
 
-// set up socket communication
+// set up SOCKET communication
 initalizeClientIO(server);
 
 /**********************************************************/
@@ -112,7 +114,7 @@ function assertUserIsNotAlreadyPlaying(data) {
     // who is at that time disconnected, he will be able
     // to assume his position !
     // user id is valid
-    if(utils.isValidId(data.user.id)) {
+    if(isValidId(data.user.id)) {
         // & user already playing in game
         let game = gameCoordinator.getGameContainingUser(data.user.id);
         if(game && game.get_id() !== data.game.id)
@@ -140,7 +142,7 @@ function setResponseToRenderizedGamePage(response, data, game) {
 }
 
 function setResponseToRequestedResources(response, data) {
-    let contentType = utils.fileExtensionToContentType(data.file.path);
+    let contentType = fileExtensionToContentType(data.file.path);
     //NOTE: undefined is actually variable window.undefined which can be defined, in that case this would break!
     let encoding = contentType.split('/')[0] === 'image' ? undefined : 'utf-8';
 

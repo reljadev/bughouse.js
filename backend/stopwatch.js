@@ -1,4 +1,4 @@
-const utils = require("./utils")
+const { deepCopy } = require("./utils/misc");
 
 class Stopwatch {
     // declare private variables
@@ -13,7 +13,7 @@ class Stopwatch {
         options = options ?? {};
         options.clock = options.clock ?? 5 * 1000 * 60; // 5 minutes
         options.delay = options.delay ?? 1; // 1 ms
-        this.#options = utils.deepCopy(options);
+        this.#options = deepCopy(options);
 
         // initialize
         this.reset();

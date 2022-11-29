@@ -1,6 +1,6 @@
-const Chess = require("./modules/chess.js/chess")
-const Stopwatch = require("./stopwatch")
-const utils = require("./utils")
+const Chess = require("./modules/chess.js/chess");
+const Stopwatch = require("./stopwatch");
+const { uuid } = require("./utils/idHandler");
 
 // STAGE ENUM
 const PRE_GAME = Symbol('pre-game');
@@ -32,7 +32,7 @@ class Game {
     #black_timer2;
 
     constructor(options) {
-        this.#id = utils.uuid(8);
+        this.#id = uuid(8);
 
         this.#chess1 = new Chess(options.fen, options.spares);
         this.#chess2 = new Chess(options.fen, options.spares);
@@ -513,7 +513,7 @@ class Game {
 }
 
 Game.Player = class Player {
-    #user_id = utils.uuid(16);
+    #user_id = uuid(16);
     #username = null;
     #socket = null;
 
