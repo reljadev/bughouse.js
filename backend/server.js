@@ -32,14 +32,14 @@ const server = http.createServer(function (request, response) {
             // game page
             if(data.file.name == MAIN_PAGE) {
                 let game = gameCoordinator.getGameOfJoiningUser(data);
-                renderizePageAndReturn(response, data, game);
+                setResponseToRenderizedGamePage(response, data, game);
             // landing page
             } else {
-                returnResources(response, data);
+                setResponseToRequestedResources(response, data);
             }
         // all other resources
         } else {
-            returnResources(response, data);
+            setResponseToRequestedResources(response, data);
         }
         
     } catch(err) {
@@ -126,36 +126,35 @@ function redirectTo(response, url) {
     }).end();
 }
 
-function renderizePageAndReturn(response, data, game) {
+function setResponseToRenderizedGamePage(response, data, game) {
     fs.readFile(data.file.path, 'utf-8', function(fs_error, fileContent) {
         if(fs_error) {
-            returnErrorPage(fs_error, response);
+            setResponseToErrorPage(fs_error, response);
         } else {
             let content = ejs.render(fileContent, { username: data.user.name, 
                                                     data: game.info() });
-            returnFile(response, content, 'text/html', data);
+            setResponseToRequstedFile(response, content, 'text/html', data);
         }
     });
 }
 
-function returnResources(response, data) {
+function setResponseToRequestedResources(response, data) {
     let contentType = utils.fileExtensionToContentType(data.file.path);
     //NOTE: undefined is actually variable window.undefined which can be defined, in that case this would break!
     let encoding = contentType.split('/')[0] === 'image' ? undefined : 'utf-8';
 
     fs.readFile(data.file.path, encoding, function(fs_error, content) {
         if (fs_error)
-            // TODO: all return should be renamed to setResponse
-            returnErrorPage(fs_error, response);
+            setResponseToErrorPage(fs_error, response);
         else
-            returnFile(response, content, contentType, data);
+            setResponseToRequstedFile(response, content, contentType, data);
     });
 }
 
-function returnErrorPage(fs_error, response) {
+function setResponseToErrorPage(fs_error, response) {
     if(fs_error.code == 'ENOENT') {
         fs.readFile(`./${ERROR_PAGE}`, function(fs_error, content) {
-            returnFile(response, content, 'text/html');
+            setResponseToRequstedFile(response, content, 'text/html');
         });
     } else {
         response.writeHead(500);
@@ -163,7 +162,7 @@ function returnErrorPage(fs_error, response) {
     }
 }
 
-function returnFile(response, content, contentType, data) {
+function setResponseToRequstedFile(response, content, contentType, data) {
     // set header
     let headers = { 'Content-Type': contentType };
     if(data) headers['Set-Cookie'] = `user_id=${data.user.id}`;
