@@ -2,9 +2,8 @@ const http = require('http');
 const ejs = require('ejs');
 const fs = require('fs');
 const utils = require('./utils');
-const sanitize = require('sanitize-html');
-const socket = require('socket.io');
 const { gameCoordinator } = require('./games_coordinator');
+const { initalizeClientIO } = require('./clientIO');
 
 // CONSTANTS
 const PORT = process.env.PORT || 3000;
@@ -13,6 +12,66 @@ const MAIN_PAGE = "main_page.ejs";
 const LANDING_PAGES = ["", "landing_page.html"];
 const PAGES = [MAIN_PAGE, ...LANDING_PAGES];
 const ERROR_PAGE = "404.html";
+
+/**********************************************************/
+/*                         SERVER                         */
+/**********************************************************/
+
+// create server
+const server = http.createServer(function (request, response) {
+    console.log('requesting ' + request.url);
+
+    try {
+        let data = utils.extractDataFromRequest(request);
+
+        // request for a page
+        if(PAGES.includes(data.file.name)) {
+            assertUsernameUniqueness(data);
+            assertUserIsNotAlreadyPlaying(data);
+
+            // game page
+            if(data.file.name == MAIN_PAGE) {
+                let game = gameCoordinator.getGameOfJoiningUser(data);
+                renderizePageAndReturn(response, data, game);
+            // landing page
+            } else {
+                returnResources(response, data);
+            }
+        // all other resources
+        } else {
+            returnResources(response, data);
+        }
+        
+    } catch(err) {
+        if(err instanceof DuplicateUsernameException) {
+            redirectTo(response, `/${ERROR_PAGE}`);
+        } else if(err instanceof UserInMultipleGamesException) {
+            let g = err.game, uId = err.userId;
+            redirectTo(response, `/${MAIN_PAGE}?gameId=${g.get_id()}&username=${g.get_player(uId).get_username()}`);
+        } else if(err instanceof MissingAdminFieldException) { //TODO: should i import this exception?
+            redirectTo(response, `/${LANDING_PAGES[1]}`);
+        } else {
+            redirectTo(response, `/${ERROR_PAGE}`);
+        }
+    }
+
+});
+
+// listen for upcomming connection
+server.listen(PORT, function(error) {
+    if(error) {
+        console.log('Error occured while trying to set up a server ' + error);
+    } else {
+        console.log('Server is listening on port ' + PORT);
+    }
+});
+
+// set up socket communication
+initalizeClientIO(server);
+
+/**********************************************************/
+/*                   EXCEPTION CLASSES                    */
+/**********************************************************/
 
 class DuplicateUsernameException extends Error {
     constructor(message) {
@@ -29,6 +88,10 @@ class UserInMultipleGamesException extends Error {
         this.game = game;
     }
 }
+
+/**********************************************************/
+/*                     HELPER METHODS                     */
+/**********************************************************/
 
 function assertUsernameUniqueness(data) {
     // username is set
@@ -89,16 +152,6 @@ function returnResources(response, data) {
     });
 }
 
-function returnFile(response, content, contentType, data) {
-    // set header
-    let headers = { 'Content-Type': contentType };
-    if(data) headers['Set-Cookie'] = `user_id=${data.user.id}`;
-    response.writeHead(200, headers);
-
-    // set content
-    response.end(content, 'utf-8');
-}
-
 function returnErrorPage(fs_error, response) {
     if(fs_error.code == 'ENOENT') {
         fs.readFile(`./${ERROR_PAGE}`, function(fs_error, content) {
@@ -110,197 +163,12 @@ function returnErrorPage(fs_error, response) {
     }
 }
 
-// create server
-const server = http.createServer(function (request, response) {
-    console.log('requesting ' + request.url);
+function returnFile(response, content, contentType, data) {
+    // set header
+    let headers = { 'Content-Type': contentType };
+    if(data) headers['Set-Cookie'] = `user_id=${data.user.id}`;
+    response.writeHead(200, headers);
 
-    try {
-        let data = utils.extractDataFromRequest(request);
-
-        // request for a page
-        if(PAGES.includes(data.file.name)) {
-            assertUsernameUniqueness(data);
-            assertUserIsNotAlreadyPlaying(data);
-
-            // game page
-            if(data.file.name == MAIN_PAGE) {
-                let game = gameCoordinator.getGameOfJoiningUser(data);
-                renderizePageAndReturn(response, data, game);
-            // landing page
-            } else {
-                returnResources(response, data);
-            }
-        // all other resources
-        } else {
-            returnResources(response, data);
-        }
-        
-    } catch(err) {
-        if(err instanceof DuplicateUsernameException) {
-            redirectTo(response, `/${ERROR_PAGE}`);
-        } else if(err instanceof UserInMultipleGamesException) {
-            let g = err.game, uId = err.userId;
-            redirectTo(response, `/${MAIN_PAGE}?gameId=${g.get_id()}&username=${g.get_player(uId).get_username()}`);
-        } else if(err instanceof MissingAdminFieldException) { //TODO: should i import this exception?
-            redirectTo(response, `/${LANDING_PAGES[1]}`);
-        } else {
-            redirectTo(response, `/${ERROR_PAGE}`);
-        }
-    }
-
-});
-
-//TODO: use game coordinator here
-// set up websocket
-let io = socket(server);
-
-io.on('connection', (client) => {
-    console.log('A user just connected.');
-
-    //TODO: should i get the game here?
-    let game_id = client.request._query['gameId'];
-    let user_id = client.request._query['user_id'];
-    let username = sanitize(client.request._query['username']);
-    
-    let game = gameCoordinator.getGameById(game_id);
-    if(game && typeof username !== 'undefined') {
-        // update player username & socket
-        let p = game.get_player(user_id);
-        if(p) {
-            client.join(game_id);
-
-            p.set_username(username);
-            p.set_socket(client);
-
-            client.broadcast.to(game_id).emit('joined', username);
-        }
-    }
-
-    // player set at board
-    client.on('playerJoined', (board, color, username) => {
-        // sanitize client suplied data
-        board = sanitize(board);
-        color = sanitize(color);
-        username = sanitize(username);
-
-        let game = gameCoordinator.getGameById(game_id);
-        if(game) {
-            let p = game.get_player(user_id);
-            if(p && game.is_admin(p)) {
-                let player_set = game.set_player_at_board(board, color, username);
-                if(player_set) {
-                    client.broadcast.to(game_id).emit('playerJoined', board, color, username);
-                    if(game.boards_are_set()) {
-                        client.emit('can_start_game');
-                    }
-                }
-            }
-        }
-    });
-
-    // player removed from board
-    client.on('playerRemoved', (board, color) => {
-        // sanitize client suplied data
-        board = sanitize(board);
-        color = sanitize(color);
-
-        let game = gameCoordinator.getGameById(game_id);
-        if(game) {
-            let p = game.get_player(user_id);
-            if(p && game.is_admin(p)) {
-                let player_removed = game.remove_player_from_board(board, color);
-                if(player_removed) {
-                    client.broadcast.to(game_id).emit('playerRemoved', board, color);
-                    client.emit('cant_start_game');
-                }
-            }
-        }
-    });
-
-    // admin has initiated the game
-    client.on('game_has_started', (times) => {
-        let game = gameCoordinator.getGameById(game_id);
-        if(game) {
-            let p = game.get_player(user_id);
-            if(p && game.is_admin(p)) {
-                game.set_times(times);
-                let game_started = game.start();
-        
-                if(game_started) {
-                    client.broadcast.to(game_id).emit('game_has_started', times);
-                }
-            }
-        }
-    });
-
-    // on player move
-    client.on('move', (board, move, elapsedTime) => {
-        let game = gameCoordinator.getGameById(game_id);
-        if(game) {
-            let p = game.get_player(user_id);
-            if(p) {
-                let updated = game.move(board, p, move);
-                if(updated) {
-                    game.update_timers(board, elapsedTime);
-                    // broadcast move & updated timers
-                    client.broadcast.to(game.get_id()).emit('move', board, move,
-                                                                    game.get_white_time(board),
-                                                                    game.get_black_time(board));
-                    game.check_status();
-                }
-            }
-        }
-    });
-
-    client.on('resigned', () => {
-        let game = gameCoordinator.getGameById(game_id);
-
-        if(game) {
-            let player = game.get_player(user_id);
-            if(player) {
-                game.resigned(player);
-            }
-        }
-    });
-
-    client.on('reset_game', (fen, sparePieces) => {
-        let game = gameCoordinator.getGameById(game_id);
-
-        if(game) {
-            let p = game.get_player(user_id);
-            if(p && game.is_admin(p)) {
-                let position_set = game.set_position(fen, sparePieces);
-                if(position_set) {
-                    game.reset();
-                
-                    client.broadcast.to(game_id).emit('reset_game', fen, sparePieces);
-                }
-            }
-        }
-    });
-
-    // player has disconnected
-    client.on('disconnect', () => {
-        console.log('A user has disconnected.');
-
-        let game = gameCoordinator.getGameById(game_id);
-
-        if(game) {
-            let p = game.get_player(user_id);
-            if(p) {
-                client.broadcast.to(game.get_id()).emit('disconnected', 
-                                                    p.get_username());
-                game.remove_player(user_id);
-            }
-        }
-    });
-});
-
-// listen for upcomming connection
-server.listen(PORT, function(error) {
-    if(error) {
-        console.log('Error occured while trying to set up a server ' + error);
-    } else {
-        console.log('Server is listening on port ' + PORT);
-    }
-});
+    // set content
+    response.end(content, 'utf-8');
+}

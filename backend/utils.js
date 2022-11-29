@@ -129,7 +129,6 @@ function deepCopy(obj) {
 
 /***************** EXPORTS *****************/
 
-// export all functions
 module.exports = {extractDataFromRequest: extractDataFromRequest,
                   fileExtensionToContentType: fileExtensionToContentType,
                   uuid,

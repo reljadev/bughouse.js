@@ -5,13 +5,9 @@ const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 const START_SPARES = {'white': {'wP': 0, 'wN': 0, 'wB': 0, 'wR': 0, 'wQ': 0},
                       'black': {'bP': 0, 'bN': 0, 'bB': 0, 'bR': 0, 'bQ': 0}};
 
-
-class MultipleInstantiationOfSingletonException extends Error {
-    constructor(message) {
-        super(message);
-        this.name = this.constructor.name;
-    }
-}
+/**********************************************************/
+/*                    GAME COORDINATOR                    */
+/**********************************************************/
 
 let instance;
 let games = {};
@@ -91,6 +87,19 @@ class GamesCoordinator {
 
 }
 
+// initialize singleton object & make it immutable
 let gameCoordinator = Object.freeze(new GamesCoordinator());
 
+/**********************************************************/
+/*                   EXCEPTION CLASSES                    */
+/**********************************************************/
+
+class MultipleInstantiationOfSingletonException extends Error {
+    constructor(message) {
+        super(message);
+        this.name = this.constructor.name;
+    }
+}
+
+// EXPORTS
 module.exports = {gameCoordinator: gameCoordinator};
