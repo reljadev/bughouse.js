@@ -6,7 +6,7 @@ const { gameCoordinator } = require('./gameCoordinator');
 /*                  CLIENT COMMUNICATION                  */
 /**********************************************************/
 
-function initalizeClientIO(server) {
+function initializeClientIO(server) {
     let io = socket(server);
 
     io.on('connection', (client) => {
@@ -183,4 +183,4 @@ function setClientEventHandlers(client, player, game) {
 }
 
 // EXPORTS
-module.exports = {initalizeClientIO: initalizeClientIO};
+module.exports = { initializeClientIO };
