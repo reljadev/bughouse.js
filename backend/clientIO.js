@@ -13,12 +13,12 @@ function initalizeClientIO(server) {
         console.log('A user just connected.');
 
         try {
-            let { game_id, username } = getClientInfo(client);
+            let { gameId, username } = getClientInfo(client);
             let { game, player } = getClientGameAndPlayer(client);
             updatePlayerInfo(player, client);
 
-            client.join(game_id);
-            client.broadcast.to(game_id).emit('joined', username);
+            client.join(gameId);
+            client.broadcast.to(gameId).emit('joined', username);
 
             setClientEventHandlers(client, player, game);
         } catch(err) {
@@ -62,24 +62,24 @@ class MissingUsernameException extends Error {
 /**********************************************************/
 
 function getClientInfo(client) {
-    let game_id = client.request._query['gameId'];
-    let user_id = client.request._query['user_id'];
+    let gameId = client.request._query['gameId'];
+    let userId = client.request._query['user_id'];
     let username = sanitize(client.request._query['username']);
 
-    return { game_id, user_id, username };
+    return { gameId, userId, username };
 }
 
 function getClientGameAndPlayer(client) {
-    let { game_id, user_id } = getClientInfo(client);
+    let { gameId, userId } = getClientInfo(client);
 
-    let game = gameCoordinator.getGameById(game_id);
+    let game = gameCoordinator.getGameById(gameId);
     if(game == null)
-        throw new NonExistentGameException(`Game ${game_id} doesn't exist`, game_id);
+        throw new NonExistentGameException(`Game ${gameId} doesn't exist`, gameId);
 
-    player = game.get_player(user_id);
+    player = game.getPlayer(userId);
     if(player == null)
-        throw new NonExistentPlayerException(`Player with id ${user_id} doesn't exist in game ${game_id}`,
-                                                user_id, game_id);
+        throw new NonExistentPlayerException(`Player with id ${userId} doesn't exist in game ${gameId}`,
+                                                userId, gameId);
 
     return { game, player };
 }
@@ -91,12 +91,12 @@ function updatePlayerInfo(player, client) {
         username == null || username.length == 0)
             throw new MissingUsernameException(`Username is required`);
         
-    player.set_username(username);
-    player.set_socket(client);
+    player.setUsername(username);
+    player.setSocket(client);
 }
 
 function setClientEventHandlers(client, player, game) {
-    let { game_id, user_id } = getClientInfo(client);
+    let { gameId, userId } = getClientInfo(client);
 
     // player set at board
     client.on('playerJoined', (board, color, username) => {
@@ -105,11 +105,11 @@ function setClientEventHandlers(client, player, game) {
         color = sanitize(color);
         username = sanitize(username);
 
-        if(game.is_admin(player)) {
-            let player_set = game.set_player_at_board(board, color, username);
-            if(player_set) {
-                client.broadcast.to(game_id).emit('playerJoined', board, color, username);
-                if(game.boards_are_set()) {
+        if(game.isAdmin(player)) {
+            let playerSet = game.setPlayerAtBoard(board, color, username);
+            if(playerSet) {
+                client.broadcast.to(gameId).emit('playerJoined', board, color, username);
+                if(game.boardsAreSet()) {
                     client.emit('can_start_game');
                 }
             }
@@ -122,10 +122,10 @@ function setClientEventHandlers(client, player, game) {
         board = sanitize(board);
         color = sanitize(color);
 
-        if(game.is_admin(player)) {
-            let player_removed = game.remove_player_from_board(board, color);
-            if(player_removed) {
-                client.broadcast.to(game_id).emit('playerRemoved', board, color);
+        if(game.isAdmin(player)) {
+            let playerRemoved = game.removePlayerFromBoard(board, color);
+            if(playerRemoved) {
+                client.broadcast.to(gameId).emit('playerRemoved', board, color);
                 client.emit('cant_start_game');
             }
         }
@@ -133,12 +133,12 @@ function setClientEventHandlers(client, player, game) {
 
     // admin has initiated the game
     client.on('game_has_started', (times) => {
-        if(game.is_admin(player)) {
-            game.set_times(times);
-            let game_started = game.start();
+        if(game.isAdmin(player)) {
+            game.setTimes(times);
+            let gameStarted = game.start();
     
-            if(game_started) {
-                client.broadcast.to(game_id).emit('game_has_started', times);
+            if(gameStarted) {
+                client.broadcast.to(gameId).emit('game_has_started', times);
             }
         }
     });
@@ -148,12 +148,12 @@ function setClientEventHandlers(client, player, game) {
         let updated = game.move(board, player, move);
 
         if(updated) {
-            game.update_timers(board, elapsedTime);
+            game.updateTimers(board, elapsedTime);
             // broadcast move & updated timers
-            client.broadcast.to(game.get_id()).emit('move', board, move,
-                                                            game.get_white_time(board),
-                                                            game.get_black_time(board));
-            game.check_status();
+            client.broadcast.to(game.getId()).emit('move', board, move,
+                                                            game.getWhiteTime(board),
+                                                            game.getBlackTime(board));
+            game.checkStatus();
         }
     });
 
@@ -162,12 +162,12 @@ function setClientEventHandlers(client, player, game) {
     });
 
     client.on('reset_game', (fen, sparePieces) => {
-        if(game.is_admin(player)) {
-            let position_set = game.set_position(fen, sparePieces);
-            if(position_set) {
+        if(game.isAdmin(player)) {
+            let positionSet = game.setPosition(fen, sparePieces);
+            if(positionSet) {
                 game.reset();
             
-                client.broadcast.to(game_id).emit('reset_game', fen, sparePieces);
+                client.broadcast.to(gameId).emit('reset_game', fen, sparePieces);
             }
         }
     });
@@ -176,9 +176,9 @@ function setClientEventHandlers(client, player, game) {
     client.on('disconnect', () => {
         console.log('A user has disconnected.');
 
-        client.broadcast.to(game.get_id()).emit('disconnected', 
-                                                player.get_username());
-        game.remove_player(user_id);
+        client.broadcast.to(game.getId()).emit('disconnected', 
+                                                player.getUsername());
+        game.removePlayer(userId);
     });
 }
 

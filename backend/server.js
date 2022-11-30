@@ -50,7 +50,7 @@ const server = http.createServer(function (request, response) {
             redirectTo(response, `/${ERROR_PAGE}`);
         } else if(err instanceof UserInMultipleGamesException) {
             let g = err.game, uId = err.userId;
-            redirectTo(response, `/${MAIN_PAGE}?gameId=${g.get_id()}&username=${g.get_player(uId).get_username()}`);
+            redirectTo(response, `/${MAIN_PAGE}?gameId=${g.getId()}&username=${g.getPlayer(uId).getUsername()}`);
         } else if(err instanceof MissingAdminFieldException) {
             redirectTo(response, `/${LANDING_PAGES[1]}`);
         } else {
@@ -117,8 +117,8 @@ function assertUserIsNotAlreadyPlaying(data) {
     if(isValidId(data.user.id)) {
         // & user already playing in game
         let game = gameCoordinator.getGameContainingUser(data.user.id);
-        if(game && game.get_id() !== data.game.id)
-            throw new UserInMultipleGamesException(`User ${data.user.id} is already playing in ${game.get_id()} game`, 
+        if(game && game.getId() !== data.game.id)
+            throw new UserInMultipleGamesException(`User ${data.user.id} is already playing in ${game.getId()} game`, 
                                                     data.user.id, game);    
     }
 }
@@ -130,9 +130,9 @@ function redirectTo(response, url) {
 }
 
 function setResponseToRenderizedGamePage(response, data, game) {
-    fs.readFile(data.file.path, 'utf-8', function(fs_error, fileContent) {
-        if(fs_error) {
-            setResponseToErrorPage(fs_error, response);
+    fs.readFile(data.file.path, 'utf-8', function(fsError, fileContent) {
+        if(fsError) {
+            setResponseToErrorPage(fsError, response);
         } else {
             let content = ejs.render(fileContent, { username: data.user.name, 
                                                     data: game.info() });
@@ -146,22 +146,22 @@ function setResponseToRequestedResources(response, data) {
     //NOTE: undefined is actually variable window.undefined which can be defined, in that case this would break!
     let encoding = contentType.split('/')[0] === 'image' ? undefined : 'utf-8';
 
-    fs.readFile(data.file.path, encoding, function(fs_error, content) {
-        if (fs_error)
-            setResponseToErrorPage(fs_error, response);
+    fs.readFile(data.file.path, encoding, function(fsError, content) {
+        if (fsError)
+            setResponseToErrorPage(fsError, response);
         else
             setResponseToRequstedFile(response, content, contentType, data);
     });
 }
 
-function setResponseToErrorPage(fs_error, response) {
-    if(fs_error.code == 'ENOENT') {
-        fs.readFile(`./${ERROR_PAGE}`, function(fs_error, content) {
+function setResponseToErrorPage(fsError, response) {
+    if(fsError.code == 'ENOENT') {
+        fs.readFile(`./${ERROR_PAGE}`, function(fsError, content) {
             setResponseToRequstedFile(response, content, 'text/html');
         });
     } else {
         response.writeHead(500);
-        response.end('Sorry, check with the site admin for error: ' + fs_error.code + ' ..\n');
+        response.end('Sorry, check with the site admin for error: ' + fsError.code + ' ..\n');
     }
 }
 

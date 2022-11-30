@@ -1,3 +1,7 @@
+/**********************************************************/
+/*                      MISC METHODS                      */
+/**********************************************************/
+
 function deepCopy(obj) {
     let copy = {}
 
@@ -12,4 +16,5 @@ function deepCopy(obj) {
     return copy
 }
 
+// EXPORTS
 module.exports = {deepCopy: deepCopy};

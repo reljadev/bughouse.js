@@ -39,16 +39,16 @@ class GameCoordinator {
             games.hasOwnProperty(data.game.id)) {
             game = games[data.game.id];
 
-            if(!game.has_player(data.user.id))
+            if(!game.hasPlayer(data.user.id))
                 //TODO: I don't like that this changes user id
-                data.user.id = game.add_new_player();
+                data.user.id = game.addNewPlayer();
             
         // start new game
         } else {
             let admin = data.user.name;
             game = this.#startNewGame(admin);
             //TODO: I don't like that this changes user id
-            data.user.id = game.add_new_player();
+            data.user.id = game.addNewPlayer();
         }
 
         return game;
@@ -58,7 +58,7 @@ class GameCoordinator {
         if(typeof userId === 'undefined') return null;
     
         for(let i in games) {
-            if(games[i].has_player(userId))
+            if(games[i].hasPlayer(userId))
                 return games[i];
         }
         
@@ -69,7 +69,7 @@ class GameCoordinator {
         if(typeof username === 'undefined') return null;
 
         for(let i in games) {
-            if(games[i].has_username(username))
+            if(games[i].hasUsername(username))
                 return games[i];
         }
         
@@ -80,7 +80,7 @@ class GameCoordinator {
         //NOTE: in next version of code there should be
         //  a possibility for admin to set starting position and spares
         let game = new Game({ admin: admin, fen: START_FEN, spares: START_SPARES });
-        games[game.get_id()] = game;
+        games[game.getId()] = game;
     
         return game;
     }

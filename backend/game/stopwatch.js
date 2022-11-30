@@ -1,11 +1,15 @@
 const { deepCopy } = require("../utils/misc");
 
+/**********************************************************/
+/*                       STOPWATCH                        */
+/**********************************************************/
+
 class Stopwatch {
     // declare private variables
     #offset;
     #clock;
     #interval;
-    #start_time;
+    #startTime;
     #options;
 
     constructor(options) {
@@ -38,13 +42,15 @@ class Stopwatch {
         return d;
     }
 
-    /////////////// PUBLIC API ///////////////
+    /**********************************************************/
+    /*                       PUBLIC API                       */
+    /**********************************************************/
 
     start() {
         if (!this.#interval) {
             this.#offset = performance.now();
             this.#interval = setInterval(this.#update.bind(this), this.#options.delay);
-            this.#start_time = this.#clock;
+            this.#startTime = this.#clock;
         }
     }
 
@@ -55,9 +61,9 @@ class Stopwatch {
         }
     }
 
-    elapsed_time() {
-        if(!this.#interval && this.#start_time) {
-            return this.#start_time - this.#clock;
+    elapsedTime() {
+        if(!this.#interval && this.#startTime) {
+            return this.#startTime - this.#clock;
         }
     }
 
@@ -78,4 +84,5 @@ class Stopwatch {
 
 }
 
+// EXPORTS
 module.exports = Stopwatch;

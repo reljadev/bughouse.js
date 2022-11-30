@@ -1,17 +1,21 @@
 const sanitize = require('sanitize-html');
 const { convertURLToFilePath } = require('./fileHandler');
 
+/**********************************************************/
+/*                 REQUEST PARSER METHODS                 */
+/**********************************************************/
+
 function extractDataFromRequest(request) {
     let data = {file: {}, user: {}, game: {}};
 
     // parse request
-    let parsed_url = parseURL(request);
-    let params = parsed_url.params;
+    let parsedURL = parseURL(request);
+    let params = parsedURL.params;
     let cookies = parseCookies(request);
 
     // set data
-    data.file.path = parsed_url.filePath;
-    data.file.name = parsed_url.fileName;
+    data.file.path = parsedURL.filePath;
+    data.file.name = parsedURL.fileName;
     data.user.id = cookies.user_id;
     data.user.name = sanitize(params.username);
     data.game.id = params.gameId ?? null;
@@ -51,4 +55,5 @@ function parseCookies(request) {
     return list;
 }
 
+// EXPORTS
 module.exports = {extractDataFromRequest: extractDataFromRequest};

@@ -2,17 +2,14 @@ const Chess = require("../modules/chess.js/chess");
 const Stopwatch = require("./stopwatch");
 const { uuid } = require("../utils/idHandler");
 
-// STAGE ENUM
+// CONSTANTS
 const PRE_GAME = Symbol('pre-game');
 const PLAYING = Symbol('playing');
 const POST_GAME = Symbol('post-game');
 
-class MissingAdminFieldException extends Error {
-    constructor(message) {
-        super(message);
-        this.name = this.constructor.name;
-    }
-}
+/**********************************************************/
+/*                          GAME                          */
+/**********************************************************/
 
 class Game {
     // declare private variables
@@ -51,23 +48,23 @@ class Game {
 
         this.#white_timer1 = new Stopwatch({delay: 100, 
                                         clock: options.white_clock ?? 5 * 1000 * 60,
-                                        onTimesUp: this.#game_over.bind(this) });
+                                        onTimesUp: this.#gameOver.bind(this) });
         this.#black_timer1 = new Stopwatch({delay: 100,
                                         clock: options.black_clock ?? 5 * 1000 * 60,
-                                        onTimesUp: this.#game_over.bind(this) });
+                                        onTimesUp: this.#gameOver.bind(this) });
         this.#white_timer2 = new Stopwatch({delay: 100, 
                                         clock: options.white_clock ?? 5 * 1000 * 60,
-                                        onTimesUp: this.#game_over.bind(this) });
+                                        onTimesUp: this.#gameOver.bind(this) });
         this.#black_timer2 = new Stopwatch({delay: 100,
                                         clock: options.black_clock ?? 5 * 1000 * 60,
-                                        onTimesUp: this.#game_over.bind(this) });
+                                        onTimesUp: this.#gameOver.bind(this) });
     }
 
-    #set_position(chess, fen, spares) {
-        let loaded_fen = chess.load(fen);
-        if(loaded_fen) {
-            let loaded_spares = chess.loadSpares(spares);
-            if(loaded_spares) {
+    #setPosition(chess, fen, spares) {
+        let loadedFen = chess.load(fen);
+        if(loadedFen) {
+            let loadedSpares = chess.loadSpares(spares);
+            if(loadedSpares) {
                 return true;
             }
         }
@@ -75,30 +72,30 @@ class Game {
         return false;
     }
 
-    #game_over(username) {
+    #gameOver(username) {
         this.#stage = POST_GAME;
         this.#white_timer1.stop();
         this.#black_timer1.stop();
         this.#white_timer2.stop();
         this.#black_timer2.stop();
-        let messages = this.#get_pop_up_messages(username);
+        let messages = this.#getPopUpMessages(username);
 
         for(let i in this.#players) {
             let p = this.#players[i];
             if(p) {
-                let socket = p.get_socket();
+                let socket = p.getSocket();
                 if(socket) {
                     // white player on first board
-                    if(p.get_username() === this.#white_player1) {
+                    if(p.getUsername() === this.#white_player1) {
                         socket.emit('game_is_over', messages.white1);
                     // black player on first board
-                    } else if(p.get_username() === this.#black_player1) {
+                    } else if(p.getUsername() === this.#black_player1) {
                         socket.emit('game_is_over', messages.black1);
                     // white player on second board 
-                    } else if(p.get_username() === this.#white_player2) {
+                    } else if(p.getUsername() === this.#white_player2) {
                         socket.emit('game_is_over', messages.white2)
                     // black player on second board
-                    } else if(p.get_username() === this.#black_player2) {
+                    } else if(p.getUsername() === this.#black_player2) {
                         socket.emit('game_is_over', messages.black2);
                     // watcher
                     } else {
@@ -109,7 +106,7 @@ class Game {
         }
     }
         
-    #get_pop_up_messages(player) {
+    #getPopUpMessages(player) {
         player = player ?? null;
         let msgForWatchers = '';
         let msgForWhite1 = '';
@@ -218,15 +215,17 @@ class Game {
                 white2: msgForWhite2, black2: msgForBlack2, watcher: msgForWatchers}        
     }
 
-    #refundLagTime(timer, elapsed_time) {
-        let offset = timer.elapsed_time() - elapsed_time;
-        let clamped_offset = Math.min(Math.max(-1000, offset), 1000);
-        timer.add(clamped_offset);
+    #refundLagTime(timer, elapsedTime) {
+        let offset = timer.elapsedTime() - elapsedTime;
+        let clampedOffset = Math.min(Math.max(-1000, offset), 1000);
+        timer.add(clampedOffset);
     }
 
-    ///////////////// PUBLIC API /////////////////
+    /**********************************************************/
+    /*                       PUBLIC API                       */
+    /**********************************************************/
 
-    get_id() {
+    getId() {
         return this.#id;
     }
 
@@ -258,32 +257,32 @@ class Game {
                 black_player1: this.#black_player1,
                 white_player2: this.#white_player2,
                 black_player2: this.#black_player2,
-                usernames: this.get_usernames(),
+                usernames: this.getUsernames(),
             };
     }
 
-    get_usernames() {
+    getUsernames() {
         let users = [];
         for(let i in this.#players) {
             let p = this.#players[i];
-            if(p.get_username()) {
-                users.unshift([ p.get_username(),
-                                p.get_socket() ? 'connected' : 'disconnected' ]);
+            if(p.getUsername()) {
+                users.unshift([ p.getUsername(),
+                                p.getSocket() ? 'connected' : 'disconnected' ]);
             }
         }
 
         return users;
     }
 
-    has_player(user_id) {
-        return this.#players.hasOwnProperty(user_id);
+    hasPlayer(userId) {
+        return this.#players.hasOwnProperty(userId);
     }
 
-    has_username(username) {
+    hasUsername(username) {
         for(let i in this.#players) {
             let p = this.#players[i];
-            if(p.get_username() === username &&
-                p.get_socket() !== null) {
+            if(p.getUsername() === username &&
+                p.getSocket() !== null) {
                     return true;
                 } 
         }
@@ -291,51 +290,51 @@ class Game {
         return false;
     }
 
-    is_player(player) {
-        return player.get_username() === this.#white_player1 ||
-                player.get_username() === this.#black_player1 ||
-                player.get_username() === this.#white_player2 ||
-                player.get_username() === this.#black_player2;
+    isPlayer(player) {
+        return player.getUsername() === this.#white_player1 ||
+                player.getUsername() === this.#black_player1 ||
+                player.getUsername() === this.#white_player2 ||
+                player.getUsername() === this.#black_player2;
     }
 
-    is_admin(player) {
-        return player.get_username() === this.#admin;
+    isAdmin(player) {
+        return player.getUsername() === this.#admin;
     }
 
-    get_player(user_id) {
-        return this.#players[user_id];
+    getPlayer(userId) {
+        return this.#players[userId];
     }
 
-    add_new_player() {
+    addNewPlayer() {
         let p = new Game.Player();
-        this.#players[p.get_id()] = p;
-        return p.get_id();
+        this.#players[p.getId()] = p;
+        return p.getId();
     }
 
-    remove_player(user_id) {
-        let p = this.#players[user_id];
+    removePlayer(userId) {
+        let p = this.#players[userId];
         // player disconnects mid-game, don't remove him completely
         if(this.#stage === PLAYING && 
-            (this.#white_player1 === p.get_username() ||
-             this.#black_player1 === p.get_username() ||
-             this.#white_player2 === p.get_username() ||
-             this.#black_player2 === p.get_username())) {
-                p.set_socket(null);
+            (this.#white_player1 === p.getUsername() ||
+             this.#black_player1 === p.getUsername() ||
+             this.#white_player2 === p.getUsername() ||
+             this.#black_player2 === p.getUsername())) {
+                p.setSocket(null);
         } else {
-            if(this.#white_player1 === p.get_username()) {
+            if(this.#white_player1 === p.getUsername()) {
                 this.#white_player1 = null;
-            } else if(this.#black_player1 === p.get_username()) {
+            } else if(this.#black_player1 === p.getUsername()) {
                 this.#black_player1 = null;
-            } else if(this.#white_player2 === p.get_username()) {
+            } else if(this.#white_player2 === p.getUsername()) {
                 this.#white_player2 = null;
-            } else if(this.#black_player2 === p.get_username()) {
+            } else if(this.#black_player2 === p.getUsername()) {
                 this.#black_player2 = null;
             }
-            delete this.#players[user_id];
+            delete this.#players[userId];
         }
     }
 
-    set_player_at_board(board, color, username) {
+    setPlayerAtBoard(board, color, username) {
         if(board === 'first') {
             if(color === 'white') {
                 if(this.#white_player1 === null) {
@@ -369,7 +368,7 @@ class Game {
         return true;
     }
 
-    remove_player_from_board(board, color) {
+    removePlayerFromBoard(board, color) {
         if(board === 'first') {
             if(color === 'white') {
                 this.#white_player1 = null;
@@ -387,7 +386,7 @@ class Game {
         return true;
     }
 
-    boards_are_set() {
+    boardsAreSet() {
         return this.#white_player1 !== null && 
                 this.#black_player1 !== null &&
                 this.#white_player2 !== null &&
@@ -395,7 +394,7 @@ class Game {
     }
 
     start() {
-        if(this.boards_are_set()) {
+        if(this.boardsAreSet()) {
             this.#stage = PLAYING;
 
             this.#white_timer1.start();
@@ -407,25 +406,25 @@ class Game {
         return false;
     }
 
-    check_status() {
+    checkStatus() {
         if(this.#chess1.game_over() || this.#chess2.game_over()) {
-            this.#game_over();
+            this.#gameOver();
         }
     }
 
     resigned(player) {
-        if(this.is_player(player)) {
-            this.#game_over(player.get_username());
+        if(this.isPlayer(player)) {
+            this.#gameOver(player.getUsername());
         }
     }
 
-    set_position(fen, spares) {
-        let position_set = this.#set_position(this.#chess1, fen, spares);
-        if(position_set) {
-            position_set &&= this.#set_position(this.#chess2, fen, spares);
+    setPosition(fen, spares) {
+        let positionSet = this.#setPosition(this.#chess1, fen, spares);
+        if(positionSet) {
+            positionSet &&= this.#setPosition(this.#chess2, fen, spares);
         }
         
-        return position_set;
+        return positionSet;
     }
 
     reset() {
@@ -433,7 +432,7 @@ class Game {
         // remove players that disconnected mid-game
         for(let i in this.#players) {
             let p = this.#players[i];
-            if(!p.get_socket()) {
+            if(!p.getSocket()) {
                 delete this.#players[i];
             }
         }
@@ -445,12 +444,12 @@ class Game {
 
     move(board, player, move) {
         let chess = board === 'first' ? this.#chess1 : this.#chess2;
-        let w_player = board === 'first' ? this.#white_player1 :
+        let wPlayer = board === 'first' ? this.#white_player1 :
                                             this.#white_player2;
-        let b_player = board === 'first' ? this.#black_player1 :
+        let bPlayer = board === 'first' ? this.#black_player1 :
                                             this.#black_player2;
-        if((chess.turn() === 'w' && player.get_username() === w_player) ||
-            (chess.turn() === 'b' && player.get_username() === b_player)) {
+        if((chess.turn() === 'w' && player.getUsername() === wPlayer) ||
+            (chess.turn() === 'b' && player.getUsername() === bPlayer)) {
                 let m = chess.move(move);
                 if(m !== null) {
                     if(m.hasOwnProperty('captured')) {
@@ -469,41 +468,41 @@ class Game {
         return false;
     }
 
-    get_white_time(board) {
+    getWhiteTime(board) {
         return board === 'first' ? this.#white_timer1.time() :
                                     this.#white_timer2.time();
     }
 
-    get_black_time(board) {
+    getBlackTime(board) {
         return board === 'first' ? this.#black_timer1.time() :
                                     this.#black_timer2.time();
     }
 
-    update_timers(board, elapsed_time) {
+    updateTimers(board, elapsedTime) {
         if(board === 'first') {
             if(this.#chess1.turn() === 'w') {
                 this.#black_timer1.stop();
                 this.#white_timer1.start();
-                this.#refundLagTime(this.#black_timer1, elapsed_time);
+                this.#refundLagTime(this.#black_timer1, elapsedTime);
             } else {
                 this.#white_timer1.stop();
                 this.#black_timer1.start();
-                this.#refundLagTime(this.#white_timer1, elapsed_time);
+                this.#refundLagTime(this.#white_timer1, elapsedTime);
             }
         } else {
             if(this.#chess2.turn() === 'w') {
                 this.#black_timer2.stop();
                 this.#white_timer2.start();
-                this.#refundLagTime(this.#black_timer2, elapsed_time);
+                this.#refundLagTime(this.#black_timer2, elapsedTime);
             } else {
                 this.#white_timer2.stop();
                 this.#black_timer2.start();
-                this.#refundLagTime(this.#white_timer2, elapsed_time);
+                this.#refundLagTime(this.#white_timer2, elapsedTime);
             }
         }
     }
 
-    set_times(times) {
+    setTimes(times) {
         this.#white_timer1.time(times.w_time1);
         this.#black_timer1.time(times.b_time1);
         this.#white_timer2.time(times.w_time2);
@@ -512,8 +511,12 @@ class Game {
 
 }
 
+/**********************************************************/
+/*                         PLAYER                         */
+/**********************************************************/
+
 Game.Player = class Player {
-    #user_id = uuid(16);
+    #userId = uuid(16);
     #username = null;
     #socket = null;
 
@@ -522,26 +525,38 @@ Game.Player = class Player {
         this.#socket = socket;
     }
 
-    get_id() {
-        return this.#user_id;
+    getId() {
+        return this.#userId;
     }
 
-    set_username(username) {
+    setUsername(username) {
         this.#username = username;
     }
 
-    get_username() {
+    getUsername() {
         return this.#username;
     }
 
-    set_socket(socket) {
+    setSocket(socket) {
         this.#socket = socket;
     }
 
-    get_socket() {
+    getSocket() {
         return this.#socket;
     }
 }
 
+/**********************************************************/
+/*                   EXCEPTION CLASSES                    */
+/**********************************************************/
+
+class MissingAdminFieldException extends Error {
+    constructor(message) {
+        super(message);
+        this.name = this.constructor.name;
+    }
+}
+
+// EXPORTS
 module.exports = {Game: Game, 
                   MissingAdminFieldException: MissingAdminFieldException};
