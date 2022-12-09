@@ -107,9 +107,9 @@ function parseURL(request) {
     // get file path & name
     let {filePath, fileName} = convertURLToFilePath(parser);
     // get request parameters
-    let params = Object.fromEntries(parser.searchParams)
+    let params = Object.fromEntries(parser.searchParams);
 
-    return { protocol, filePath, fileName, params }
+    return { protocol, filePath, fileName, params };
 }
 
 function parseCookies(request) {

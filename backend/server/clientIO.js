@@ -7,7 +7,7 @@ const { gameCoordinator } = require('./gameCoordinator');
 /**********************************************************/
 
 function initializeClientIO(server) {
-    let io = socket(server);
+    let io = socket(server, {transports: ['websocket']});
 
     io.on('connection', (client) => {
         console.log('A user just connected.');
@@ -173,8 +173,8 @@ function setClientEventHandlers(client, player, game) {
     });
 
     // player has disconnected
-    client.on('disconnect', () => {
-        console.log('A user has disconnected.');
+    client.on('disconnect', (reason) => {
+        console.log('A user has disconnected, because of ' + reason);
 
         client.broadcast.to(game.getId()).emit('disconnected', 
                                                 player.getUsername());

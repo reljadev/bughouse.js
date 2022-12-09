@@ -6,9 +6,8 @@ function get_cookie(name) {
   
 // connect to server
 // NOTE: io is imported in game.ejs
-const server = io('/',  { query: "gameId=" + game_id + 
-                                "&user_id=" + get_cookie('user_id') + 
-                                "&username=" + myUsername });
+const server = io('/',  { transports: ['websocket'], upgrade: false,
+            query: `gameId=${game_id}&user_id=${get_cookie('user_id')}&username=${myUsername}` });
 
 // opponent moved
 server.on('move', (board, move, whiteClock, blackClock) => {
@@ -68,3 +67,7 @@ server.on('reset_game', (fen, sparePieces) => {
 server.on('disconnected', (username) => {
     game.remove_player(username);
 })
+
+server.on('disconnect', (reason) => {
+    console.log('Server connection lost, because of ' + reason);
+}) 
