@@ -107,6 +107,7 @@ class GameCoordinator {
     // who is at that time disconnected, he will be able
     // to assume his position !
     assertUserIsNotAlreadyPlaying(userId, gameId) {
+        //TODO: there is a bug here, if user reconnects mid-game
         // user id is valid
         if(isValidId(userId)) {
             // & user already playing in game

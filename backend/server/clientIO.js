@@ -76,7 +76,7 @@ function getClientGameAndPlayer(client) {
     if(game == null)
         throw new NonExistentGameException(`Game ${gameId} doesn't exist`, gameId);
 
-    player = game.getPlayer(userId);
+    let player = game.getPlayer(userId);
     if(player == null)
         throw new NonExistentPlayerException(`Player with id ${userId} doesn't exist in game ${gameId}`,
                                                 userId, gameId);
