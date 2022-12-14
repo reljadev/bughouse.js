@@ -32,16 +32,19 @@ let game = new Game(data);
 //// GAME FUNCTIONS ////
 function move_executed(board, move, elapsed_time) {
   // send move to server
-  server.emit('move', board, move, elapsed_time);
+  // server.emit('move', board, move, elapsed_time);
+  playerChannel.publish("move", { board, move, elapsed_time });
   updateStatus();
 }
 
 function player_joined_board(board, color, username) {
-  server.emit('playerJoined', board, color, username);
+  // server.emit('playerJoined', board, color, username);
+  adminChannel.publish("playerJoined", { board, color, username });
 }
 
 function player_left_board(board, color) {
-  server.emit('playerRemoved', board, color);
+  // server.emit('playerRemoved', board, color);
+  adminChannel.publish("playerRemoved", { board, color });
 }
 
 //// INITIALIZE ELEMENTS ////
@@ -81,7 +84,7 @@ $start_button.on('click', function(evt) {
     $start_button.css('display', 'none');
 
     // notify server of game started
-    server.emit('game_has_started', times); 
+    adminChannel.publish("game_has_started", { times });
   } );
 
 $reset_button.on('click', function(evt) {
@@ -92,7 +95,7 @@ $reset_button.on('click', function(evt) {
     on_game_state_change();
 
     // notify server
-    server.emit('reset_game', fen, spares);
+    adminChannel.publish("reset_game", { fen, spares });
   } );
 
 // copy game id
@@ -230,7 +233,7 @@ function initialize_resign_button() {
   // on click
   $resign_button.on('click', () => {
     // notify server
-    server.emit('resigned');
+    playerChannel.publish("resigned", {});
   });
 
 }

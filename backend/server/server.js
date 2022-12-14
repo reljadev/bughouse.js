@@ -8,6 +8,7 @@ const { MissingAdminFieldException } = require('../game/game');
 const { gameCoordinator, 
         DuplicateUsernameException,
         UserInMultipleGamesException } = require('./gameCoordinator');
+const { clientIO, TokenRequestException } = require('./clientIO');
 
 // CONSTANTS
 const PORT = process.env.PORT || 3000;
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 3000;
 const MAIN_PAGE = "main_page.ejs";
 const LANDING_PAGES = ["", "landing_page.html"];
 const PAGES = [MAIN_PAGE, ...LANDING_PAGES];
+const AUTHENTICATION = "auth";
 const ERROR_PAGE = "404.html";
 
 /**********************************************************/
@@ -29,8 +31,16 @@ function initalizeServer() {
         try {
             let data = extractDataFromRequest(request);
 
+            // request for signed ably requestToken
+            if(data.file.name == AUTHENTICATION) {
+                let userId = data.user.id;
+                let username = data.user.name;
+                let gameId = data.game.id;
+
+                const tokenRequest = clientIO.getTokenRequest(userId, username, gameId);
+                setResponseToTokenRequest(response, tokenRequest);
             // request for a page
-            if(PAGES.includes(data.file.name)) {
+            } else if(PAGES.includes(data.file.name)) {
                 gameCoordinator.assertUsernameUniqueness(data.user.name);
                 gameCoordinator.assertUserIsNotAlreadyPlaying(data.user.id, data.game.id);
 
@@ -49,6 +59,9 @@ function initalizeServer() {
             }
             
         } catch(err) {
+            // TODO: remove these logs
+            console.error(err)
+
             if(err instanceof DuplicateUsernameException) {
                 redirectTo(response, `/${ERROR_PAGE}`);
             } else if(err instanceof UserInMultipleGamesException) {
@@ -56,6 +69,9 @@ function initalizeServer() {
                 redirectTo(response, `/${MAIN_PAGE}?gameId=${g.getId()}&username=${g.getPlayer(uId).getUsername()}`);
             } else if(err instanceof MissingAdminFieldException) {
                 redirectTo(response, `/${LANDING_PAGES[1]}`);
+            } else if(err instanceof TokenRequestException) {
+                //TODO: add message, what went wrong
+                redirectTo(response, `/${ERROR_PAGE}`);
             } else {
                 redirectTo(response, `/${ERROR_PAGE}`);
             }
@@ -80,7 +96,7 @@ function initalizeServer() {
 /**********************************************************/
 
 function extractDataFromRequest(request) {
-    let data = {file: {}, user: {}, game: {}};
+    let data = { file: {}, user: {}, game: {} };
 
     // parse request
     let parsedURL = parseURL(request);
@@ -90,7 +106,10 @@ function extractDataFromRequest(request) {
     // set data
     data.file.path = parsedURL.filePath;
     data.file.name = parsedURL.fileName;
-    data.user.id = cookies.user_id;
+    if(cookies.user_id !== "undefined")
+        data.user.id = cookies.user_id;
+    else
+        data.user.id = params.userId;
     data.user.name = sanitize(params.username);
     data.game.id = params.gameId ?? null;
 
@@ -183,6 +202,11 @@ function setResponseToRequstedFile(response, content, contentType, data) {
 
     // set content
     response.end(content, 'utf-8');
+}
+
+function setResponseToTokenRequest(response, tokenRequest) {
+    response.writeHead(200, { 'Content-Type': 'application/json'});
+    response.end(JSON.stringify(tokenRequest), 'utf-8');
 }
 
 // EXPORTS

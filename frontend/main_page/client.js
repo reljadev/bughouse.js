@@ -3,53 +3,96 @@ function get_cookie(name) {
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
 }
-  
-// connect to server
-// NOTE: io is imported in game.ejs
-const server = io('/',  { transports: ['websocket'], upgrade: false,
-            query: `gameId=${game_id}&user_id=${get_cookie('user_id')}&username=${myUsername}` });
 
-// opponent moved
-server.on('move', (board, move, whiteClock, blackClock) => {
+const userId = get_cookie('user_id');
+
+// get signed tokenRequest from auth server & use to get auth token from ably
+const realtimeAblyClient = new Ably.Realtime({
+                            // authentication path relative to domain
+                            authUrl: "/auth", 
+                            // TODO: it's recommended to get userId & gameId from cookies
+                            // instead of placing them as authParams
+                            authParams: {
+                                username: myUsername,
+                                userId: userId,
+                                gameId: game_id
+                            },
+                            // check if connection was lost every 5s
+                            transportParams: { heartbeatInterval: 5000 } }
+                        );
+
+let serverChannel = realtimeAblyClient.channels.get(`game:${game_id}:server`);
+let playerChannel = realtimeAblyClient.channels.get(`game:${game_id}:player:${userId}`);
+let adminChannel;
+if(myUsername === admin) {
+    adminChannel = realtimeAblyClient.channels.get(`game:${game_id}:admin`);
+
+    adminChannel.subscribe(({ name, data }) => {
+        //TODO: only admin actions
+        ACTIONS[name](data);
+    });
+}
+
+serverChannel.presence.enter();
+
+//TODO: change this constants to upper case
+const ACTIONS = { 'move': move,
+                  'joined': playerJoined,
+                  'playerJoined': playerOnBoard,
+                  'playerRemoved': playerOffBoard,
+                  'can_start_game': gameReady,
+                  'cant_start_game': gameNotReady,
+                  'game_has_started': gameStarted,
+                  'game_is_over': gameOver,
+                  'reset_game': resetGame,
+                  'disconnected': playerLeft };
+
+serverChannel.subscribe(({ name, data }) => {
+    ACTIONS[name](data);
+});
+
+function move({ board, move, whiteClock, blackClock, initiator }) {
+    if(initiator == userId) return;
+
     game.move(board, move);
     game.set_clocks(board, whiteClock, blackClock);
 
     updateStatus();
-})
+}
 
-// some player joined
-server.on('joined', (username) => {
+function playerJoined({ username }) {
+    if(myUsername == username) return;
+
     game.add_player(username);
-})
+}
 
-// player added to chessboard
-server.on('playerJoined', (board, color, username) => {
+function playerOnBoard({ board, color, username }) {
+    if(myUsername == admin) return;
+
     game.add_player_to_board(board, color, username);
-})
+}
 
-// removed player from chessboard
-server.on('playerRemoved', (board, color) => {
+function playerOffBoard({ board, color }) {
+    if(myUsername == admin) return;
+
     game.remove_player_from_board(board, color);
-})
+}
 
-// admin can start a game
-server.on('can_start_game', () => {
-    // NOTE: this will never be sent to a client that's not an admin
+function gameReady() {
     $start_button.removeAttr('disabled');
-})
+}
 
-// admin can't start a game
-server.on('cant_start_game', () => {
-    // NOTE: this will never be sent to a client that's not an admin
+function gameNotReady() {
     $start_button.attr('disabled', 'disabled');
-})
+}
 
-// admin initiated new game
-server.on('game_has_started', (times) => {
+function gameStarted({ times }) {
+    if(myUsername == admin) return;
+
     start_game(times);
-})
+}
 
-server.on('game_is_over', (message) => {
+function gameOver({ message }) {
     game.game_over(); 
     on_game_state_change();
 
@@ -57,17 +100,14 @@ server.on('game_is_over', (message) => {
         $msg.text(message);
         $modal.css('display', 'block');
     }
-});
+}
 
-server.on('reset_game', (fen, sparePieces) => {
-    reset_game(fen, sparePieces);
-})
+function resetGame({ fen, spares }) {
+    if(myUsername == admin) return;
 
-// some player disconnected
-server.on('disconnected', (username) => {
+    reset_game(fen, spares);
+}
+
+function playerLeft({ username }) {
     game.remove_player(username);
-})
-
-server.on('disconnect', (reason) => {
-    console.log('Server connection lost, because of ' + reason);
-}) 
+}

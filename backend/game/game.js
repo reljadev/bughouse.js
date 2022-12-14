@@ -87,19 +87,19 @@ class Game {
                 if(socket) {
                     // white player on first board
                     if(p.getUsername() === this.#white_player1) {
-                        socket.emit('game_is_over', messages.white1);
+                        socket.publish('game_is_over', { message: messages.white1 });
                     // black player on first board
                     } else if(p.getUsername() === this.#black_player1) {
-                        socket.emit('game_is_over', messages.black1);
+                        socket.publish('game_is_over', { message: messages.black1 });
                     // white player on second board 
                     } else if(p.getUsername() === this.#white_player2) {
-                        socket.emit('game_is_over', messages.white2)
+                        socket.publish('game_is_over', { message: messages.white2 })
                     // black player on second board
                     } else if(p.getUsername() === this.#black_player2) {
-                        socket.emit('game_is_over', messages.black2);
+                        socket.publish('game_is_over', { message: messages.black2 });
                     // watcher
                     } else {
-                        socket.emit('game_is_over', messages.watcher);
+                        socket.publish('game_is_over', { message: messages.watcher });
                     }
                 }
             }
@@ -305,9 +305,10 @@ class Game {
         return this.#players[userId];
     }
 
-    addNewPlayer() {
-        let p = new Game.Player();
+    addNewPlayer(username) {
+        let p = new Game.Player(username);
         this.#players[p.getId()] = p;
+
         return p.getId();
     }
 
@@ -517,12 +518,12 @@ class Game {
 
 Game.Player = class Player {
     #userId = uuid(16);
-    #username = null;
-    #socket = null;
+    #username;
+    #socket;
 
     constructor(username, socket) {
-        this.#username = username;
-        this.#socket = socket;
+        this.#username = username ?? null;
+        this.#socket = socket ?? null;
     }
 
     getId() {

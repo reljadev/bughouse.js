@@ -1,8 +1,12 @@
 const { initalizeServer } = require('./server/server');
-const { initializeClientIO } = require('./server/clientIO');
+const { clientIO } = require('./server/clientIO');
+const { gameCoordinator } = require('./server/gameCoordinator');
 
 // set up server
-const server = initalizeServer();
+initalizeServer();
 
-// set up SOCKET communication
-initializeClientIO(server);
+// when game coordinator creates a new game, 
+// clientIO needs to create a communication for that game
+gameCoordinator.setCallbackUponCreatingGame(
+    clientIO.createGameCommunicationChannel.bind(clientIO)
+);
