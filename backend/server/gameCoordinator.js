@@ -15,6 +15,8 @@ let games = {};
 
 class GameCoordinator {
 
+    #uponCreatingNewGame;
+
     constructor() {
         if(instance)
             throw new MultipleInstantiationOfSingletonException("Cannot instantiate a singleton class multiple times");
@@ -27,6 +29,8 @@ class GameCoordinator {
         //  a possibility for admin to set starting position and spares
         let game = new Game({ admin: admin, fen: START_FEN, spares: START_SPARES });
         games[game.getId()] = game;
+
+        this.#uponCreatingNewGame(game.getId());
     
         return game;
     }
@@ -56,6 +60,10 @@ class GameCoordinator {
     /**********************************************************/
     /*                       PUBLIC API                       */
     /**********************************************************/
+
+    setCallbackUponCreatingGame(callback) {
+        this.#uponCreatingNewGame = callback;
+    }
 
     getGameById(gameId) {
         let game = null;
