@@ -7,7 +7,7 @@ const { gameCoordinator } = require('./gameCoordinator');
 /**********************************************************/
 
 function initializeClientIO(server) {
-    let io = socket(server, {transports: ['websocket']});
+    let io = socket(server, { transports: ['websocket'] });
 
     io.on('connection', (client) => {
         console.log('A user just connected.');
