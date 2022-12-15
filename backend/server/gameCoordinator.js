@@ -67,7 +67,7 @@ class GameCoordinator {
         return game;
     }
 
-    getGameOfJoiningUser(userId, username, gameId, uponCreatingNewPlayer) {
+    getGameOfJoiningUser(userId, username, gameId, uponCreatingNewGame, uponCreatingNewPlayer) {
         let game = null;
 
         // join existing game
@@ -83,6 +83,7 @@ class GameCoordinator {
         // start new game
         } else {
             game = this.#startNewGame(username);
+            uponCreatingNewGame(game.getId());
             let newUserId = game.addNewPlayer();
             uponCreatingNewPlayer(newUserId);
         }

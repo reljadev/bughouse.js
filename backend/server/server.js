@@ -1,4 +1,5 @@
 const http = require('http');
+const Cookies = require('cookies');
 const ejs = require('ejs');
 const fs = require('fs');
 const sanitize = require('sanitize-html');
@@ -27,7 +28,8 @@ function initalizeServer() {
         console.log('requesting ' + request.url);
 
         try {
-            let data = extractDataFromRequest(request);
+            let cookies = new Cookies(request, response);
+            let data = extractDataFromRequest(request, cookies);
 
             // request for a page
             if(PAGES.includes(data.file.name)) {
@@ -36,9 +38,10 @@ function initalizeServer() {
 
                 // game page
                 if(data.file.name == MAIN_PAGE) {
-                    let game = gameCoordinator.getGameOfJoiningUser(data.user.id, 
-                                        data.user.name, data.game.id, (newUserId) => data.user.id = newUserId);
-                    setResponseToRenderizedGamePage(response, data, game);
+                    let game = gameCoordinator.getGameOfJoiningUser(data.user.id, data.user.name, data.game.id,
+                                                                    (newGameId) => data.game.id = newGameId,
+                                                                    (newUserId) => data.user.id = newUserId);
+                    setResponseToRenderizedGamePage(response, cookies, data, game);
                 // landing page
                 } else {
                     setResponseToRequestedResources(response, data);
@@ -79,20 +82,19 @@ function initalizeServer() {
 /*                       URL PARSING                      */
 /**********************************************************/
 
-function extractDataFromRequest(request) {
+function extractDataFromRequest(request, cookies) {
     let data = {file: {}, user: {}, game: {}};
 
     // parse request
     let parsedURL = parseURL(request);
     let params = parsedURL.params;
-    let cookies = parseCookies(request);
 
     // set data
     data.file.path = parsedURL.filePath;
     data.file.name = parsedURL.fileName;
-    data.user.id = cookies.user_id;
+    data.user.id = cookies.get('user_id');
     data.user.name = sanitize(params.username);
-    data.game.id = params.gameId ?? null;
+    data.game.id = params.gameId ?? cookies.get('game_id');
 
     return data;
 }
@@ -139,7 +141,12 @@ function redirectTo(response, url) {
     }).end();
 }
 
-function setResponseToRenderizedGamePage(response, data, game) {
+function setResponseToRenderizedGamePage(response, cookies, data, game) {
+    // cookies
+    if(data.user.id) cookies.set('user_id', data.user.id, { overwrite: true, httpOnly: false });
+    if(data.game.id) cookies.set('game_id', data.game.id, { overwrite: true, httpOnly: false });
+
+    // page
     fs.readFile(data.file.path, 'utf-8', function(fsError, fileContent) {
         if(fsError) {
             setResponseToErrorPage(fsError, response);
@@ -178,7 +185,6 @@ function setResponseToErrorPage(fsError, response) {
 function setResponseToRequstedFile(response, content, contentType, data) {
     // set header
     let headers = { 'Content-Type': contentType };
-    if(data) headers['Set-Cookie'] = `user_id=${data.user.id}`;
     response.writeHead(200, headers);
 
     // set content
