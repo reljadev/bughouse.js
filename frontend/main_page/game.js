@@ -82,11 +82,8 @@ class Game {
             return JSON.parse(JSON.stringify(obj));
         }
 
-        this.#options.first_board.fen = clone(options.first_board.fen);
-        this.#options.first_board.sparePieces = clone(options.first_board.sparePieces);
-        this.#options.first_board.start_fen = clone(options.first_board.start_fen);
-        this.#options.first_board.start_spares = clone(options.first_board.start_spares);
-        this.#options.first_board.pgn = clone(options.first_board.pgn);
+        this.#options.first_board = clone(options.first_board);
+        this.#options.second_board = clone(options.second_board);
     }
 
     #initialize_stage() {
