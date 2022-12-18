@@ -626,6 +626,10 @@ class Game {
 
     ///////////////////// GAME INFORMATION //////////////////////
 
+    am_i_admin() {
+        return this.#options.myUsername === this.#options.admin;
+    }
+
     am_i_at_board() {
         return this.#options.myUsername === this.#options.white_player1 || 
                 this.#options.myUsername === this.#options.black_player1 ||

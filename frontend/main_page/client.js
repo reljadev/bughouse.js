@@ -3,7 +3,7 @@
 const server = io('/',  { transports: ['websocket'], upgrade: false,
             query: `gameId=${game_id}&user_id=${get_cookie('user_id')}&username=${myUsername}` });
 
-// server sent game data upon connection
+// server sent game info upon connection
 server.on("upon_connection", (game_options) => {
     initialize(game_options);
 });

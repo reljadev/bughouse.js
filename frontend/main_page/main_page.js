@@ -9,18 +9,11 @@ function get_cookie(name) {
 /*                    INITIALIZATION                       */
 /***********************************************************/
 
-///////////////////// RETREIVE DATA //////////////////////
-// NOTE: data variable is included at renderization time (runtime)
-let myUsername = get_cookie('username');
-let data = JSON.parse($('#data_data').attr('data-value'));
-
-let game_id = data.id;
-let admin = data.admin;
-let fen = data.first_board.fen;
-let sparePieces = data.first_board.sparePieces;
-//TODO: only game id need to retrieve from cookie
-
 //// INITIALIZE GAME ////
+
+let myUsername = get_cookie('username');
+let game_id = get_cookie('game_id');
+
 // placeholder game, while client waits for websocket
 // connection to server, which will retrieve game info
 let game = new Game({ 
@@ -34,9 +27,13 @@ let game = new Game({
   },
 });
 
+// this function is called by serverIO
+// when the websocket connection with server is set up
 function initialize(game_options) {
   game.unmount();
-  console.clear();
+  // commented out because on reconnection
+  // console will be wiped out
+  // console.clear();
 
   game_options.myUsername = myUsername;
   game_options.move_executed = move_executed;
@@ -49,6 +46,7 @@ function initialize(game_options) {
 }
 
 //// GAME FUNCTIONS ////
+
 function move_executed(board, move, elapsed_time) {
   // send move to server
   server.emit('move', board, move, elapsed_time);
@@ -64,6 +62,7 @@ function player_left_board(board, color) {
 }
 
 //// INITIALIZE ELEMENTS ////
+
 let $backward_button1 = $('#backward_button_1');
 let $forward_button1 = $('#forward_button_1');
 let $backward_button2 = $('#backward_button_2');
@@ -82,7 +81,8 @@ let $msg = $('#game_over_msg');
 // display invite link
 $text_id.val(game_id);
 
-// add events
+//// EVENTS ////
+
 $backward_button1.on('click', ()=> {
   game.backward_move('first');
 });
@@ -120,7 +120,23 @@ $reset_button.on('click', function(evt) {
 // copy game id
 $('#copy_button').on('click', copy_id);
 
-//// EVENTS ////
+// clicking 'x' on modal content
+$('#modal_close').on('click', 
+                    () => { $modal.css('display', 'none') });
+
+// when the user clicks anywhere outside of the modal, close it
+$(window).on('click', (evt) => {
+    if ($(evt.target).attr('id') === 'myModal') {
+      $modal.css('display', 'none');
+    }
+  }
+);
+
+// on window resize
+$( window ).resize(game.resize.bind(game));
+
+//// EVENT HANDLERS ////
+
 function start_game(times) {
   game.set_times(times);
   game.start();
@@ -150,26 +166,12 @@ function copy_id() {
   );
 }
 
-// clicking 'x' on modal content
-$('#modal_close').on('click', 
-                    () => { $modal.css('display', 'none') });
-
-// when the user clicks anywhere outside of the modal, close it
-$(window).on('click', (evt) => {
-    if ($(evt.target).attr('id') === 'myModal') {
-      $modal.css('display', 'none');
-    }
-  }
-);
-
-// on window resize
-$( window ).resize(game.resize.bind(game));
-
 /***********************************************************/
 /*                  CONTROLLER FUNCTIONS                   */
 /***********************************************************/
 
 //// STATUS FUNCTIONS ////
+
 function updateStatus() {
   update_stats('first');
   update_stats('second');
@@ -189,12 +191,13 @@ function resetStatus() {
 }
 
 //// BUTTONS VISIBILITY ////
+
 function on_game_state_change() {
   // PRE GAME //
   if(game.is_pre_game()) {
     hide_controllers();
 
-    if(myUsername === admin) {
+    if(game.am_i_admin()) {
       // hide reset button
       if($reset_button) {
         $reset_button.css('display', 'none');
@@ -222,7 +225,7 @@ function on_game_state_change() {
   // POST GAME //
   } else if(game.is_post_game()) {
     // show reset button
-    if(myUsername === admin) {
+    if(game.am_i_admin()) {
       $reset_button.css('display', '');
     }
     // hide resign button
