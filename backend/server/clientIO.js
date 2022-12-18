@@ -18,7 +18,7 @@ function initializeClientIO(server) {
             updatePlayerInfo(player, client);
 
             client.join(gameId);
-            client.broadcast.to(gameId).emit('joined', username);
+            client.to(gameId).emit('joined', username);
 
             setClientEventHandlers(client, player, game);
 
@@ -112,7 +112,7 @@ function setClientEventHandlers(client, player, game) {
         if(game.isAdmin(player)) {
             let playerSet = game.setPlayerAtBoard(board, color, username);
             if(playerSet) {
-                client.broadcast.to(gameId).emit('playerJoined', board, color, username);
+                client.to(gameId).emit('playerJoined', board, color, username);
                 if(game.boardsAreSet()) {
                     client.emit('can_start_game');
                 }
@@ -129,7 +129,7 @@ function setClientEventHandlers(client, player, game) {
         if(game.isAdmin(player)) {
             let playerRemoved = game.removePlayerFromBoard(board, color);
             if(playerRemoved) {
-                client.broadcast.to(gameId).emit('playerRemoved', board, color);
+                client.to(gameId).emit('playerRemoved', board, color);
                 client.emit('cant_start_game');
             }
         }
@@ -142,7 +142,7 @@ function setClientEventHandlers(client, player, game) {
             let gameStarted = game.start();
     
             if(gameStarted) {
-                client.broadcast.to(gameId).emit('game_has_started', times);
+                client.to(gameId).emit('game_has_started', times);
             }
         }
     });
@@ -154,9 +154,9 @@ function setClientEventHandlers(client, player, game) {
         if(updated) {
             game.updateTimers(board, elapsedTime);
             // broadcast move & updated timers
-            client.broadcast.to(game.getId()).emit('move', board, move,
-                                                            game.getWhiteTime(board),
-                                                            game.getBlackTime(board));
+            client.to(game.getId()).emit('move', board, move,
+                                         game.getWhiteTime(board),
+                                         game.getBlackTime(board));
             game.checkStatus();
         }
     });
@@ -171,7 +171,7 @@ function setClientEventHandlers(client, player, game) {
             if(positionSet) {
                 game.reset();
             
-                client.broadcast.to(gameId).emit('reset_game', fen, sparePieces);
+                client.to(gameId).emit('reset_game', fen, sparePieces);
             }
         }
     });
@@ -180,8 +180,7 @@ function setClientEventHandlers(client, player, game) {
     client.on('disconnect', (reason) => {
         console.log('A user has disconnected, because of ' + reason);
 
-        client.broadcast.to(game.getId()).emit('disconnected', 
-                                                player.getUsername());
+        client.to(game.getId()).emit('disconnected', player.getUsername());
         game.removePlayer(userId);
     });
 }
