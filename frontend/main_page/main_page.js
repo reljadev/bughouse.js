@@ -30,8 +30,6 @@ let game = new Game({
   },
 });
 
-//TODO: players text not shown
-
 function initialize(game_options) {
   game.unmount();
   console.clear();

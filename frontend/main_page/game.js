@@ -771,7 +771,7 @@ class Game {
         $('#myBoard_2').empty();
         $('#time2_top').empty();
         $('#time2_bottom').empty();
-        $('#mySidebar').empty();
+        $('#mySidebar').html('<h4>players</h4>');
     }
 
     ///////////////////// GAME CONTROLLERS //////////////////////
