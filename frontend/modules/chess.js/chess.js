@@ -2192,6 +2192,10 @@ var Chess = function (fen, sparePieces) {
       return move ? make_pretty(move) : null
     },
 
+    getStartPosition: function() {
+      return [start_fen, clone(start_spares)];
+    },
+
     get_state: function(moveNum) {
       var moves = []
       // undo moves

@@ -17,17 +17,44 @@
 // NOTE: data variable is included at renderization time (runtime)
 let myUsername = $('#data_username').attr('data-value');
 let data = JSON.parse($('#data_data').attr('data-value'));
+
 let game_id = data.id;
 let admin = data.admin;
 let fen = data.first_board.fen;
 let sparePieces = data.first_board.sparePieces;
+//TODO: only game id need to retrieve from cookie
 
 //// INITIALIZE GAME ////
-data.myUsername = myUsername;
-data.move_executed = move_executed;
-data.player_joined_board = player_joined_board;
-data.player_left_board = player_left_board;
-let game = new Game(data);
+//TODO: myUsername not needed, and then I don't need to hack
+// & parse separetely my username and all the rest
+
+// placeholder game, while client waits for websocket
+// connection to server, which will retrieve game info
+let game = new Game({ 
+  id: game_id,
+  admin: 'placeholder',
+  first_board: {
+      fen: "8/8/8/8/8/8/8/8",
+  },
+  second_board: {
+      fen: "8/8/8/8/8/8/8/8",
+  },
+});
+
+//TODO: players text not shown
+
+function initialize(game_options) {
+  //TODO: clear console
+  game.unmount();
+
+  game_options.myUsername = myUsername;
+  game_options.move_executed = move_executed;
+  game_options.player_joined_board = player_joined_board;
+  game_options.player_left_board = player_left_board;
+  game = new Game(game_options);
+
+  on_game_state_change();
+}
 
 //// GAME FUNCTIONS ////
 function move_executed(board, move, elapsed_time) {
@@ -45,6 +72,8 @@ function player_left_board(board, color) {
 }
 
 //// INITIALIZE ELEMENTS ////
+//TODO: These buttons are defined here,
+// but showed / hidden / updated after socket connects
 let $backward_button1 = $('#backward_button_1');
 let $forward_button1 = $('#forward_button_1');
 let $backward_button2 = $('#backward_button_2');
@@ -61,17 +90,26 @@ let $pgn_button2 = $('#pgn_button_2');
 let $msg = $('#game_over_msg');
 
 // if player joins midgame, update status immedietely
-if(game.is_playing()) {
-  updateStatus();
-}
+//TODO: this won't be needed, because it will be updated when socket connects
+// if(game.is_playing()) {
+//   updateStatus();
+// }
 // display invite link
 $text_id.val(game_id);
 
 // add events
-$backward_button1.on('click', game.backward_move.bind(game, 'first'));
-$forward_button1.on('click', game.forward_move.bind(game, 'first'));
-$backward_button2.on('click', game.backward_move.bind(game, 'second'));
-$forward_button2.on('click', game.forward_move.bind(game, 'second'));
+$backward_button1.on('click', ()=> {
+  game.backward_move('first');
+});
+$forward_button1.on('click', () => {
+  game.forward_move('first');
+});
+$backward_button2.on('click', () => {
+  game.backward_move('second');
+});
+$forward_button2.on('click', ()=> {
+  game.forward_move('second');
+});
 
 $start_button.on('click', function(evt) {
     let times = game.get_times();
@@ -84,9 +122,10 @@ $start_button.on('click', function(evt) {
     server.emit('game_has_started', times); 
   } );
 
+//TODO: fen & sparePieces aren't known untill socket connects
+// so it should retrieve start fen and spares from game
 $reset_button.on('click', function(evt) {
-    let fen = data.first_board.start_fen;
-    let spares = data.first_board.start_spares;
+    let [fen, spares] = game.getStartPosition('first');
     
     reset_game(fen, spares);
     on_game_state_change();
@@ -98,8 +137,9 @@ $reset_button.on('click', function(evt) {
 // copy game id
 $('#copy_button').on('click', copy_id);
 
+//TODO: this will be done when client connects
 // show & hide appropriate buttons
-on_game_state_change();
+// on_game_state_change();
 
 //// EVENTS ////
 function start_game(times) {
@@ -108,7 +148,6 @@ function start_game(times) {
 
   on_game_state_change();
   updateStatus();
-
 }
 
 function reset_game(fen, sparePieces) {
@@ -219,8 +258,8 @@ function on_game_state_change() {
 
 function initialize_resign_button() {
   // i'm at first board
-  if(myUsername === data.white_player1 ||
-    myUsername === data.black_player1) {
+  if(myUsername === game.getBoardPlayer('first', 'white') ||
+    myUsername === game.getBoardPlayer('first', 'black')) {
       $resign_button = $('#resign_game1');
   // i'm at second board
   } else {
@@ -252,5 +291,4 @@ function set_controllers_visibility(visibility) {
 
   $pgn_button1.css('display', visibility);
   $pgn_button2.css('display', visibility);
-
 }

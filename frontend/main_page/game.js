@@ -75,7 +75,14 @@ class Game {
         if(!options.admin) {
             throw 'admin must be specified';
         }
+        options.stage = options.stage ?? 'pre-game';
+        options.usernames = options.usernames ?? [];
+        options.white_player1 = options.white_player1 ?? null;
+        options.black_player1 = options.black_player1 ?? null;
+        options.white_player2 = options.white_player2 ?? null;
+        options.black_player2 = options.black_player2 ?? null;
 
+        //TODO: should just clone all this options
         this.#options = options;
 
         function clone(obj) {
@@ -192,9 +199,10 @@ class Game {
                 added_myself = true;
             }
         });
-        if(!added_myself) {
-            this.#players.add_player(this.#options.myUsername, true);
-        }
+        //TODO: this needs to be fixed anyway
+        // if(!added_myself) {
+        //     this.#players.add_player(this.#options.myUsername, true);
+        // }
         if(this.#options.white_player1 !== null) {
             let position = this.#color_to_board_position('first', 'white');
             this.#players.add_player_to_board('first', position, this.#options.white_player1);
@@ -679,6 +687,14 @@ class Game {
                                     this.#chess2.pgn();
     }
 
+    getStartPosition(board) {
+        if(board == "first") {
+            return this.#chess1.getStartPosition();
+        } else {
+            return this.#chess2.getStartPosition();
+        }
+    }
+
     ///////////////////// META CONTROLLERS //////////////////////
     
     set_clocks(board, whiteClock, blackClock) {
@@ -715,6 +731,22 @@ class Game {
         this.#players.remove_player(username);
     }
 
+    getBoardPlayer(board, color) {
+        if(board == "first") {
+            if(color == "white") {
+                return this.#options.white_player1;
+            } else {
+                return this.#options.black_player1;
+            }
+        } else {
+            if(color == "white") {
+                return this.#options.white_player2;
+            } else {
+                return this.#options.black_player2;
+            }
+        }
+    }
+
     add_player_to_board(board, color, username) {
         this.#update_players('add', board, color, username);
         let position = this.#color_to_board_position(board, color);
@@ -730,6 +762,16 @@ class Game {
     resize() {
         this.#board1.resize();
         this.#board2.resize();
+    }
+
+    unmount() {
+        $('#myBoard_1').empty();
+        $('#time1_top').empty();
+        $('#time1_bottom').empty();
+        $('#myBoard_2').empty();
+        $('#time2_top').empty();
+        $('#time2_bottom').empty();
+        $('#mySidebar').empty();
     }
 
     ///////////////////// GAME CONTROLLERS //////////////////////

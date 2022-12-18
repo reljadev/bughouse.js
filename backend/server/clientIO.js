@@ -21,6 +21,8 @@ function initializeClientIO(server) {
             client.broadcast.to(gameId).emit('joined', username);
 
             setClientEventHandlers(client, player, game);
+
+            client.emit('upon_connection', game.info());
         } catch(err) {
             //TODO: parse these exceptions on client side
             client.emit('exception_occured', err);
