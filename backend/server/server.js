@@ -146,6 +146,7 @@ function redirectTo(response, url) {
 function setResponseToRenderizedGamePage(response, cookies, data, game) {
     // cookies
     if(data.user.id) cookies.set('user_id', data.user.id, { overwrite: true, httpOnly: false });
+    if(data.user.name) cookies.set('username', data.user.name, { overwrite: true, httpOnly: false });
     if(data.game.id) cookies.set('game_id', data.game.id, { overwrite: true, httpOnly: false });
 
     // page

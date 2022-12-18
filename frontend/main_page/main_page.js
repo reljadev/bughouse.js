@@ -1,10 +1,17 @@
+// helper function
+function get_cookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
 /***********************************************************/
 /*                    INITIALIZATION                       */
 /***********************************************************/
 
 ///////////////////// RETREIVE DATA //////////////////////
 // NOTE: data variable is included at renderization time (runtime)
-let myUsername = $('#data_username').attr('data-value');
+let myUsername = get_cookie('username');
 let data = JSON.parse($('#data_data').attr('data-value'));
 
 let game_id = data.id;
@@ -14,9 +21,6 @@ let sparePieces = data.first_board.sparePieces;
 //TODO: only game id need to retrieve from cookie
 
 //// INITIALIZE GAME ////
-//TODO: myUsername not needed, and then I don't need to hack
-// & parse separetely my username and all the rest
-
 // placeholder game, while client waits for websocket
 // connection to server, which will retrieve game info
 let game = new Game({ 

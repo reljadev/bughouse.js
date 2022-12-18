@@ -192,17 +192,9 @@ class Game {
                                         is_playing: this.#is_playing.bind(this) });
 
         // add players
-        let added_myself = false;
         this.#options.usernames.forEach((arr) => {
             this.#players.add_player(arr[0], arr[1]);
-            if(arr[0] === this.#options.myUsername) {
-                added_myself = true;
-            }
         });
-        //TODO: this needs to be fixed anyway
-        // if(!added_myself) {
-        //     this.#players.add_player(this.#options.myUsername, true);
-        // }
         if(this.#options.white_player1 !== null) {
             let position = this.#color_to_board_position('first', 'white');
             this.#players.add_player_to_board('first', position, this.#options.white_player1);
