@@ -1,14 +1,3 @@
-// when user navigates using history (back and forward buttons),
-// reload the page so that the request gets to the server
-// this way, server knows that user has joined
-(function () {
-	window.onpageshow = function(event) {
-		if (event.persisted) {
-			window.location.reload();
-		}
-	};
-})();
-
 /***********************************************************/
 /*                    INITIALIZATION                       */
 /***********************************************************/
