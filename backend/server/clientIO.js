@@ -24,6 +24,8 @@ function initializeClientIO(server) {
 
             client.emit('upon_connection', game.info());
         } catch(err) {
+            //TODO: remove log
+            console.log(err);
             //TODO: parse these exceptions on client side
             client.emit('exception_occured', err);
         }

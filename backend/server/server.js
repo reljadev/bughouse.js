@@ -52,6 +52,8 @@ function initalizeServer() {
             }
             
         } catch(err) {
+            //TODO: remove log
+            console.log(err);
             if(err instanceof DuplicateUsernameException) {
                 redirectTo(response, `/${ERROR_PAGE}`);
             } else if(err instanceof UserInMultipleGamesException) {
