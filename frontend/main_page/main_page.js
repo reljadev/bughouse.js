@@ -33,8 +33,8 @@ let game = new Game({
 //TODO: players text not shown
 
 function initialize(game_options) {
-  //TODO: clear console
   game.unmount();
+  console.clear();
 
   game_options.myUsername = myUsername;
   game_options.move_executed = move_executed;
@@ -43,6 +43,7 @@ function initialize(game_options) {
   game = new Game(game_options);
 
   on_game_state_change();
+  updateStatus();
 }
 
 //// GAME FUNCTIONS ////
@@ -61,8 +62,6 @@ function player_left_board(board, color) {
 }
 
 //// INITIALIZE ELEMENTS ////
-//TODO: These buttons are defined here,
-// but showed / hidden / updated after socket connects
 let $backward_button1 = $('#backward_button_1');
 let $forward_button1 = $('#forward_button_1');
 let $backward_button2 = $('#backward_button_2');
@@ -78,11 +77,6 @@ let $pgn_button1 = $('#pgn_button_1');
 let $pgn_button2 = $('#pgn_button_2');
 let $msg = $('#game_over_msg');
 
-// if player joins midgame, update status immedietely
-//TODO: this won't be needed, because it will be updated when socket connects
-// if(game.is_playing()) {
-//   updateStatus();
-// }
 // display invite link
 $text_id.val(game_id);
 
@@ -111,8 +105,6 @@ $start_button.on('click', function(evt) {
     server.emit('game_has_started', times); 
   } );
 
-//TODO: fen & sparePieces aren't known untill socket connects
-// so it should retrieve start fen and spares from game
 $reset_button.on('click', function(evt) {
     let [fen, spares] = game.getStartPosition('first');
     
@@ -125,10 +117,6 @@ $reset_button.on('click', function(evt) {
 
 // copy game id
 $('#copy_button').on('click', copy_id);
-
-//TODO: this will be done when client connects
-// show & hide appropriate buttons
-// on_game_state_change();
 
 //// EVENTS ////
 function start_game(times) {

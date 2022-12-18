@@ -624,8 +624,8 @@ class Game {
     }
 
     #sanity_check() {
-        setTimeout(() => {console.log(this.#chess1.ascii() + '\n')}, 50)
-        setTimeout(() => {console.log(this.#chess2.ascii() + '\n\n')}, 100)
+        setTimeout(() => {console.log(this.#chess1.ascii() + '\n')}, 0)
+        setTimeout(() => {console.log(this.#chess2.ascii() + '\n\n')}, 0)
     }
 
     /***********************************************************/
