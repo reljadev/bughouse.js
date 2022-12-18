@@ -1,6 +1,5 @@
 const http = require('http');
 const Cookies = require('cookies');
-const ejs = require('ejs');
 const fs = require('fs');
 const sanitize = require('sanitize-html');
 const { convertURLToFilePath, 
@@ -13,7 +12,7 @@ const { gameCoordinator,
 // CONSTANTS
 const PORT = process.env.PORT || 3000;
 
-const MAIN_PAGE = "main_page.ejs";
+const MAIN_PAGE = "main_page.html";
 const LANDING_PAGES = ["", "landing_page.html"];
 const PAGES = [MAIN_PAGE, ...LANDING_PAGES];
 const ERROR_PAGE = "404.html";
@@ -41,7 +40,8 @@ function initalizeServer() {
                     let game = gameCoordinator.getGameOfJoiningUser(data.user.id, data.user.name, data.game.id,
                                                                     (newGameId) => data.game.id = newGameId,
                                                                     (newUserId) => data.user.id = newUserId);
-                    setResponseToRenderizedGamePage(response, cookies, data, game);
+                    setCookies(cookies, data);
+                    setResponseToRequestedResources(response, data);
                 // landing page
                 } else {
                     setResponseToRequestedResources(response, data);
@@ -143,22 +143,10 @@ function redirectTo(response, url) {
     }).end();
 }
 
-function setResponseToRenderizedGamePage(response, cookies, data, game) {
-    // cookies
+function setCookies(cookies, data) {
     if(data.user.id) cookies.set('user_id', data.user.id, { overwrite: true, httpOnly: false });
     if(data.user.name) cookies.set('username', data.user.name, { overwrite: true, httpOnly: false });
     if(data.game.id) cookies.set('game_id', data.game.id, { overwrite: true, httpOnly: false });
-
-    // page
-    fs.readFile(data.file.path, 'utf-8', function(fsError, fileContent) {
-        if(fsError) {
-            setResponseToErrorPage(fsError, response);
-        } else {
-            let content = ejs.render(fileContent, { username: data.user.name, 
-                                                    data: game.info() });
-            setResponseToRequstedFile(response, content, 'text/html', data);
-        }
-    });
 }
 
 function setResponseToRequestedResources(response, data) {

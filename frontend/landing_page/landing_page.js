@@ -42,7 +42,7 @@ $(document).on('keypress', onKeyPressed);
 
 function startGame() {
     username = $username.val() === '' ? username : $username.val();
-    let url = '/main_page.ejs?';
+    let url = '/main_page.html?';
     url += 'username=' + username;
     window.location.href = url;
 }
@@ -75,7 +75,7 @@ function goGame() {
 
     username = $username.val() === '' ? username : $username.val();
     let game_id = $id_input.val();
-    let url = '/main_page.ejs?';
+    let url = '/main_page.html?';
     url += 'username=' + username;
     url += '&';
     url += 'gameId=' + game_id;

@@ -1,5 +1,5 @@
 // connect to server
-// NOTE: io is imported in game.ejs
+// NOTE: io is imported in main_game.html
 const server = io('/',  { transports: ['websocket'], upgrade: false,
             query: `gameId=${game_id}&user_id=${get_cookie('user_id')}&username=${myUsername}` });
 

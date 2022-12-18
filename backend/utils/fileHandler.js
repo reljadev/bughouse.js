@@ -39,8 +39,7 @@ function convertURLToFilePath(URLparser) {
 
 function fileExtensionToContentType(filePath) {
     let extname = path.extname(filePath);
-    const extToType = {'.html': 'text/html', '.js': 'text/javascript',
-                         '.css': 'text/css', '.ejs': 'text/html',
+    const extToType = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css',
                          '.json': 'application/json', '.ttf': 'font/ttf',
                          '.png': 'image/png', '.jpg': 'image/jpg',
                          '.svg': 'image/svg+xml', '.ico': 'image/x-icon'};
