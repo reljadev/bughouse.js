@@ -429,6 +429,13 @@ class Game {
 
     reset() {
         this.#stage = PRE_GAME;
+
+        // reset clocks
+        this.#white_timer1.reset();
+        this.#black_timer1.reset();
+        this.#white_timer2.reset();
+        this.#black_timer2.reset();
+
         // remove players that disconnected mid-game
         for(let i in this.#players) {
             let p = this.#players[i];
@@ -436,6 +443,8 @@ class Game {
                 delete this.#players[i];
             }
         }
+
+        // remove players from board
         this.#white_player1 = null;
         this.#black_player1 = null;
         this.#white_player2 = null;
