@@ -7,7 +7,9 @@ const { gameCoordinator } = require('./gameCoordinator');
 /**********************************************************/
 
 function initializeClientIO(server) {
-    let io = socket(server, { transports: ['websocket'] });
+    let io = socket(server, { transports: ['websocket'],
+                              pingInterval: 2000,
+                              pingTimeout: 4000 });
 
     io.on('connection', (client) => {
         console.log('A user just connected.');
@@ -141,35 +143,6 @@ function setClientEventHandlers(client, player, game) {
         client.to(game.getId()).emit('disconnected', player.getUsername());
         game.removePlayer(userId);
     });
-}
-
-/**********************************************************/
-/*                   EXCEPTION CLASSES                    */
-/**********************************************************/
-
-//TODO: is this needed?
-class NonExistentGameException extends Error {
-    constructor(message, gameId) {
-        super(message);
-        this.name = this.constructor.name;
-        this.gameId = gameId;
-    }
-}
-
-class NonExistentPlayerException extends Error {
-    constructor(message, userId, gameId) {
-        super(message);
-        this.name = this.constructor.name;
-        this.userId = userId;
-        this.gameId = gameId;
-    }
-}
-
-class MissingUsernameException extends Error {
-    constructor(message) {
-        super(message);
-        this.name = this.constructor.name;
-    }
 }
 
 // EXPORTS
