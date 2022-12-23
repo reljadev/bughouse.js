@@ -1,7 +1,7 @@
 // connect to server
-// NOTE: io is imported in main_game.html
-const server = io('/',  { transports: ['websocket'], upgrade: false,
-            query: `gameId=${game_id}&user_id=${get_cookie('user_id')}&username=${myUsername}` });
+const server = io('/',  { transports: ['websocket'], 
+                          upgrade: false,
+                          query: `gameId=${get_cookie('game_id')}&user_id=${get_cookie('user_id')}&username=${get_cookie('username')}` });
 
 // server sent game info upon connection
 server.on("upon_connection", (game_options) => {

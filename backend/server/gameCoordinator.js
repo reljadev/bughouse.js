@@ -67,28 +67,27 @@ class GameCoordinator {
         return game;
     }
 
-    getGameOfJoiningUser(userId, username, gameId, uponCreatingNewGame, uponCreatingNewPlayer) {
-        let game = null;
+    getGameOfJoiningUser(gameId, userId, username) {
+        let game, player;
 
         // join existing game
-        if(gameId !== null && 
-            games.hasOwnProperty(gameId)) {
+        if(gameId && games.hasOwnProperty(gameId)) {
             game = games[gameId];
 
-            if(!game.hasPlayer(userId)) {
-                let newUserId = game.addNewPlayer();
-                uponCreatingNewPlayer(newUserId);
-            }
-                
+            // player exists inside game 
+            if(userId && game.hasPlayer(userId))
+                player = game.getPlayer(userId);
+            // add new player
+            else
+                player = game.addNewPlayer(username);
+        
         // start new game
         } else {
             game = this.#startNewGame(username);
-            uponCreatingNewGame(game.getId());
-            let newUserId = game.addNewPlayer();
-            uponCreatingNewPlayer(newUserId);
+            player = game.addNewPlayer(username);
         }
 
-        return game;
+        return { game, player };
     }
 
     assertUsernameUniqueness(username) {
@@ -102,7 +101,7 @@ class GameCoordinator {
         }
     }
 
-    // NOTE: this has a bug! If user has been in this game
+    // TODO: this has a bug! If user has been in this game
     // as a watcher, his id was set. If he joins later
     // with a different name, possibly some players name
     // who is at that time disconnected, he will be able

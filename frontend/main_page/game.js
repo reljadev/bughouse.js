@@ -626,6 +626,14 @@ class Game {
 
     ///////////////////// GAME INFORMATION //////////////////////
 
+    getId() {
+        return this.#options.id;
+    }
+
+    getMyUsername() {
+        return this.#options.myUsername;
+    }
+
     am_i_admin() {
         return this.#options.myUsername === this.#options.admin;
     }

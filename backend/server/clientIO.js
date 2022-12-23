@@ -13,16 +13,18 @@ function initializeClientIO(server) {
         console.log('A user just connected.');
 
         try {
-            let { gameId, username } = getClientInfo(client);
-            let { game, player } = getClientGameAndPlayer(client);
+            let { gameId, userId, username } = getClientInfo(client);
+            let { game, player } = gameCoordinator.getGameOfJoiningUser(gameId, userId, username);
             updatePlayerInfo(player, client);
-
-            client.join(gameId);
-            client.to(gameId).emit('joined', username);
-
             setClientEventHandlers(client, player, game);
 
-            client.emit('upon_connection', game.info());
+            let game_options = game.info();
+            game_options.user_id = player.getId();
+            game_options.myUsername = player.getUsername();
+            client.emit('upon_connection', game_options);
+
+            client.join(game.getId());
+            client.to(game.getId()).emit('joined', username);
         } catch(err) {
             //TODO: remove log
             console.log(err);
@@ -31,34 +33,6 @@ function initializeClientIO(server) {
         }
 
     });
-}
-
-/**********************************************************/
-/*                   EXCEPTION CLASSES                    */
-/**********************************************************/
-
-class NonExistentGameException extends Error {
-    constructor(message, gameId) {
-        super(message);
-        this.name = this.constructor.name;
-        this.gameId = gameId;
-    }
-}
-
-class NonExistentPlayerException extends Error {
-    constructor(message, userId, gameId) {
-        super(message);
-        this.name = this.constructor.name;
-        this.userId = userId;
-        this.gameId = gameId;
-    }
-}
-
-class MissingUsernameException extends Error {
-    constructor(message) {
-        super(message);
-        this.name = this.constructor.name;
-    }
 }
 
 /**********************************************************/
@@ -73,34 +47,18 @@ function getClientInfo(client) {
     return { gameId, userId, username };
 }
 
-function getClientGameAndPlayer(client) {
-    let { gameId, userId } = getClientInfo(client);
-
-    let game = gameCoordinator.getGameById(gameId);
-    if(game == null)
-        throw new NonExistentGameException(`Game ${gameId} doesn't exist`, gameId);
-
-    let player = game.getPlayer(userId);
-    if(player == null)
-        throw new NonExistentPlayerException(`Player with id ${userId} doesn't exist in game ${gameId}`,
-                                                userId, gameId);
-
-    return { game, player };
-}
-
 function updatePlayerInfo(player, client) {
     let { username } = getClientInfo(client);
 
     if(typeof username == "undefined" ||
-        username == null || username.length == 0)
-            throw new MissingUsernameException(`Username is required`);
-        
-    player.setUsername(username);
+        username == null || username.length == 0) {
+            player.setUsername(username);
+    }    
     player.setSocket(client);
 }
 
 function setClientEventHandlers(client, player, game) {
-    let { gameId, userId } = getClientInfo(client);
+    let [ gameId, userId ] = [ game.getId(), player.getId() ];
 
     // player set at board
     client.on('playerJoined', (board, color, username) => {
@@ -183,6 +141,35 @@ function setClientEventHandlers(client, player, game) {
         client.to(game.getId()).emit('disconnected', player.getUsername());
         game.removePlayer(userId);
     });
+}
+
+/**********************************************************/
+/*                   EXCEPTION CLASSES                    */
+/**********************************************************/
+
+//TODO: is this needed?
+class NonExistentGameException extends Error {
+    constructor(message, gameId) {
+        super(message);
+        this.name = this.constructor.name;
+        this.gameId = gameId;
+    }
+}
+
+class NonExistentPlayerException extends Error {
+    constructor(message, userId, gameId) {
+        super(message);
+        this.name = this.constructor.name;
+        this.userId = userId;
+        this.gameId = gameId;
+    }
+}
+
+class MissingUsernameException extends Error {
+    constructor(message) {
+        super(message);
+        this.name = this.constructor.name;
+    }
 }
 
 // EXPORTS

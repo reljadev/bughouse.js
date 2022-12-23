@@ -1,4 +1,14 @@
 
+function setCookie(name, value, days) {
+    var expires = "";
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+  }
+
 /***********************************************************/
 /*                    INITIALIZATION                       */
 /***********************************************************/
@@ -42,9 +52,8 @@ $(document).on('keypress', onKeyPressed);
 
 function startGame() {
     username = $username.val() === '' ? username : $username.val();
-    let url = '/main_page.html?';
-    url += 'username=' + username;
-    window.location.href = url;
+    setCookie('username', username);
+    window.location.href = '/main_page.html';
 }
 
 function onJoinClick() {
@@ -75,11 +84,10 @@ function goGame() {
 
     username = $username.val() === '' ? username : $username.val();
     let game_id = $id_input.val();
-    let url = '/main_page.html?';
-    url += 'username=' + username;
-    url += '&';
-    url += 'gameId=' + game_id;
-    window.location.href = url;
+    setCookie('username', username);
+    setCookie('game_id', game_id);
+
+    window.location.href = '/main_page.html';
 }
 
 function onKeyPressed(evt) {

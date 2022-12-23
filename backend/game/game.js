@@ -39,7 +39,7 @@ class Game {
         this.#admin = options.admin;
         if(typeof this.#admin === 'undefined' || this.#admin === null ||
             typeof this.#admin === 'string' && this.#admin === '') {
-                throw MissingAdminFieldException('admin is a required parameter');
+                throw new MissingAdminFieldException('admin is a required parameter');
         }
         this.#white_player1 = options.white_player ?? null;
         this.#black_player1 = options.black_player ?? null;
@@ -305,10 +305,10 @@ class Game {
         return this.#players[userId];
     }
 
-    addNewPlayer() {
-        let p = new Game.Player();
-        this.#players[p.getId()] = p;
-        return p.getId();
+    addNewPlayer(username) {
+        let player = new Game.Player(username);
+        this.#players[player.getId()] = player;
+        return player;
     }
 
     removePlayer(userId) {

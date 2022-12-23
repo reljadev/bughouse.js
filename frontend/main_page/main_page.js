@@ -5,19 +5,26 @@ function get_cookie(name) {
   if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
+function setCookie(name, value, days) {
+  var expires = "";
+  if (days) {
+      var date = new Date();
+      date.setTime(date.getTime() + (days*24*60*60*1000));
+      expires = "; expires=" + date.toUTCString();
+  }
+  document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+}
+
 /***********************************************************/
 /*                    INITIALIZATION                       */
 /***********************************************************/
 
 //// INITIALIZE GAME ////
 
-let myUsername = get_cookie('username');
-let game_id = get_cookie('game_id');
-
 // placeholder game, while client waits for websocket
 // connection to server, which will retrieve game info
 let game = new Game({ 
-  id: game_id,
+  id: 'placeholder',
   admin: 'placeholder',
   first_board: {
       fen: "8/8/8/8/8/8/8/8",
@@ -30,17 +37,21 @@ let game = new Game({
 // this function is called by serverIO
 // when the websocket connection with server is set up
 function initialize(game_options) {
+  // unmount previous game
   game.unmount();
-  // commented out because on reconnection
-  // console will be wiped out
-  // console.clear();
 
-  game_options.myUsername = myUsername;
+  // update cookies
+  setCookie('user_id', game_options.user_id);
+  setCookie('game_id', game_options.id);
+
+  // initialize new game with options sent from server
   game_options.move_executed = move_executed;
   game_options.player_joined_board = player_joined_board;
   game_options.player_left_board = player_left_board;
   game = new Game(game_options);
 
+  // display information & update state
+  $text_id.val(game.getId());
   on_game_state_change();
   updateStatus();
 }
@@ -77,9 +88,6 @@ let $pgn2 = $('#pgn_2');
 let $pgn_button1 = $('#pgn_button_1');
 let $pgn_button2 = $('#pgn_button_2');
 let $msg = $('#game_over_msg');
-
-// display invite link
-$text_id.val(game_id);
 
 //// EVENTS ////
 
@@ -153,12 +161,12 @@ function reset_game(fen, sparePieces) {
 }
 
 function copy_id() {
-  navigator.clipboard.writeText(game_id).then(
+  navigator.clipboard.writeText(game.getId()).then(
     function() { 
       $text_id.val('Copied!');
       $text_id.css({'color': 'white',
                     'background-color': 'gray'});
-      setTimeout(() => { $text_id.val(game_id);
+      setTimeout(() => { $text_id.val(game.getId());
                           $text_id.css({'color': 'black', 
                                         'background-color': 'white'}); },
                   500);
@@ -240,8 +248,8 @@ function on_game_state_change() {
 
 function initialize_resign_button() {
   // i'm at first board
-  if(myUsername === game.getBoardPlayer('first', 'white') ||
-    myUsername === game.getBoardPlayer('first', 'black')) {
+  if(game.getMyUsername() === game.getBoardPlayer('first', 'white') ||
+    game.getMyUsername() === game.getBoardPlayer('first', 'black')) {
       $resign_button = $('#resign_game1');
   // i'm at second board
   } else {
