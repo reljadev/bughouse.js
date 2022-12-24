@@ -192,8 +192,9 @@ class Game {
                                         is_playing: this.#is_playing.bind(this) });
 
         // add players
-        this.#options.usernames.forEach((arr) => {
-            this.#players.add_player(arr[0], arr[1]);
+        this.#options.usernames.forEach(([username, connected]) => {
+            this.#players.add_player(username, connected);
+            console.log(username + " " + connected);
         });
         if(this.#options.white_player1 !== null) {
             let position = this.#color_to_board_position('first', 'white');
