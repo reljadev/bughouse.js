@@ -1,12 +1,15 @@
-Online multi-player game of bughouse (4-player variant of chess). Code deployed on https://funnyfarm.herokuapp.com. \
-**NOTE:** project development is still on-going. Things left to do:
-- Performance
-    - page caching
-    - combine icons into one file
-    - g-zip compression
-    - minify & combine CSS, JS and HTML files
-- Security
-    - Content Security Policy header
-- Design: improve UI/UX
-- Code refactoring
-    - transition from CommonJS to ES modules
+# What is Bughouse?
+Bughouse chess is a popular chess variant played on two chessboards by four players in teams of two. Normal chess rules apply, except that captured pieces on one board are passed on to the teammate on the other board, who then has the option of putting these pieces on their board, instead of a move.\
+<em>Definition taken from [wikipedia](https://en.wikipedia.org/wiki/Bughouse_chess).</em> 
+
+# How do I play?
+After navigating to game's landing page, you can either start a new game, which will make you an **admin** of that game, or join an existing game via a game id. It is important to note that only the **admin** of the game has the abality to modify & start the game.\
+After creating a new game, you can invite your friends by sending them game id, which is located in the lower right corner of the screen. All of the players can be set at the board by simply draging and dropping their usernames. Once the 4 players all take their place, and the clocks have been set to the desired times, game can be initiated. The rest of the players, who aren't currenly at the board, are the observers, and you can replace players on each subsequent game.
+
+# How is it implemented?
+Both frontend and backend are implemented in pure JavaScript, without frameworks, which drastically simplifies code development and maintenance. Indeed, the biggest logic in the app, namely the chess engine, is the same on the client app and the server. Furthermore, additional logic such as stopwatch also has similar implementations in frontend and backend. \\
+
+This app has a centralized architecture. Namely, a single instance of a server, which is responsible for synchronizing all of the clients, and ensuring consistency in each game. \
+Each instance of the game is run both on the server and client app. This insures that player can only make legal moves through the app's GUI, but nevertheless, all of the moves coming in to the server are parsed and validated. Upon, each move played, server checks whether the game ended, and broadcasts the appropriate signals to the rest of the players. \
+In order to display the same stopwatch time to all the players, wherever they are, we have to use a real-time, bi-derictional communication with as little overhead as possible, which is why I opted for websockets, implemented by [socket.io](https://socket.io/) library. However, that is not enough. Lag time, which can very greatly from signal to signal, also has to be taken into account. In order to solve for that, we keep one true record of stopwatch time on the server, and resync players times to that stopwatch on each move played. Namely, each player, as well as the server, keeps the record of the time it took him to play the move. Now, the lag time, provided a malicious user doesn't modify the move time, is the client measured time subtracted from the server measured time. Lag time, measured this way is clamped to 1 second and added to the remaining player time, which is then broadcast to all the other players.
+
